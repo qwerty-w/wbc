@@ -1,1 +1,275 @@
-<h1>Index</h1>
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <title>Web Bitcoin Client</title>
+        <link href="static/css/styles.css" rel="stylesheet" type="text/css">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="icon" type="image/x-icon" href="static/img/favicon.svg">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Play:wght@400;700&display=swap" rel="stylesheet">
+    </head>
+    <body>
+        <div class="blocks">
+            <div class="addresses">
+                <div class="addresses__top block-top-buttons">
+                    <span class="text-button" id="add-address-button">Add new</span>
+                </div>
+                <div class="addresses__bottom default-border hidden-scroll">
+                    <div class="address default-border at_selected">
+                        <span class='address__name'>Address 1 [my address for unpsents and other etc]</span>
+                        <span class='address__string'>bc1qqahdd9t5gefxqs0lfte9a6rxns6qwqsw7pdzkpfkhl9mda66pxvslrq657</span>
+                        <span class='address__type'>P2WPKH</span>
+                    </div>
+                </div>
+            </div>
+            <div class="transactions">
+                <div class="transactions__top block-top-buttons">
+                    <span class="text-button" id="select-all-button">Select all</span>
+                </div>
+                <div class="transactions__bottom default-border hidden-scroll">
+                    <div class="transaction default-border at_selected">
+                        <div class="transaction__id-row">
+                            <span class="transaction__id">63f9f4930ec7f1e0dadcfa8c060e31d541b685eaf982f4a64ff6a03d7002aad3</span>
+                        </div>
+                        <div class="transaction__addresses transaction__row">
+                            <span class="transaction__left-address transaction__address">bc1q5fgxtj8n08smu9tmpuy52hsckcqwcf0l9dvnzh</span>
+                            <img class="transaction__arrow" src="static/img/transaction/arrow_green.svg" alt="-->">
+                            <span class="transaction__right-address transaction__address">35H2tgcGBzN6DkZhuEp8Rc18UMKJ3AazCu</span>
+                        </div>
+                        <div class="transaction__others-n-amount transaction__row">
+                            <span class="transaction__left-other">Other (33+ inps)</span>
+                            <span class="transaction__amount">+3333.33333</span>
+                            <span class="transaction__right-other">Other (33+ inps)</span>
+                        </div>
+                        <div class="transaction__metadata transaction__row">
+                            <span class="transaction__full-amount">3333.33333</span>
+                            <span class="transaction__size">223</span>
+                            <span class="transaction__confirmations">999+</span>
+                            <span class="transaction__weight">565</span>
+                            <span class="transaction__fee">0.00003728</span>
+                        </div>
+                    </div>
+                    <div class="transaction default-border at_selectable">
+                        <div class="transaction__id-row">
+                            <span class="transaction__id">590805d39846f71f2387d61a9269126d63864993d4befc394324027e6a180bd6</span>
+                        </div>
+                        <div class="transaction__addresses transaction__row">
+                            <span class="transaction__left-address transaction__address">bc1q5fgxtj8n08smu9tmpuy52hsckcqwcf0l9dvnzh</span>
+                            <img class="transaction__arrow" src="static/img/transaction/arrow_green.svg" alt="-->">
+                            <span class="transaction__right-address transaction__address">35H2tgcGBzN6DkZhuEp8Rc18UMKJ3AazCu</span>
+                        </div>
+                        <div class="transaction__others-n-amount transaction__row">
+                            <span class="transaction__left-other">Other (33+ inps)</span>
+                            <span class="transaction__amount">+3333.33333</span>
+                            <span class="transaction__right-other">Other (33+ inps)</span>
+                        </div>
+                        <div class="transaction__metadata transaction__row">
+                            <span class="transaction__full-amount">3333.33333</span>
+                            <span class="transaction__size">223</span>
+                            <span class="transaction__confirmations">999+</span>
+                            <span class="transaction__weight">565</span>
+                            <span class="transaction__fee">0.00003728</span>
+                        </div>
+                    </div>
+                    <div class="transaction default-border at_selectable">
+                        <div class="transaction__id-row">
+                            <span class="transaction__id">924574bcf3507ac82a1671056546a6f431c9dc381ae1c052f8ac51f63dc72e3d</span>
+                        </div>
+                        <div class="transaction__addresses transaction__row">
+                            <span class="transaction__left-address transaction__address">bc1q5fgxtj8n08smu9tmpuy52hsckcqwcf0l9dvnzh</span>
+                            <img class="transaction__arrow" src="static/img/transaction/arrow_green.svg" alt="-->">
+                            <span class="transaction__right-address transaction__address">35H2tgcGBzN6DkZhuEp8Rc18UMKJ3AazCu</span>
+                        </div>
+                        <div class="transaction__others-n-amount transaction__row">
+                            <span class="transaction__left-other">Other (33+ inps)</span>
+                            <span class="transaction__amount">+3333.33333</span>
+                            <span class="transaction__right-other">Other (33+ inps)</span>
+                        </div>
+                        <div class="transaction__metadata transaction__row">
+                            <span class="transaction__full-amount">3333.33333</span>
+                            <span class="transaction__size">223</span>
+                            <span class="transaction__confirmations">999+</span>
+                            <span class="transaction__weight">565</span>
+                            <span class="transaction__fee">0.00003728</span>
+                        </div>
+                    </div>
+                    <div class="transaction default-border at_selectable">
+                        <div class="transaction__id-row">
+                            <span class="transaction__id">e7706c52e9e22571147106e7725a9a3bde8365a1c61e860eab356be79c6432f9</span>
+                        </div>
+                        <div class="transaction__addresses transaction__row">
+                            <span class="transaction__left-address transaction__address">bc1q5fgxtj8n08smu9tmpuy52hsckcqwcf0l9dvnzh</span>
+                            <img class="transaction__arrow" src="static/img/transaction/arrow_green.svg" alt="-->">
+                            <span class="transaction__right-address transaction__address">35H2tgcGBzN6DkZhuEp8Rc18UMKJ3AazCu</span>
+                        </div>
+                        <div class="transaction__others-n-amount transaction__row">
+                            <span class="transaction__left-other">Other (33+ inps)</span>
+                            <span class="transaction__amount">+3333.33333</span>
+                            <span class="transaction__right-other">Other (33+ inps)</span>
+                        </div>
+                        <div class="transaction__metadata transaction__row">
+                            <span class="transaction__full-amount">3333.33333</span>
+                            <span class="transaction__size">223</span>
+                            <span class="transaction__confirmations">999+</span>
+                            <span class="transaction__weight">565</span>
+                            <span class="transaction__fee">0.00003728</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="creator">
+                <div class="creator__top block-top-buttons"></div>
+                <div class="main-creator default-border">
+                    <div class="main-creator__io-sides">
+                        <div class="main-creator__inputs-side">
+                            <h3>Inputs</h3>
+                            <div class="main-creator__inputs hidden-scroll">
+                                <div class="main-creator__input default-border" draggable="true">
+                                    <span class='main-creator__input-id'>63f9f4930ec7f1e0dadcfa8c060e31d541b685eaf982f4a64ff6a03d7002aad3</span>
+                                    <span class='main-creator__input-amount'>+3333.33333333</span>
+                                </div>
+                            </div>
+                            <div class="main-creator__inputs-count-n-buttons">
+                                <span class='main-creator__inputs-count'>1</span>
+                                <span class="text-button" id="main-creator__remove-all-inputs-button">Remove all</span>
+                            </div>
+                        </div>
+                        <div class="main-creator__outputs-side">
+                            <h3>Outputs</h3>
+                            <div class="main-creator__outputs hidden-scroll">
+                                <div class="main-creator__output default-border" draggable="true">
+                                    <span class='main-creator__output-address'>bc1qqahdd9t5gefxqs0lfte9a6rxns6qwqsw7pdzkpfkhl9mda66pxvslrq657</span>
+                                    <span class='main-creator__output-amount'>-3333.33333333</span>
+                                </div>
+                                <div class="main-creator__add-output default-border">
+                                    <img src="static/img/main-creator/add-output-button.svg" alt="+" draggable="false" id="main-creator__add-output-button">
+                                </div>
+                            </div>
+                            <div class="main-creator__outputs-count-n-buttons">
+                                <span class='main-creator__outputs-count'>1</span>
+                                <span class="text-button" id="main-creator__remove-all-outputs-button">Remove all</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="main-creator__metadata default-border">
+                        <div class="main-creator__metadata-top-row">
+                            <div class="main-creator__metadata-locktime">
+                                <input type="number" name="locktime" value="0" placeholder="0" min="0">
+                                <span class='main-creator__metadata-undertext'>Locktime</span>
+                            </div>
+                            <div class="main-creator__metadata-fee">
+                                <input type="number" name="fee" value="" placeholder="Fee" min="0">
+                            </div>
+                            <span id="main-creator__metadata-segwit-status">Segwit Transaction</span>
+                        </div>
+                        <div class="main-creator__metadata-bottom-row">
+                            <div class="main-creator__metadata-version">
+                                <input type="number" name="version" value="2" placeholder="2" min="0">
+                                <span class='main-creator__metadata-undertext'>Version</span>
+                            </div>
+                            <div class="main-creator__metadata-total-available">
+                                <span id='main-creator__metadata-total-available-amount'>0</span>
+                                <span class='main-creator__metadata-undertext'>Total available</span>
+                            </div>
+                            <div class="main-creator__metadata-create-button">
+                                <img id="main-creator__metadata-create-button-img" src="static/img/main-creator/Vector (2).svg" alt="-->">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="modal">
+            <div class="add-output-modal modal-default-border">
+                <div class="add-output-modal__top">
+                    <div class="add-output-modal__address">
+                        <input type="text" id="add-output-modal__address-input" class="modal-default-border">
+                        <span class="modal__undertext">Address</span>
+                    </div>
+                </div>
+                <div class="add-output-modal__bot">
+                    <div class="add-output-modal__amount">
+                        <input type="number" id="add-output-modal__amount-input" class="modal-default-border" min="0">
+                        <span class="modal__undertext">Amount</span>
+                    </div>
+                    <button id="add-output-modal__main-button" class="modal-main-button">Add</button>
+                </div>
+            </div>
+        </div>
+        <div class="modal">
+            <div class="create-address-modal modal-default-border">
+                <div class="add-address-modal__type-switcher-row">
+                    <div class="add-address-modal__switcher-create">
+                        <div class="add-address-modal__switcher-create-anim switcher-anim_selected"></div>
+                        <span class="add-address-modal__switcher-text">Create</span>
+                    </div>
+                    <div class="add-address-modal__switcher-import">
+                        <div class="add-address-modal__switcher-import-anim"></div>
+                        <span class="add-address-modal__switcher-text">Import</span>                        
+                    </div>
+                </div>
+                <div class="create-address-modal__name-row">
+                    <div class="create-address-modal__name">
+                        <input type="text" id="create-address-modal__name-input" class="modal-default-border">
+                        <span class="modal__undertext">Name</span>
+                    </div>
+                </div>
+                <div class="create-address-modal__type-n-create-row">
+                    <div class="create-address-modal__type">
+                        <select id="create-address-modal__type-select" class="modal-default-border">
+                            <option value="P2PKH">P2PKH</option>
+                            <option value="P2SH">P2SH</option>
+                            <option value="P2WPKH">P2WPKH</option>
+                            <option value="P2WSH">P2WSH</option>
+                        </select>
+                        <span class="modal__undertext">Type</span>
+                    </div>
+                    <button id="create-address-modal__main-button" class="modal-main-button">Create</button>
+                </div>
+            </div>
+        </div>
+        <div class="modal">
+            <div class="import-address-modal modal-default-border">
+                <div class="add-address-modal__type-switcher-row">
+                    <div class="add-address-modal__switcher-create">
+                        <div class="add-address-modal__switcher-create-anim switcher-anim_selected"></div>
+                        <span class="add-address-modal__switcher-text">Create</span>
+                    </div>
+                    <div class="add-address-modal__switcher-import">
+                        <div class="add-address-modal__switcher-import-anim"></div>
+                        <span class="add-address-modal__switcher-text">Import</span>                        
+                    </div>
+                </div>
+                <div class="import-address-modal__key-row">
+                    <input type="text" id="import-address-modal__key-input" class="modal-default-border">
+                    <span class="modal__undertext">Key</span>
+                </div>
+                <div class="import-address-modal__type-n-format-row">
+                    <div class="import-address-modal__type">
+                        <select id="import-address-modal__type-select" class="modal-default-border">
+                            <option value="P2PKH">P2PKH</option>
+                            <option value="P2SH">P2SH</option>
+                            <option value="P2WPKH">P2WPKH</option>
+                            <option value="P2WSH">P2WSH</option>
+                        </select>
+                        <span class="modal__undertext">Type</span>
+                    </div>
+                    <button id="import-address-modal__main-button" class="modal-main-button">Import</button>
+                    <div class="import-address-modal__format">
+                        <select id="import-address-modal__format-select" class="modal-default-border">
+                            <option value="WIF">WIF</option>
+                            <option value="HEX">Hex</option>
+                            <option value="BASE64">Base64</option>
+                            <option value="BASE58">Base58</option>
+                        </select>
+                        <span class="modal__undertext">Format</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </body>
+    <script src="static/js/decimal.js"></script>
+    <script type="text/javascript" src="static/js/script.js"></script>
+</html>
