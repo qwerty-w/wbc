@@ -4,19 +4,13 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.request import Request
 from rest_framework.viewsets import ModelViewSet, ViewSet
-from rest_framework.serializers import ModelSerializer
 
 from .models import Address, CachedTransaction
+from .serializers import AddressSerializer, CachedTransactionSerializer
 
 
 def index(request):
     return render(request, 'creator/index.html')
-
-
-class AddressSerializer(ModelSerializer):
-    class Meta:
-        model = Address
-        fields = ['string', 'name', 'type']
 
 
 class AddressViewSet(ModelViewSet):
@@ -31,23 +25,3 @@ class AddressViewSet(ModelViewSet):
             return Response([])
 
         return Response(CachedTransactionSerializer(transaction.get()).data)
-
-
-class CachedTransactionSerializer(ModelSerializer):
-    class Meta:
-        model = CachedTransaction
-        fields = [
-            'txid',
-            'inputs',
-            'output_address',
-            'other_outputs',
-            'inputs_amount',
-            'outputs_amount',
-            'full_amount',
-            'fee',
-            'inputs_count',
-            'outputs_count',
-            'confirmations',
-            'size',
-            'weight',
-        ]
