@@ -21,6 +21,7 @@ from creator import views as creator_views
 
 router = routers.SimpleRouter()
 router.register('address', creator_views.AddressViewSet)
+router.register('transaction', creator_views.TransactionViewSet, basename='transaction')
 
 urlpatterns = [
     path('', creator_views.index),
