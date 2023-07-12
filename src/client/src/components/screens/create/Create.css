@@ -1,0 +1,17 @@
+
+.main {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding-top: 12%;
+    gap: 64px;
+}
+
+.tx {
+    background-color: #F2F2F2;
+    border-radius: 20px;
+}
+.tx:hover {
+    cursor: pointer;
+    background-color: #E7E7E7;
+}

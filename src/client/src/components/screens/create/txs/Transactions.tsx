@@ -1,0 +1,93 @@
+import './Transactions.css'
+import { addInput } from '../crt/Creater'
+
+export { type ITransaction, Transactions }
+
+interface ITransaction {
+    id: string,
+    confs: number,
+    s_timestamp: number,
+    amount: number,
+    fee: number
+}
+
+interface TransactionProps {
+    tx: ITransaction
+}
+
+function wrapID(id: string): string {
+    return id.slice(0, 4) + '-' + id.slice(-4)
+}
+
+function zeroFill(val: string | number, length: number = 2): string {
+    return String(val).padStart(length, '0')
+}
+
+function getDate(s_timestamp: number): string {
+    let ms_timestamp = s_timestamp * 1000
+    var date = new Date(ms_timestamp)
+    return `${zeroFill(date.getDay())}.${zeroFill(date.getMonth())}.${date.getFullYear()}, ${zeroFill(date.getHours())}:${zeroFill(date.getMinutes())}:${zeroFill(date.getSeconds())}`
+}
+
+function wrapFee(fee: number): string {
+    if (fee < 1000) {
+        return String(fee)
+    }
+    let formatter = Intl.NumberFormat('en', { notation: 'compact', minimumFractionDigits: 1, maximumFractionDigits: 1 });
+    return formatter.format(fee)
+}
+
+function Transaction({ tx }: TransactionProps) {
+    return (
+        <div className="transaction tx" onClick={e => {addInput(tx)}}>
+            <div className="transaction__left">
+                <div className="transaction__id">
+                    <span className="transaction__id-label">ID:</span>&nbsp;
+                    <span className="transaction__id-value">{wrapID(tx.id)}</span>
+                </div>
+                <div className="transaction__confs">
+                    <span className="transaction__confs-label">Confirmations:</span>&nbsp;
+                    <span className="transaction__confs-value">{tx.confs}</span>
+                </div>
+                <div className="transaction__date">
+                    <span className="transaction__date-label">Date:</span>&nbsp;
+                    <span className="transaction__date-value">{getDate(tx.s_timestamp)}</span>
+                </div>
+            </div>
+            <div className="transaction__right">
+                <span className="transaction__amount">{(tx.amount / 10 ** 8).toFixed(8)}</span>
+                <div className="transaction__fee">
+                    <span className="transaction__fee-label">Fee</span>&nbsp;
+                    <span className="transaction__fee-value">{wrapFee(tx.fee)}</span>
+                </div>
+            </div>
+        </div>
+    )
+}
+
+function getTransactions(): ITransaction[] {  // TODO
+    return [
+        {
+            id: '4902f9e3fad8473d2a13c4a07efca3c01df38643e8a3d375858c34e869c7bf63',
+            confs: 0,
+            s_timestamp: 1688334358,
+            amount: 3612443,
+            fee: 4000
+        },
+        {
+            id: '4902f9e3fad8473d2a13c4a07efca3c01df38643e8a3d375858c34e869c7bf63',
+            confs: 0,
+            s_timestamp: 1688334358,
+            amount: 3612443,
+            fee: 4000
+        }
+    ]
+}
+
+function Transactions() {
+    var txs = getTransactions()
+    return <div className='txs'>{txs.map((tx) => {
+        return <Transaction tx={tx} />
+    })}</div>
+}
+
