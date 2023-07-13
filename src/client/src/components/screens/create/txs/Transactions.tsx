@@ -1,6 +1,8 @@
+import { useContext } from 'react'
 import './Transactions.css'
+import { InputsContext } from '../crt/context'
 
-export { type ITransaction, Transactions }
+export { type ITransaction, Transactions, wrapID }
 
 interface ITransaction {
     id: string,
@@ -8,10 +10,6 @@ interface ITransaction {
     s_timestamp: number,
     amount: number,
     fee: number
-}
-
-interface TransactionProps {
-    tx: ITransaction
 }
 
 function wrapID(id: string): string {
@@ -36,28 +34,37 @@ function wrapFee(fee: number): string {
     return formatter.format(fee)
 }
 
-function Transaction({ tx }: TransactionProps) {
+function Transaction({ id, confs, s_timestamp, amount, fee }: ITransaction) {
+    const { inps, setInps } = useContext(InputsContext)
+
     return (
-        <div className="transaction tx" onClick={e => {}}>
+        <div className="transaction tx" onClick={e => {
+            for (let inp of inps) {
+                if (inp.txid == id) {
+                    return
+                }
+            }
+            setInps([...inps, { txid: id, amount: amount }])
+        }}>
             <div className="transaction__left">
                 <div className="transaction__id">
                     <span className="transaction__id-label">ID:</span>&nbsp;
-                    <span className="transaction__id-value">{wrapID(tx.id)}</span>
+                    <span className="transaction__id-value">{wrapID(id)}</span>
                 </div>
                 <div className="transaction__confs">
                     <span className="transaction__confs-label">Confirmations:</span>&nbsp;
-                    <span className="transaction__confs-value">{tx.confs}</span>
+                    <span className="transaction__confs-value">{confs}</span>
                 </div>
                 <div className="transaction__date">
                     <span className="transaction__date-label">Date:</span>&nbsp;
-                    <span className="transaction__date-value">{getDate(tx.s_timestamp)}</span>
+                    <span className="transaction__date-value">{getDate(s_timestamp)}</span>
                 </div>
             </div>
             <div className="transaction__right">
-                <span className="transaction__amount">{(tx.amount / 10 ** 8).toFixed(8)}</span>
+                <span className="transaction__amount">{(amount / 10 ** 8)}</span>
                 <div className="transaction__fee">
                     <span className="transaction__fee-label">Fee</span>&nbsp;
-                    <span className="transaction__fee-value">{wrapFee(tx.fee)}</span>
+                    <span className="transaction__fee-value">{wrapFee(fee)}</span>
                 </div>
             </div>
         </div>
@@ -86,7 +93,7 @@ function getTransactions(): ITransaction[] {  // TODO
 function Transactions() {
     var txs = getTransactions()
     return <div className='txs'>{txs.map((tx) => {
-        return <Transaction tx={tx} />
+        return Transaction(tx)
     })}</div>
 }
 
