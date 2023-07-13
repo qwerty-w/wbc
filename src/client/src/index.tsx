@@ -7,6 +7,7 @@ import Create from './components/screens/create/Create'
 const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement
 );
+
 root.render(
   <React.StrictMode>
     <Create />

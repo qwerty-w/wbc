@@ -1,5 +1,4 @@
 import './Transactions.css'
-import { addInput } from '../crt/Creater'
 
 export { type ITransaction, Transactions }
 
@@ -39,7 +38,7 @@ function wrapFee(fee: number): string {
 
 function Transaction({ tx }: TransactionProps) {
     return (
-        <div className="transaction tx" onClick={e => {addInput(tx)}}>
+        <div className="transaction tx" onClick={e => {}}>
             <div className="transaction__left">
                 <div className="transaction__id">
                     <span className="transaction__id-label">ID:</span>&nbsp;
