@@ -1,7 +1,7 @@
 import './Creator.css'
 import { useState, useContext } from 'react'
 import { InputsContext, OutputsContext } from './context'
-import { wrapID } from '../txs/Transactions'
+import { wrapString, toBitcoins } from '../../../../utils'
 
 export type { IInput, IOutput }
 export { Creator }
@@ -22,9 +22,23 @@ function Input({ txid, amount }: IInput) {
             <div className="crt__input crt__io">
                 <div className="transaction__id">
                     <span className="transaction__id-label">ID:</span>&nbsp;
-                    <span className="transaction__id-value">{wrapID(txid)}</span>
+                    <span className="transaction__id-value">{wrapString(txid)}</span>
                 </div>
-                <div className="crt__io-amount">{amount / 10 ** 8}</div>
+                <div className="crt__io-amount">{toBitcoins(amount)}</div>
+            </div>
+        </div>
+    )
+}
+
+function Output({ address, amount }: IOutput) {
+    return (
+        <div className="crt__ios">
+            <div className="crt__output crt__io">
+                <div className="crt__output-address">
+                    <span className="crt__output-address-label">Address:</span>&nbsp;
+                    <span className="crt__output-address-value">{wrapString(address)}</span>
+                </div>
+                <div className="crt__io-amount">{toBitcoins(amount)}</div>
             </div>
         </div>
     )
@@ -40,20 +54,12 @@ function CreatorTop({ inps, outs }: ICreatorTopProps) {
         <div className="crt__top">
             <div className="crt__top-left">
                 <span className="crt__io-label">Inputs</span>
-                { inps.map(Input) }
+                {inps.map(Input)}
             </div>
             <div className="crt__top-vline"></div>
             <div className="crt__top-right">
                 <span className="crt__io-label">Outputs</span>
-                <div className="crt__ios">
-                    <div className="crt__output crt__io">
-                        <div className="crt__output-address">
-                            <span className="crt__output-address-label">Address:</span>&nbsp;
-                            <span className="crt__output-address-value">bc1q-pemf</span>
-                        </div>
-                        <div className="crt__io-amount">0.03612443</div>
-                    </div>
-                </div>
+                {outs.map(Output)}
             </div>
         </div>
     )
@@ -89,7 +95,6 @@ function Fee() {
 }
 
 function CreatorBot() {
-    const [total, setTotal] = useState(0)
     return (
         <div className="crt__bot">
             <div className="crt__bot-block segwit-lock">
@@ -123,6 +128,10 @@ function CreatorBot() {
             </div>
         </div>
     )
+}
+
+export function addInput() {
+    var x = 1
 }
 
 function Creator() {

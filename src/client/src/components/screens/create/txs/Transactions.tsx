@@ -1,8 +1,9 @@
 import { useContext } from 'react'
 import './Transactions.css'
 import { InputsContext } from '../crt/context'
+import { toBitcoins, wrapString } from '../../../../utils'
 
-export { type ITransaction, Transactions, wrapID }
+export { type ITransaction, Transactions }
 
 interface ITransaction {
     id: string,
@@ -10,10 +11,6 @@ interface ITransaction {
     s_timestamp: number,
     amount: number,
     fee: number
-}
-
-function wrapID(id: string): string {
-    return id.slice(0, 4) + '-' + id.slice(-4)
 }
 
 function zeroFill(val: string | number, length: number = 2): string {
@@ -40,7 +37,7 @@ function Transaction({ id, confs, s_timestamp, amount, fee }: ITransaction) {
     return (
         <div className="transaction tx" onClick={e => {
             for (let inp of inps) {
-                if (inp.txid == id) {
+                if (inp.txid === id) {
                     return
                 }
             }
@@ -49,7 +46,7 @@ function Transaction({ id, confs, s_timestamp, amount, fee }: ITransaction) {
             <div className="transaction__left">
                 <div className="transaction__id">
                     <span className="transaction__id-label">ID:</span>&nbsp;
-                    <span className="transaction__id-value">{wrapID(id)}</span>
+                    <span className="transaction__id-value">{wrapString(id)}</span>
                 </div>
                 <div className="transaction__confs">
                     <span className="transaction__confs-label">Confirmations:</span>&nbsp;
@@ -61,7 +58,7 @@ function Transaction({ id, confs, s_timestamp, amount, fee }: ITransaction) {
                 </div>
             </div>
             <div className="transaction__right">
-                <span className="transaction__amount">{(amount / 10 ** 8)}</span>
+                <span className="transaction__amount">{toBitcoins(amount)}</span>
                 <div className="transaction__fee">
                     <span className="transaction__fee-label">Fee</span>&nbsp;
                     <span className="transaction__fee-value">{wrapFee(fee)}</span>
@@ -96,4 +93,3 @@ function Transactions() {
         return Transaction(tx)
     })}</div>
 }
-
