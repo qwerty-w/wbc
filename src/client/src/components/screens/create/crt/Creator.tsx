@@ -1,24 +1,15 @@
-import './Creater.css'
+import './Creator.css'
 import { useState } from 'react'
 import { ITransaction } from '../txs/Transactions'
 
-export { type ICreaterAddress, addInput, addOutput, Creater }
+export { type ICreatorAddress, Creator }
 
-interface ICreaterAddress {
+interface ICreatorAddress {
     str: string,
     amount: number
 }
 
-function addInput(tx: ITransaction): void {
-
-}
-
-function addOutput(address: ICreaterAddress): void {
-
-}
-
-
-function CreaterTop() {
+function CreatorTop() {
     return (
         <div className="crt__top">
             <div className="crt__top-left">
@@ -79,7 +70,7 @@ function Fee() {
     )
 }
 
-function CreaterBot() {
+function CreatorBot() {
     const [total, setTotal] = useState(0)
     return (
         <div className="crt__bot">
@@ -116,12 +107,12 @@ function CreaterBot() {
     )
 }
 
-function Creater() {
+function Creator() {
     return (
         <div className="crt">
-            <CreaterTop />
+            <CreatorTop />
             <div className="crt__hline"></div>
-            <CreaterBot />
+            <CreatorBot />
         </div>
     )
 }
