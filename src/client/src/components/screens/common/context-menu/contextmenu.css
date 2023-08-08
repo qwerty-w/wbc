@@ -1,0 +1,38 @@
+.contextmenu {
+    position: absolute;
+    top: 0;
+    left: 0;
+    /* visibility: hidden; */
+
+    width: 150px;
+    background-color: black;
+    border-radius: 3px;
+
+    user-select: none;
+}
+.contextmenu ul {
+    padding: 0;
+    margin: 0;
+    font-size: 12px;
+
+    display: flex;
+    flex-direction: column;
+    gap: 0px;
+
+    padding: 5px 0px;
+}
+.contextmenu li {
+    height: 24px;
+    cursor: pointer;
+    list-style: none;
+
+    display: flex;
+    align-items: center;
+}
+.contextmenu li:hover {
+    background-color: #ED9B60;
+}
+.contextmenu li span {
+    margin-left: 15px;
+    color: white;
+}
