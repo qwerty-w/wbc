@@ -1,10 +1,8 @@
 import './Creator.css'
 import { useState, useContext } from 'react'
-import { ContextMenu, IContextMenuPos } from '../../common/context-menu/contextmenu'
+import { ContextMenuItem, ContextMenu, IContextMenuPos } from '../../common/context-menu/contextmenu'
 import { InputsContext, OutputsContext } from './context'
 import { wrapString, toBitcoins } from '../../../../utils'
-
-import { contextMenuSetters } from '../../../..'
 
 export type { IInput, IOutput }
 export { Creator }
@@ -137,30 +135,21 @@ function Creator() {
     const { inps } = useContext(InputsContext)
     const { outs } = useContext(OutputsContext)
 
-    const [contextMenuState, setContextMenuState] = useState(false)
-    contextMenuSetters.push(setContextMenuState)
-    const [contextMenuPos, setContextMenuPos] = useState<IContextMenuPos>({top: 0, left: 0})
+    const [contextMenuIsShowed, setContextMenuIsShowed] = useState(false)
+    const [contextMenuPos, setContextMenuPos] = useState<IContextMenuPos>({ top: 0, left: 0 })
 
     return (
         <div className="crt" onContextMenu={ev => {
             ev.preventDefault()
             setContextMenuPos({top: ev.clientY, left: ev.clientX})
-            setContextMenuState(true)
+            setContextMenuIsShowed(true)
         }}>
             <CreatorTop inps={inps} outs={outs} />
             <div className="crt__hline"></div>
             <CreatorBot />
-            { contextMenuState && <ContextMenu pos={contextMenuPos} actions={[
-                    {
-                        name: 'action 1',
-                        handler: () => {}
-                    },
-                    {
-                        name: 'action 2',
-                        handler: () => {}
-                    }
-                ]}>
-            </ContextMenu> }
+            <ContextMenu isShowed={contextMenuIsShowed} setIsShowed={setContextMenuIsShowed} pos={contextMenuPos} >
+                <ContextMenuItem  name="Add new output" onclick={ () => {} } />
+            </ContextMenu>
         </div>
     )
 }

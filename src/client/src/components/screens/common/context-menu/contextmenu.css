@@ -2,13 +2,13 @@
     position: absolute;
     top: 0;
     left: 0;
-    /* visibility: hidden; */
 
     width: 150px;
     background-color: black;
     border-radius: 3px;
 
     user-select: none;
+    padding: 4px 0px;
 }
 .contextmenu ul {
     padding: 0;
@@ -18,8 +18,6 @@
     display: flex;
     flex-direction: column;
     gap: 0px;
-
-    padding: 5px 0px;
 }
 .contextmenu li {
     height: 24px;

@@ -1,35 +1,55 @@
-import React from "react";
+import React, { ReactElement, useEffect, useRef, useState } from "react";
 import './contextmenu.css'
 
-export { type IContextMenuPos, type IContextMenuAction, ContextMenu }
+export { type IContextMenuPos, ContextMenuItem, ContextMenu }
 
 interface IContextMenuPos {
     top: number,
     left: number
 }
 
-interface IContextMenuAction {
+interface IContextMenu {
+    isShowed: boolean,
+    pos: IContextMenuPos
+}
+
+interface IContextMenuItemProps {
     name: string,
-    handler: CallableFunction
+    onclick: CallableFunction
+}
+
+function ContextMenuItem({ name, onclick }: IContextMenuItemProps) {
+    return <div onMouseUp={ev => console.log(`act ${name} is clicked`)}><li><span>{name}</span></li></div>
 }
 
 interface IContextMenuProps {
+    isShowed: boolean,
+    setIsShowed: React.Dispatch<React.SetStateAction<boolean>>
     pos: IContextMenuPos,
-    actions: Array<IContextMenuAction>,
-    children: never[]
+    children: ReactElement
 }
 
-function ContextMenuAction(action: IContextMenuAction) {
-    return (
-        <li><span>{action.name}</span></li>
-    )
-}
+function ContextMenu({ isShowed, setIsShowed, pos, children }: IContextMenuProps) {
+    const contextMenuRef = useRef<HTMLDivElement>(null)
 
-function ContextMenu({ pos, actions }: IContextMenuProps) {
+    useEffect(() => {
+        if (isShowed) {
+            (contextMenuRef.current as HTMLDivElement).focus()
+        }
+    }, [isShowed])
+    window.addEventListener('keydown', ev => {
+        if (ev.key == 'Escape') {
+            setIsShowed(false)
+        }
+    })
+
+    if (!isShowed) {
+        return <></>
+    }
     return (
-        <div className="contextmenu" style={{top: pos.top, left: pos.left}}>
-            <ul>
-                { actions.map((action) => ContextMenuAction(action)) }
+        <div ref={contextMenuRef} className="contextmenu" tabIndex={0} onBlur={ev => {setIsShowed(false)}} style={{top: pos.top, left: pos.left}}>
+            <ul onMouseUp={ev => setIsShowed(false)}>
+                { children }
             </ul>
         </div>
     )
