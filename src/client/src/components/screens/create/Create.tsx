@@ -8,12 +8,7 @@ import { Creator } from './crt/Creator'
 import { TransactionProvider } from './txs/context'
 import { IOProvider } from './crt/context'
 
-import { IContextMenuAction, ContextMenu } from '../common/context-menu/contextmenu'
-
-
 function Create() {
-    const [contextMenuState, setContextMenuState] = useState(true)
-
     return (
     <TransactionProvider>
         <IOProvider>

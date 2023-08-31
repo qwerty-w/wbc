@@ -20,14 +20,13 @@
 }
 .crt__top-vline {
     width: 1px;
-    margin: 18px 8px;
+    margin: 5px 8px;
     background-color: #F2F2F2;
 }
 .crt__hline {
     height: 1px;
     background-color: #F2F2F2;
-    margin-right: 13px;
-    margin-left: 13px;
+    margin: 0px 13px;
 }
 .crt__io-label {
     text-align: center;
