@@ -9,18 +9,14 @@ export interface IAddress {
     name: string
 }
 
-interface AddressProps {
-    addr: IAddress
-}
-
-export function Address(props: AddressProps) {
+export function Address({ str, name }: IAddress) {
     return (
         <div className="address">
             <div className="address__left">
                 <img src={AddressIcon} alt="ico" />
             </div>
             <div className="address__right">
-                <span className="address__name">{props.addr.name}</span>
+                <span className="address__name">{name}</span>
                 <div className="address__arrow">
                     <img src={ArrowSvg} alt="-->" />       
                 </div>
@@ -41,8 +37,10 @@ function getAddresses(): IAddress[] {  // TODO
 export function Addresses() {
     const addresses: IAddress[] = getAddresses()
     return (
-        <div className='add'>{addresses.map((addr: IAddress) => {
-            return <Address addr={addr} />
-        })}</div>
+        <div className='add'>
+            {
+                addresses.map((address, index) => <Address key={index} str={address.str} name={address.name} />)
+            }
+        </div>
     )
 }
