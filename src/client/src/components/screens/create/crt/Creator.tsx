@@ -1,6 +1,6 @@
 import './Creator.css'
 import { useState, useContext } from 'react'
-import { ContextMenuItem, ContextMenu, IContextMenuPos } from '../../common/context-menu/contextmenu'
+import { IContextMenuPos, ContextMenuItem, ContextMenuDivider, ContextMenu } from '../../common/context-menu/contextmenu'
 import { InputsContext, OutputsContext } from './context'
 import { wrapString, toBitcoins } from '../../../../utils'
 
@@ -32,15 +32,28 @@ function Input({ txid, amount }: IInput) {
 }
 
 function Output({ address, amount }: IOutput) {
+    const [contextMenuIsShowed, setContextMenuIsShowed] = useState(false)
+    const [contextMenuPos, setContextMenuPos] = useState<IContextMenuPos>({ top: 0, left: 0 })
+
+    const { outs, setOuts } = useContext(OutputsContext)
+
     return (
-        <div className="crt__ios">
-            <div className="crt__output crt__io">
-                <div className="crt__output-address">
-                    <span className="crt__output-address-label">Address:</span>&nbsp;
-                    <span className="crt__output-address-value">{wrapString(address)}</span>
-                </div>
-                <div className="crt__io-amount">{toBitcoins(amount)}</div>
+        <div className="crt__output crt__io" onContextMenu={ev => {
+            ev.preventDefault()
+            setContextMenuPos({top: ev.clientY, left: ev.clientX})
+            setContextMenuIsShowed(true)
+            ev.stopPropagation()
+        }}>
+            <div className="crt__output-address">
+                <span className="crt__output-address-label">Address:</span>&nbsp;
+                <span className="crt__output-address-value">{ wrapString(address) }</span>
             </div>
+            <div className="crt__io-amount">{toBitcoins(amount)}</div>
+            <ContextMenu isShowed={contextMenuIsShowed} setIsShowed={setContextMenuIsShowed} pos={contextMenuPos} >
+                <ContextMenuItem  name="Remove output" onClick={ ev => { setOuts(outs.filter(out => out.address != address)) } } />
+                <ContextMenuDivider/>
+                <ContextMenuItem  name="Add new output" onClick={ ev => { } } />
+            </ContextMenu>
         </div>
     )
 }
@@ -51,6 +64,8 @@ interface ICreatorTopProps {
 }
 
 function CreatorTop({ inps, outs }: ICreatorTopProps) {
+    const [contextMenuIsShowed, setContextMenuIsShowed] = useState(false)
+    const [contextMenuPos, setContextMenuPos] = useState<IContextMenuPos>({ top: 0, left: 0 })
     return (
         <div className="crt__top">
             <div className="crt__top-left">
@@ -62,13 +77,20 @@ function CreatorTop({ inps, outs }: ICreatorTopProps) {
                 </div>
             </div>
             <div className="crt__top-vline"></div>
-            <div className="crt__top-right">
+            <div className="crt__top-right" onContextMenu={ev => {
+                ev.preventDefault()
+                setContextMenuPos({top: ev.clientY, left: ev.clientX})
+                setContextMenuIsShowed(true)
+            }}>
                 <span className="crt__io-label">Outputs</span>
                 <div className="crt__ios">
                     {
                         outs.map(out => <Output key={out.address} address={out.address} amount={out.amount} />)
                     }
                 </div>
+                <ContextMenu isShowed={contextMenuIsShowed} setIsShowed={setContextMenuIsShowed} pos={contextMenuPos} >
+                    <ContextMenuItem  name="Add new output" onClick={ ev => {} } />
+                </ContextMenu>
             </div>
         </div>
     )
@@ -143,21 +165,11 @@ function Creator() {
     const { inps } = useContext(InputsContext)
     const { outs } = useContext(OutputsContext)
 
-    const [contextMenuIsShowed, setContextMenuIsShowed] = useState(false)
-    const [contextMenuPos, setContextMenuPos] = useState<IContextMenuPos>({ top: 0, left: 0 })
-
     return (
-        <div className="crt" onContextMenu={ev => {
-            ev.preventDefault()
-            setContextMenuPos({top: ev.clientY, left: ev.clientX})
-            setContextMenuIsShowed(true)
-        }}>
+        <div className="crt">
             <CreatorTop inps={inps} outs={outs} />
             <div className="crt__hline"></div>
             <CreatorBot />
-            <ContextMenu isShowed={contextMenuIsShowed} setIsShowed={setContextMenuIsShowed} pos={contextMenuPos} >
-                <ContextMenuItem  name="Add new output" onclick={ () => {} } />
-            </ContextMenu>
         </div>
     )
 }

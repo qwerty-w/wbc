@@ -44,8 +44,6 @@
     gap: 7px;
 }
 .crt__io {
-    position: relative;
-
     height: 58px;
     padding-top: 12px;
     padding-bottom: 13px;
@@ -107,8 +105,6 @@
     padding: 18px 25px;
 }
 .crt__bot-block {
-    position: relative;
-
     background-color: #F2F2F2;
     height: 100%;
     border-radius: 20px;
