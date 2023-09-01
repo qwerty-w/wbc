@@ -78,7 +78,7 @@ function getTransactions(): ITransaction[] {  // TODO
             fee: 4000
         },
         {
-            id: '4902f9e3fad8473d2a13c4a07efca3c01df38643e8a3d375858c34e869c7bf63',
+            id: 'fg10f9e3fad8473d2a13c4a07efca3c01df38643e8a3d375858c34e869c7lk92',
             confs: 0,
             s_timestamp: 1688334358,
             amount: 3612443,
@@ -89,7 +89,11 @@ function getTransactions(): ITransaction[] {  // TODO
 
 function Transactions() {
     var txs = getTransactions()
-    return <div className='txs'>{txs.map((tx) => {
-        return Transaction(tx)
-    })}</div>
+    return (
+        <div className='txs'>
+            {
+                txs.map(tx => <Transaction key={tx.id} id={tx.id} confs={tx.confs} s_timestamp={tx.s_timestamp} amount={tx.amount} fee={tx.fee} />)
+            }
+        </div>
+    )
 }
