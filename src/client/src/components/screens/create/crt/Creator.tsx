@@ -55,12 +55,20 @@ function CreatorTop({ inps, outs }: ICreatorTopProps) {
         <div className="crt__top">
             <div className="crt__top-left">
                 <span className="crt__io-label">Inputs</span>
-                {inps.map(Input)}
+                <div className="crt__ios">
+                    {
+                        inps.map(inp => <Input key={inp.txid} txid={inp.txid} amount={inp.amount} />)
+                    }
+                </div>
             </div>
             <div className="crt__top-vline"></div>
             <div className="crt__top-right">
                 <span className="crt__io-label">Outputs</span>
-                {outs.map(Output)}
+                <div className="crt__ios">
+                    {
+                        outs.map(out => <Output key={out.address} address={out.address} amount={out.amount} />)
+                    }
+                </div>
             </div>
         </div>
     )
