@@ -1,32 +1,31 @@
 import React, { ReactElement, useEffect, useRef, useState } from "react";
 import './contextmenu.css'
 
-export { type IContextMenuPos, ContextMenuItem, ContextMenu }
+export { type IContextMenuPos, ContextMenuItem, ContextMenuDivider, ContextMenu }
 
 interface IContextMenuPos {
     top: number,
     left: number
 }
 
-interface IContextMenu {
-    isShowed: boolean,
-    pos: IContextMenuPos
-}
-
 interface IContextMenuItemProps {
     name: string,
-    onclick: CallableFunction
-}
-
-function ContextMenuItem({ name, onclick }: IContextMenuItemProps) {
-    return <div onMouseUp={ev => console.log(`act ${name} is clicked`)}><li><span>{name}</span></li></div>
+    onClick: (ev: React.MouseEvent<HTMLLIElement, MouseEvent>) => void
 }
 
 interface IContextMenuProps {
     isShowed: boolean,
     setIsShowed: React.Dispatch<React.SetStateAction<boolean>>
     pos: IContextMenuPos,
-    children: ReactElement
+    children: ReactElement | ReactElement[]
+}
+
+function ContextMenuItem({ name, onClick }: IContextMenuItemProps) {
+    return <li onMouseUp={ev => onClick(ev)}><span>{name}</span></li>
+}
+
+function ContextMenuDivider() {
+    return <div className="contextmenu__divider"></div>
 }
 
 function ContextMenu({ isShowed, setIsShowed, pos, children }: IContextMenuProps) {
@@ -47,7 +46,7 @@ function ContextMenu({ isShowed, setIsShowed, pos, children }: IContextMenuProps
         return <></>
     }
     return (
-        <div ref={contextMenuRef} className="contextmenu" tabIndex={0} onBlur={ev => {setIsShowed(false)}} style={{top: pos.top, left: pos.left}}>
+        <div ref={contextMenuRef} className="contextmenu" tabIndex={0} onBlur={ev => {setIsShowed(false)}} style={{top: pos.top - 5, left: pos.left - 5}}>
             <ul onMouseUp={ev => setIsShowed(false)}>
                 { children }
             </ul>
