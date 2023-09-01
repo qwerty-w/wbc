@@ -1,7 +1,10 @@
 
 
 export function wrapString(str: string, letters: number = 4) {
-    return str.slice(0, letters) + '-' + str.slice(-letters)
+    if (str.length > letters * 2) {
+        return str.slice(0, letters) + '-' + str.slice(-letters)
+    }
+    return str
 }
 
 export function toSatoshis(num: number) {
