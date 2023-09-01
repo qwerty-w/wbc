@@ -1,5 +1,5 @@
 import './Creator.css'
-import { useState, useContext } from 'react'
+import { useState, useContext, ReactElement } from 'react'
 import { IContextMenuPos, ContextMenuItem, ContextMenuDivider, ContextMenu } from '../../common/context-menu/contextmenu'
 import { InputsContext, OutputsContext } from './context'
 import { wrapString, toBitcoins } from '../../../../utils'
@@ -49,7 +49,7 @@ function Output({ address, amount }: IOutput) {
                 <span className="crt__output-address-value">{ wrapString(address) }</span>
             </div>
             <div className="crt__io-amount">{toBitcoins(amount)}</div>
-            <ContextMenu isShowed={contextMenuIsShowed} setIsShowed={setContextMenuIsShowed} pos={contextMenuPos} >
+            <ContextMenu state={ { isShowed: contextMenuIsShowed, setIsShowed: setContextMenuIsShowed, pos: contextMenuPos } } >
                 <ContextMenuItem  name="Remove output" onClick={ ev => { setOuts(outs.filter(out => out.address != address)) } } />
                 <ContextMenuDivider/>
                 <ContextMenuItem  name="Add new output" onClick={ ev => { } } />
@@ -88,7 +88,7 @@ function CreatorTop({ inps, outs }: ICreatorTopProps) {
                         outs.map(out => <Output key={out.address} address={out.address} amount={out.amount} />)
                     }
                 </div>
-                <ContextMenu isShowed={contextMenuIsShowed} setIsShowed={setContextMenuIsShowed} pos={contextMenuPos} >
+                <ContextMenu state={ { isShowed: contextMenuIsShowed, setIsShowed: setContextMenuIsShowed, pos: contextMenuPos } } >
                     <ContextMenuItem  name="Add new output" onClick={ ev => {} } />
                 </ContextMenu>
             </div>
