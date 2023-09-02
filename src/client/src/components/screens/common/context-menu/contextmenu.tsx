@@ -1,4 +1,4 @@
-import React, { ReactElement, useEffect, useRef, useState } from "react";
+import React, { PropsWithChildren, ReactElement, useEffect, useRef, useState } from "react";
 import './contextmenu.css'
 
 export { type IContextMenuPos, ContextMenuItem, ContextMenuDivider, ContextMenu }
@@ -19,9 +19,8 @@ interface IContextMenuState {
     pos: IContextMenuPos
 }
 
-interface IContextMenuProps {
-    state: IContextMenuState,
-    children: ReactElement | ReactElement[]
+interface IContextMenuProps extends PropsWithChildren {
+    state: IContextMenuState
 }
 
 function ContextMenuItem({ name, onClick }: IContextMenuItemProps) {
