@@ -3,7 +3,7 @@ import { useState, useEffect, useRef } from "react";
 import { Modal } from '../../common/modal/modal'
 
 
-export { NewAddress }
+export { type INewAddressState, NewAddress }
 
 interface INewAddressState {
     currentWindow: "create" | "import",
