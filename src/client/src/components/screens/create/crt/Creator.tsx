@@ -16,10 +16,20 @@ interface IOutput {
     address: string,
     amount: number
 }
-
+interface IContextMenuState {
+    isShowed: boolean,
+    setIsShowed: React.Dispatch<React.SetStateAction<boolean>>,
+    pos: IContextMenuPos
+    setPos: React.Dispatch<React.SetStateAction<IContextMenuPos>>,
+}
 function Input({ txid, amount }: IInput) {
+    const [contextMenuIsShowed, setContextMenuIsShowed] = useState<boolean>(false)
+    const [contextMenuPos, setContextMenuPos] = useState<IContextMenuPos>({ top: 0, left: 0 })
+    const state = { isShowed: contextMenuIsShowed, setIsShowed: setContextMenuIsShowed, pos: contextMenuPos, setPos: setContextMenuPos}
+
+    const {inps, setInps} = useContext(InputsContext)
     return (
-        <div className="crt__ios">
+        <div className="crt__ios" onContextMenu={onContextMenu(state)}>
             <div className="crt__input crt__io">
                 <div className="transaction__id">
                     <span className="transaction__id-label">ID:</span>&nbsp;
@@ -27,6 +37,9 @@ function Input({ txid, amount }: IInput) {
                 </div>
                 <div className="crt__io-amount">{toBitcoins(amount)}</div>
             </div>
+            <ContextMenu state={state}>
+                <ContextMenuItem name='Remove input' onClick={ev => { setInps(inps.filter(inp => inp.txid != txid)) }} />
+            </ContextMenu>
         </div>
     )
 }
