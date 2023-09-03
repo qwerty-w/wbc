@@ -51,7 +51,7 @@ function Addresses({ setNewAddressVisibility }: IAddressesProps) {
     return (
         <div className='add' onContextMenu={onContextMenu(contextMenuState)}>
             {
-                addresses.map((address, index) => <Address key={index} str={address.str} name={address.name} />)
+                addresses.map((address, index) => <Address key={index} {...address} />)
             }
             <ContextMenu state={contextMenuState}>
                 <ContextMenuItem name='Add new address' onClick={ ev => { setNewAddressVisibility(true) } } />
