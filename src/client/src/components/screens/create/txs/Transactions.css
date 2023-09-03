@@ -18,6 +18,11 @@
     justify-content: space-between;
     align-items: center;
     padding: 10px 14px;
+
+    user-select: none;
+}
+.transaction.selected {
+    background-color: #DFDFDF;
 }
 .transaction__left {
     display: flex;
