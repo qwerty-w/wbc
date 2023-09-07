@@ -44,18 +44,17 @@ interface IAddressesProps {
 
 function Addresses({ setNewAddressVisibility }: IAddressesProps) {
     const addresses: IAddress[] = getAddresses()
-    const [contextMenuIsShowed, setContextMenuIsShowed] = useState<boolean>(false)
-    const [contextMenuPos, setContextMenuPos] = useState<IContextMenuPos>({top: 0, left: 0})
-    const contextMenuState = { isShowed: contextMenuIsShowed, setIsShowed: setContextMenuIsShowed, pos: contextMenuPos, setPos: setContextMenuPos }
-
     return (
-        <div className='add' onContextMenu={onContextMenu(contextMenuState)}>
-            {
-                addresses.map((address, index) => <Address key={index} {...address} />)
-            }
-            <ContextMenu state={contextMenuState}>
+        <ContextMenu items={
+            <>
                 <ContextMenuItem name='Add new address' onClick={ ev => { setNewAddressVisibility(true) } } />
-            </ContextMenu>
-        </div>
+            </>
+        }>
+            <div className='add'>
+                {
+                    addresses.map((address, index) => <Address key={index} {...address} />)
+                }
+            </div>
+        </ContextMenu>
     )
 }
