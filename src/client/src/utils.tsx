@@ -14,3 +14,7 @@ export function toSatoshis(num: number) {
 export function toBitcoins(num: number) {
     return num / 10 ** 8
 }
+
+export async function setBuffer(text: string) {
+    await navigator.clipboard.writeText(text)
+}

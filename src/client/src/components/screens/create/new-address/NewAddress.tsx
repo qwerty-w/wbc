@@ -11,7 +11,7 @@ interface INewAddressState {
     animatedSwitcher: boolean
 }
 
-interface NewAddressOptionProps {
+interface INewAddressOptionProps {
     state: INewAddressState
 }
 
@@ -70,7 +70,7 @@ function Switcher({ switchTo, animation = true, createOnClick, importOnClick }: 
     )
 }
 
-function CreateAddress({ state }: NewAddressOptionProps) {
+function CreateAddress({ state }: INewAddressOptionProps) {
     return (
         <div className="create-addr new-addr">
             <Switcher animation={state.animatedSwitcher} switchTo='create' importOnClick={() => { state.setCurrentWindow('import') }} />
@@ -89,7 +89,7 @@ function CreateAddress({ state }: NewAddressOptionProps) {
     )
 }
 
-function ImportAddress({ state }: NewAddressOptionProps) {
+function ImportAddress({ state }: INewAddressOptionProps) {
     return (
         <div className="import-addr new-addr">
             <div className='new-addr__switcher'>

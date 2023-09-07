@@ -1,7 +1,7 @@
 import './Transactions.css'
-import { useContext, useRef, useState } from 'react'
+import { useContext, useRef } from 'react'
 import { InputsContext } from '../crt/context'
-import { toBitcoins, wrapString } from '../../../../utils'
+import { setBuffer, toBitcoins, wrapString } from '../../../../utils'
 import { ContextMenu, ContextMenuDivider, ContextMenuItem } from '../../common/context-menu/contextmenu'
 
 export { type ITransaction, Transactions }
@@ -56,10 +56,6 @@ function Fee({ amount }: IFeeProps) {
 function Transaction({ id, confs, s_timestamp, amount, fee }: ITransaction) {
     const { inps, setInps } = useContext(InputsContext)
     const currentTransaction = useRef<HTMLDivElement>(null)
-
-    async function setBuffer(text: string) {
-        await navigator.clipboard.writeText(text)
-    }
 
     return (
         <ContextMenu items={
