@@ -75,7 +75,6 @@
     font-weight: 500;
 }
 .crt__input .crt__io-amount::before {
-    user-select: text;
     content: "+";
 }
 .crt__io-amount::after {

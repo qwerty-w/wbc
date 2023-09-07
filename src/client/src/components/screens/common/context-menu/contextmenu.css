@@ -7,40 +7,37 @@
     background-color: black;
     border-radius: 3px;
     outline: none;
+    padding: 8px 0px;
 
     user-select: none;
-    padding: 8px 0px;
-}
-.contextmenu ul {
-    padding: 0;
-    margin: 0;
     font-size: 12px;
-
+}
+.contextmenu__container {
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 0px;
 }
-.contextmenu li {
+.contextmenu__item {
     width: 100%;
     height: 24px;
     cursor: pointer;
-    list-style: none;
 
     display: flex;
     align-items: center;
 }
-.contextmenu li:hover {
+.contextmenu__item:hover {
     background-color: #ED9B60;
 }
-.contextmenu li span {
+.contextmenu__item span {
     margin: 0 16px;
     color: white;
 }
 .contextmenu__divider {
     width: 100%;
+    padding: 8px 0px;
+}
+.contextmenu__divider-line {
     height: 1px;
-
     background-color: #383838;
-    margin: 8px 0px;
 }

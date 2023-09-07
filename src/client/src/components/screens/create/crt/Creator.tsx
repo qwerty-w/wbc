@@ -23,47 +23,44 @@ interface IContextMenuState {
     setPos: React.Dispatch<React.SetStateAction<IContextMenuPos>>,
 }
 function Input({ txid, amount }: IInput) {
-    const [contextMenuIsShowed, setContextMenuIsShowed] = useState<boolean>(false)
-    const [contextMenuPos, setContextMenuPos] = useState<IContextMenuPos>({ top: 0, left: 0 })
-    const state = { isShowed: contextMenuIsShowed, setIsShowed: setContextMenuIsShowed, pos: contextMenuPos, setPos: setContextMenuPos}
-
     const {inps, setInps} = useContext(InputsContext)
     return (
-        <div className="crt__ios" onContextMenu={onContextMenu(state)}>
-            <div className="crt__input crt__io">
-                <div className="transaction__id">
-                    <span className="transaction__id-label">ID:</span>&nbsp;
-                    <span className="transaction__id-value">{wrapString(txid)}</span>
-                </div>
-                <div className="crt__io-amount">{toBitcoins(amount)}</div>
-            </div>
-            <ContextMenu state={state}>
+        <ContextMenu items={
+            <>
                 <ContextMenuItem name='Remove input' onClick={ev => { setInps(inps.filter(inp => inp.txid != txid)) }} />
-            </ContextMenu>
-        </div>
+            </>
+        }>
+            <div className="crt__ios">
+                <div className="crt__input crt__io">
+                    <div className="transaction__id">
+                        <span className="transaction__id-label">ID:</span>&nbsp;
+                        <span className="transaction__id-value">{wrapString(txid)}</span>
+                    </div>
+                    <div className="crt__io-amount">{toBitcoins(amount)}</div>
+                </div>
+            </div>
+        </ContextMenu>
     )
 }
 
 function Output({ address, amount }: IOutput) {
-    const [contextMenuIsShowed, setContextMenuIsShowed] = useState(false)
-    const [contextMenuPos, setContextMenuPos] = useState<IContextMenuPos>({ top: 0, left: 0 })
-    const contextMenuState = { isShowed: contextMenuIsShowed, setIsShowed: setContextMenuIsShowed, pos: contextMenuPos, setPos: setContextMenuPos }
-
     const { outs, setOuts } = useContext(OutputsContext)
-
     return (
-        <div className="crt__output crt__io" onContextMenu={onContextMenu(contextMenuState)}>
-            <div className="crt__output-address">
-                <span className="crt__output-address-label">Address:</span>&nbsp;
-                <span className="crt__output-address-value">{ wrapString(address) }</span>
-            </div>
-            <div className="crt__io-amount">{toBitcoins(amount)}</div>
-            <ContextMenu state={contextMenuState} >
+        <ContextMenu items={
+            <>
                 <ContextMenuItem  name="Remove output" onClick={ ev => { setOuts(outs.filter(out => out.address != address)) } } />
                 <ContextMenuDivider/>
                 <ContextMenuItem  name="Add new output" onClick={ ev => { } } />
-            </ContextMenu>
-        </div>
+            </>
+        }>
+            <div className="crt__output crt__io">
+                <div className="crt__output-address">
+                    <span className="crt__output-address-label">Address:</span>&nbsp;
+                    <span className="crt__output-address-value">{ wrapString(address) }</span>
+                </div>
+                <div className="crt__io-amount">{toBitcoins(amount)}</div>
+            </div>
+        </ContextMenu>
     )
 }
 
@@ -73,9 +70,6 @@ interface ICreatorTopProps {
 }
 
 function CreatorTop({ inps, outs }: ICreatorTopProps) {
-    const [contextMenuIsShowed, setContextMenuIsShowed] = useState(false)
-    const [contextMenuPos, setContextMenuPos] = useState<IContextMenuPos>({ top: 0, left: 0 })
-    const contextMenuState = { isShowed: contextMenuIsShowed, setIsShowed: setContextMenuIsShowed, pos: contextMenuPos, setPos: setContextMenuPos }
     return (
         <div className="crt__top">
             <div className="crt__top-left">
@@ -87,17 +81,20 @@ function CreatorTop({ inps, outs }: ICreatorTopProps) {
                 </div>
             </div>
             <div className="crt__top-vline"></div>
-            <div className="crt__top-right" onContextMenu={onContextMenu(contextMenuState)}>
-                <span className="crt__io-label">Outputs</span>
-                <div className="crt__ios">
-                    {
-                        outs.map(out => <Output key={out.address} address={out.address} amount={out.amount} />)
-                    }
-                </div>
-                <ContextMenu state={contextMenuState} >
+            <ContextMenu items={
+                <>
                     <ContextMenuItem  name="Add new output" onClick={ ev => {} } />
-                </ContextMenu>
-            </div>
+                </>
+            }>
+                <div className="crt__top-right">
+                    <span className="crt__io-label">Outputs</span>
+                    <div className="crt__ios">
+                        {
+                            outs.map(out => <Output key={out.address} address={out.address} amount={out.amount} />)
+                        }
+                    </div>
+                </div>
+            </ContextMenu>
         </div>
     )
 }
