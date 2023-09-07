@@ -1,7 +1,6 @@
 import './Addresses.css'
-import { useState } from 'react'
-import { INewAddressState } from '../new-address/NewAddress'
-import { onContextMenu, ContextMenu, ContextMenuDivider, ContextMenuItem, IContextMenuPos } from '../../common/context-menu/contextmenu'
+import { setBuffer } from '../../../../utils'
+import { ContextMenu, ContextMenuDivider, ContextMenuItem } from '../../common/context-menu/contextmenu'
 
 const { default: ArrowSvg } = require('./icons/arrow.svg') as { default: string }
 const { default: AddressIcon } = require('./icons/butterfly.svg') as { default: string }
@@ -13,19 +12,33 @@ interface IAddress {
     name: string
 }
 
-function Address({ str, name }: IAddress) {
+interface IAddressProps extends IAddress { 
+    setNewAddressVisibility: React.Dispatch<React.SetStateAction<boolean>>
+}
+
+function Address({ str, name, setNewAddressVisibility }: IAddressProps) {
     return (
-        <div className="address">
-            <div className="address__left">
-                <img src={AddressIcon} alt="ico" />
-            </div>
-            <div className="address__right">
-                <span className="address__name">{name}</span>
-                <div className="address__arrow">
-                    <img src={ArrowSvg} alt="-->" />       
+        <ContextMenu items={
+            <>
+                <ContextMenuItem name='Add new address' onClick={ ev => { setNewAddressVisibility(true) } } />
+                <ContextMenuDivider />
+                <ContextMenuItem name='Copy name' onClick={ ev => { setBuffer(name) } } />
+                <ContextMenuItem name='Copy address' onClick={ ev => { setBuffer(str) } } />
+                <ContextMenuItem name='Copy emoji' onClick={ ev => { setBuffer('🦋') } } />  {/* TODO */}
+            </>
+        }>
+            <div className="address">
+                <div className="address__left">
+                    <img src={AddressIcon} alt="ico" />
+                </div>
+                <div className="address__right">
+                    <span className="address__name">{name}</span>
+                    <div className="address__arrow">
+                        <img src={ArrowSvg} alt="-->" />       
+                    </div>
                 </div>
             </div>
-        </div>
+        </ContextMenu>
     )
 }
 
@@ -52,7 +65,7 @@ function Addresses({ setNewAddressVisibility }: IAddressesProps) {
         }>
             <div className='add'>
                 {
-                    addresses.map((address, index) => <Address key={index} {...address} />)
+                    addresses.map((address, index) => <Address key={index} setNewAddressVisibility={setNewAddressVisibility} {...address} />)
                 }
             </div>
         </ContextMenu>
