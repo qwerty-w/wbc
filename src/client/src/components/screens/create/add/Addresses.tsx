@@ -1,4 +1,5 @@
 import './Addresses.css'
+import { useRef } from 'react'
 import { setBuffer } from '../../../../utils'
 import { ContextMenu, ContextMenuDivider, ContextMenuItem } from '../../common/context-menu/contextmenu'
 
@@ -17,6 +18,7 @@ interface IAddressProps extends IAddress {
 }
 
 function Address({ str, name, setNewAddressVisibility }: IAddressProps) {
+    const ref = useRef<HTMLDivElement>(null)
     return (
         <ContextMenu items={
             <>
@@ -26,8 +28,10 @@ function Address({ str, name, setNewAddressVisibility }: IAddressProps) {
                 <ContextMenuItem name='Copy address' onClick={ ev => { setBuffer(str) } } />
                 <ContextMenuItem name='Copy emoji' onClick={ ev => { setBuffer('🦋') } } />  {/* TODO */}
             </>
-        }>
-            <div className="address">
+        } effect={isShowed => { isShowed ?
+                                (ref.current as HTMLDivElement).style.backgroundColor = '#E7E7E7' : 
+                                ref.current?.removeAttribute('style') }}>
+            <div className="address" ref={ref}>
                 <div className="address__left">
                     <img src={AddressIcon} alt="ico" />
                 </div>
