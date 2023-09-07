@@ -68,13 +68,9 @@ function Transaction({ id, confs, s_timestamp, amount, fee }: ITransaction) {
                 <ContextMenuItem name='Copy amount' onClick={() => { setBuffer(String(toBitcoins(amount))) }} />
                 <ContextMenuItem name='Copy fee' onClick={() => { setBuffer(String(toBitcoins(fee))) }} />
             </>
-        } effect={isShowed => {
-            if (isShowed) {
-                (currentTransaction.current as HTMLDivElement).style.backgroundColor = '#E7E7E7'
-            } else {
-                currentTransaction.current?.removeAttribute('style')
-            } 
-        }}>
+        } effect={isShowed => isShowed ? 
+                              (currentTransaction.current as HTMLDivElement).style.backgroundColor = '#E7E7E7' : 
+                              currentTransaction.current?.removeAttribute('style')}>
             <div className="transaction tx" ref={currentTransaction} onClick={() => {
                 for (let inp of inps) {
                     if (inp.txid === id) {
