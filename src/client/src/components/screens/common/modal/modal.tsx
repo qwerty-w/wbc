@@ -1,5 +1,5 @@
 import './modal.css'
-import { PropsWithChildren, useRef } from 'react'
+import { PropsWithChildren, useRef, useState } from 'react'
 
 export { Modal }
 
@@ -9,9 +9,14 @@ interface IModalProps extends PropsWithChildren {
 }
 
 function Modal({ setVisibility, children }: IModalProps) {
-    const modalRef = useRef<HTMLDivElement>(null)
+    const ref = useRef<HTMLDivElement>(null)
+    const [mouseDownElement, setMouseDownElement] = useState<EventTarget>()
     return (
-        <div className="modal" ref={modalRef} onClick={ev => { if (ev.target === modalRef.current) { setVisibility(false) } }}>
+        <div className="modal"
+             ref={ref}
+             onMouseDown={ev => { setMouseDownElement(ev.target) }}
+             onMouseUp={ev => { if (ev.target === ref.current && ref.current === mouseDownElement) { setVisibility(false) } }}
+        >
             { children }
         </div>
     )
