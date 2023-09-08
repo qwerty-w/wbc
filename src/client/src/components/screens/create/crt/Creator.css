@@ -101,6 +101,8 @@
     padding: 18px 25px;
 }
 .crt__bot-block {
+    position: relative;
+
     background-color: #F2F2F2;
     height: 100%;
     border-radius: 20px;
@@ -109,6 +111,24 @@
     flex-direction: column;
     justify-content: space-between;
     padding: 11px 22px;
+}
+.crt__bot-block.segwit-lock::before, .crt__bot-block.segwit-unlock::before {
+    position: absolute;
+    content: "";
+    right: 12px;
+    bottom: 7px;
+
+    background-size: contain;
+}
+.crt__bot-block.segwit-lock::before {
+    width: 8px;
+    height: 10px;
+    background-image: url("./icons/segwit-lock.svg");
+}
+.crt__bot-block.segwit-unlock::before {
+    width: 10px;
+    height: 10px;
+    background-image: url("./icons/segwit-unlock.svg");
 }
 .crt__bot-block input {
     border-radius: 20px;
@@ -167,22 +187,4 @@
     font-size: 10px;
     text-align: center;
     color: #FFF;
-}
-.crt__bot-block.segwit-lock::before, .crt__bot-block.segwit-unlock::before {
-    position: absolute;
-    content: "";
-    right: 12px;
-    bottom: 7px;
-
-    background-size: contain;
-}
-.crt__bot-block.segwit-lock::before {
-    width: 8px;
-    height: 10px;
-    background-image: url("./icons/segwit-lock.svg");
-}
-.crt__bot-block.segwit-unlock::before {
-    width: 10px;
-    height: 10px;
-    background-image: url("./icons/segwit-unlock.svg");
 }

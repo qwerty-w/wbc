@@ -1,6 +1,6 @@
 import './Creator.css'
-import { useState, useContext, ReactElement } from 'react'
-import { IContextMenuPos, ContextMenuItem, ContextMenuDivider, ContextMenu, onContextMenu } from '../../common/context-menu/contextmenu'
+import { useState, useContext } from 'react'
+import { ContextMenuItem, ContextMenuDivider, ContextMenu } from '../../common/context-menu/contextmenu'
 import { InputsContext, OutputsContext } from './context'
 import { wrapString, toBitcoins } from '../../../../utils'
 
@@ -16,12 +16,7 @@ interface IOutput {
     address: string,
     amount: number
 }
-interface IContextMenuState {
-    isShowed: boolean,
-    setIsShowed: React.Dispatch<React.SetStateAction<boolean>>,
-    pos: IContextMenuPos
-    setPos: React.Dispatch<React.SetStateAction<IContextMenuPos>>,
-}
+
 function Input({ txid, amount }: IInput) {
     const {inps, setInps} = useContext(InputsContext)
     return (

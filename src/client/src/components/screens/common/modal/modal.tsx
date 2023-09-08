@@ -1,15 +1,15 @@
 import './modal.css'
 import { PropsWithChildren, useRef, useState } from 'react'
 
-export { Modal }
+export { type ModalShowType, Modal }
 
 
-interface IModalProps extends PropsWithChildren {
+type ModalShowType = { 
     isShowed: boolean,
     setIsShowed: React.Dispatch<React.SetStateAction<boolean>>
 }
 
-function Modal({ isShowed, setIsShowed, children }: IModalProps) {
+function Modal({ isShowed, setIsShowed, children }: ModalShowType & PropsWithChildren) {
     const ref = useRef<HTMLDivElement>(null)
     const [mouseDownElement, setMouseDownElement] = useState<EventTarget>()
     return (
