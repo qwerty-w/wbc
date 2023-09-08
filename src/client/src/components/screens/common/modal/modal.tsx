@@ -5,19 +5,22 @@ export { Modal }
 
 
 interface IModalProps extends PropsWithChildren {
-    setVisibility: React.Dispatch<React.SetStateAction<boolean>>
+    isShowed: boolean,
+    setIsShowed: React.Dispatch<React.SetStateAction<boolean>>
 }
 
-function Modal({ setVisibility, children }: IModalProps) {
+function Modal({ isShowed, setIsShowed, children }: IModalProps) {
     const ref = useRef<HTMLDivElement>(null)
     const [mouseDownElement, setMouseDownElement] = useState<EventTarget>()
     return (
-        <div className="modal"
-             ref={ref}
-             onMouseDown={ev => { setMouseDownElement(ev.target) }}
-             onMouseUp={ev => { if (ev.target === ref.current && ref.current === mouseDownElement) { setVisibility(false) } }}
-        >
-            { children }
-        </div>
+        <>
+            { isShowed && <div className="modal"
+                ref={ref}
+                onMouseDown={ev => { setMouseDownElement(ev.target) }}
+                onMouseUp={ev => { if (ev.button == 0 && ev.target === ref.current && ref.current === mouseDownElement) { setIsShowed(false) } }}
+            >
+                { children }
+            </div> }
+        </>
     )
 }

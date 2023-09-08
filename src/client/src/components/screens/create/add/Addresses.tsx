@@ -1,7 +1,8 @@
 import './Addresses.css'
-import { useRef } from 'react'
+import { useContext, useRef } from 'react'
 import { setBuffer } from '../../../../utils'
 import { ContextMenu, ContextMenuDivider, ContextMenuItem } from '../../common/context-menu/contextmenu'
+import { NewAddressContext } from '../new-address/NewAddress'
 
 const { default: ArrowSvg } = require('./icons/arrow.svg') as { default: string }
 const { default: AddressIcon } = require('./icons/butterfly.svg') as { default: string }
@@ -13,16 +14,13 @@ interface IAddress {
     name: string
 }
 
-interface IAddressProps extends IAddress { 
-    setNewAddressVisibility: React.Dispatch<React.SetStateAction<boolean>>
-}
-
-function Address({ str, name, setNewAddressVisibility }: IAddressProps) {
+function Address({ str, name }: IAddress) {
     const ref = useRef<HTMLDivElement>(null)
+    const setNewAddressIsShowed = useContext(NewAddressContext).setIsShowed
     return (
         <ContextMenu items={
             <>
-                <ContextMenuItem name='Add new address' onClick={ ev => { setNewAddressVisibility(true) } } />
+                <ContextMenuItem name='Add new address' onClick={ ev => { setNewAddressIsShowed(true) } } />
                 <ContextMenuDivider />
                 <ContextMenuItem name='Copy name' onClick={ ev => { setBuffer(name) } } />
                 <ContextMenuItem name='Copy address' onClick={ ev => { setBuffer(str) } } />
@@ -55,21 +53,18 @@ function getAddresses(): IAddress[] {  // TODO
     ]
 }
 
-interface IAddressesProps {
-    setNewAddressVisibility: React.Dispatch<React.SetStateAction<boolean>>
-}
-
-function Addresses({ setNewAddressVisibility }: IAddressesProps) {
+function Addresses() {
+    const setNewAddressIsShowed = useContext(NewAddressContext).setIsShowed
     const addresses: IAddress[] = getAddresses()
     return (
         <ContextMenu items={
             <>
-                <ContextMenuItem name='Add new address' onClick={ ev => { setNewAddressVisibility(true) } } />
+                <ContextMenuItem name='Add new address' onClick={ ev => { setNewAddressIsShowed(true) } } />
             </>
         }>
             <div className='add'>
                 {
-                    addresses.map((address, index) => <Address key={index} setNewAddressVisibility={setNewAddressVisibility} {...address} />)
+                    addresses.map((address, index) => <Address key={index} {...address} />)
                 }
             </div>
         </ContextMenu>
