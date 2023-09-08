@@ -67,9 +67,6 @@
 
     cursor: pointer;
 }
-.crt__io:hover::content::before {
-    background-color: red;
-}
 .crt__io-amount {
     font-size: 14px;
     font-weight: 500;
@@ -164,7 +161,7 @@
     user-select: none;
 }
 #crt__create-btn:hover {
-    background-color: #e1935b;
+    background-color: #E5965D;
 }
 #crt__create-btn span {
     font-size: 10px;

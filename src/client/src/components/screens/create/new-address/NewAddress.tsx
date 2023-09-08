@@ -1,9 +1,9 @@
 import './NewAddress.css'
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, createContext, PropsWithChildren, useContext } from "react";
 import { Modal } from '../../common/modal/modal'
 
 
-export { type INewAddressState, NewAddress }
+export { type INewAddressState, NewAddressContext, NewAddressContextProvider, NewAddressModal }
 
 interface INewAddressState {
     currentWindow: "create" | "import",
@@ -51,7 +51,7 @@ function Switcher({ switchTo, animation = true, createOnClick, importOnClick }: 
     useEffect(() => {
         (async function toggle() {
             let refs = [createRef, importRef];
-            const [cur, nxt] = switchTo == 'create' ? refs.reverse() : refs;
+            const [cur, nxt] = switchTo === 'create' ? refs.reverse() : refs;
 
             if (animation) {
                 await new Promise((resolve) => { setTimeout(resolve, 10) });
@@ -64,8 +64,8 @@ function Switcher({ switchTo, animation = true, createOnClick, importOnClick }: 
 
     return (
         <div className='new-addr__switcher'>
-            <div className={`new-addr__switcher-option new-addr__switcher-create-option ${switchTo == 'import' ? 'selected' : ''}`} ref={createRef} onClick={createOnClick}><span>Create</span></div>
-            <div className={`new-addr__switcher-option new-addr__switcher-import-option ${switchTo == 'create' ? 'selected' : ''}`} ref={importRef} onClick={importOnClick}><span>Import</span></div>
+            <div className={`new-addr__switcher-option new-addr__switcher-create-option ${switchTo === 'import' ? 'selected' : ''}`} ref={createRef} onClick={createOnClick}><span>Create</span></div>
+            <div className={`new-addr__switcher-option new-addr__switcher-import-option ${switchTo === 'create' ? 'selected' : ''}`} ref={importRef} onClick={importOnClick}><span>Import</span></div>
         </div>
     )
 }
@@ -93,7 +93,7 @@ function ImportAddress({ state }: INewAddressOptionProps) {
     return (
         <div className="import-addr new-addr">
             <div className='new-addr__switcher'>
-                <Switcher switchTo='import' createOnClick={() => { state.setCurrentWindow('create') }} />
+                <Switcher animation={state.animatedSwitcher} switchTo='import' createOnClick={() => { state.setCurrentWindow('create') }} />
             </div>
             <div className='import-addr__key new-addr__item'>
                 <input className='new-addr__main-inp' id="import-addr__key-inp" type="text" />
@@ -116,19 +116,32 @@ function ImportAddress({ state }: INewAddressOptionProps) {
     )
 }
 
-interface INewAddressProps {
-    setVisibility: React.Dispatch<React.SetStateAction<boolean>>
+type NewAddressContextType = {
+    isShowed: boolean,
+    setIsShowed: React.Dispatch<React.SetStateAction<boolean>>
 }
 
-function NewAddress({ setVisibility }: INewAddressProps) {
+const NewAddressContext = createContext<NewAddressContextType>({ isShowed: false, setIsShowed: () => { } })
+
+function NewAddressContextProvider({ children }: PropsWithChildren) {
+    const [isShowed, setIsShowed] = useState(false)
+    return (
+        <NewAddressContext.Provider value={{ isShowed, setIsShowed }}>
+            {children}
+        </NewAddressContext.Provider>
+    )
+}
+
+function NewAddressModal() {
+    const { isShowed, setIsShowed } = useContext(NewAddressContext)
     const [currentWindow, setCurrentWindow] = useState<'create' | 'import'>('create')
     const [firstOpen, setFirstOpen] = useState(true)
     const state = { currentWindow: currentWindow, setCurrentWindow: setCurrentWindow, animatedSwitcher: !firstOpen }
-    useEffect(() => setFirstOpen(false), [])  // after mount
+    useEffect(() => { setFirstOpen(!isShowed) }, [isShowed])
 
     return (
-        <Modal setVisibility={setVisibility}>
-            { currentWindow == 'create' ? <CreateAddress state={state} /> : <ImportAddress state={state}/> }
+        <Modal isShowed={isShowed} setIsShowed={setIsShowed}>
+            { currentWindow === 'create' ? <CreateAddress state={state} /> : <ImportAddress state={state}/> }
         </Modal>
     )
 }
