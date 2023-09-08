@@ -1,6 +1,6 @@
 import './NewAddress.css'
 import { useState, useEffect, useRef, createContext, PropsWithChildren, useContext } from "react";
-import { Modal } from '../../common/modal/modal'
+import { ModalShowType, Modal } from '../../common/modal/modal'
 
 
 export { type INewAddressState, NewAddressContext, NewAddressContextProvider, NewAddressModal }
@@ -116,12 +116,7 @@ function ImportAddress({ state }: INewAddressOptionProps) {
     )
 }
 
-type NewAddressContextType = {
-    isShowed: boolean,
-    setIsShowed: React.Dispatch<React.SetStateAction<boolean>>
-}
-
-const NewAddressContext = createContext<NewAddressContextType>({ isShowed: false, setIsShowed: () => { } })
+const NewAddressContext = createContext<ModalShowType>({ isShowed: false, setIsShowed: () => { } })
 
 function NewAddressContextProvider({ children }: PropsWithChildren) {
     const [isShowed, setIsShowed] = useState(false)

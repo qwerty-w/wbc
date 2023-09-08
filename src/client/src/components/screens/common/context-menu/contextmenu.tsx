@@ -2,7 +2,7 @@ import './contextmenu.css'
 import React, { PropsWithChildren, useState, useEffect, useRef, ReactElement, cloneElement } from "react";
 import { createPortal } from 'react-dom'
 
-export { type IContextMenuPos, onContextMenu, ContextMenuItem, ContextMenuDivider, ContextMenu }
+export { type IContextMenuPos, ContextMenuItem, ContextMenuDivider, ContextMenu }
 
 interface IContextMenuPos {
     top: number,
@@ -24,15 +24,6 @@ interface IContextMenuState {
 interface IContextMenuProps extends PropsWithChildren {
     items: ReactElement<HTMLUListElement>,
     effect?: (isShowed: boolean) => void,
-}
-
-function onContextMenu(state: IContextMenuState) {
-    return (ev: React.MouseEvent) => {
-        ev.preventDefault()
-        state.setPos({top: ev.clientY, left: ev.clientX})
-        state.setIsShowed(true)
-        ev.stopPropagation()
-    }
 }
 
 function ContextMenuItem({ name, onClick }: IContextMenuItemProps) {
