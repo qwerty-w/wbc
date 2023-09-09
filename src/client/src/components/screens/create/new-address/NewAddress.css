@@ -4,7 +4,7 @@
     border-radius: 20px;
     background: #F2F2F2;
     margin-top: 17%;
-    gap: 13px;
+    justify-content: space-between;
 }
 .new-addr__switcher {
     width: 144px;

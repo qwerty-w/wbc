@@ -1,9 +1,9 @@
 import './NewAddress.css'
-import { useState, useEffect, useRef, createContext, PropsWithChildren, useContext } from "react";
+import { useState, useEffect, useRef, createContext, useContext } from "react";
 import { ModalShowType, Modal } from '../../common/modal/modal'
 
 
-export { type INewAddressState, NewAddressContext, NewAddressContextProvider, NewAddressModal }
+export { type INewAddressState, NewAddressContext, NewAddressModal }
 
 interface INewAddressState {
     currentWindow: "create" | "import",
@@ -118,24 +118,15 @@ function ImportAddress({ state }: INewAddressOptionProps) {
 
 const NewAddressContext = createContext<ModalShowType>({ isShowed: false, setIsShowed: () => { } })
 
-function NewAddressContextProvider({ children }: PropsWithChildren) {
-    const [isShowed, setIsShowed] = useState(false)
-    return (
-        <NewAddressContext.Provider value={{ isShowed, setIsShowed }}>
-            {children}
-        </NewAddressContext.Provider>
-    )
-}
-
 function NewAddressModal() {
-    const { isShowed, setIsShowed } = useContext(NewAddressContext)
+    const { isShowed } = useContext(NewAddressContext)
     const [currentWindow, setCurrentWindow] = useState<'create' | 'import'>('create')
     const [firstOpen, setFirstOpen] = useState(true)
     const state = { currentWindow: currentWindow, setCurrentWindow: setCurrentWindow, animatedSwitcher: !firstOpen }
     useEffect(() => { setFirstOpen(!isShowed) }, [isShowed])
 
     return (
-        <Modal isShowed={isShowed} setIsShowed={setIsShowed}>
+        <Modal context={NewAddressContext}>
             { currentWindow === 'create' ? <CreateAddress state={state} /> : <ImportAddress state={state}/> }
         </Modal>
     )
