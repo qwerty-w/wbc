@@ -17,7 +17,7 @@ function NewOutputModal() {
                 </div>
                 <div className='new-out__bot'>
                     <div className='new-out__amount new-out__item'>
-                        <BTCamountInput />
+                        <BTCamountInput defval='0' />
                         <span className='new-out__item-label'>Amount</span>
                     </div>
                     <button className='new-out__continue'>Continue</button>

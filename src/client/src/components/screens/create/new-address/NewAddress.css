@@ -130,13 +130,20 @@
     border-top-right-radius: 20px;
     border-bottom-right-radius: 20px;
 }
-
+.new-addr__top {
+    width: 100%;
+    
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+}
 
 /* create address  */
 
 .create-addr {
     width: 664px;
-    height: 202px;
+    height: 193px;
     padding: 22px 55px 18px 55px;
 
     display: flex;
@@ -168,7 +175,6 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: -10px;
 }
 .import-addr__tf, .import-addr__key {
     width: 100%;

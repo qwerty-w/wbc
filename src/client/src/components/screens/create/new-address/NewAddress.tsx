@@ -73,10 +73,12 @@ function Switcher({ switchTo, animation = true, createOnClick, importOnClick }: 
 function CreateAddress({ state }: INewAddressOptionProps) {
     return (
         <div className="create-addr new-addr">
-            <Switcher animation={state.animatedSwitcher} switchTo='create' importOnClick={() => { state.setCurrentWindow('import') }} />
-            <div className='create-addr__name new-addr__item'>
-                <input className='new-addr__main-inp' id='create-addr__name-inp' type="text" />
-                <span className='new-addr__label'>Name</span>
+            <div className='new-addr__top'>
+                <Switcher animation={state.animatedSwitcher} switchTo='create' importOnClick={() => { state.setCurrentWindow('import') }} />
+                <div className='create-addr__name new-addr__item'>
+                    <input className='new-addr__main-inp' id='create-addr__name-inp' type="text" />
+                    <span className='new-addr__label'>Name</span>
+                </div>
             </div>
             <div className='create-addr__bottom'>
                 <div className='create-addr__type new-addr__item'>
@@ -92,12 +94,14 @@ function CreateAddress({ state }: INewAddressOptionProps) {
 function ImportAddress({ state }: INewAddressOptionProps) {
     return (
         <div className="import-addr new-addr">
-            <div className='new-addr__switcher'>
-                <Switcher animation={state.animatedSwitcher} switchTo='import' createOnClick={() => { state.setCurrentWindow('create') }} />
-            </div>
-            <div className='import-addr__key new-addr__item'>
-                <input className='new-addr__main-inp' id="import-addr__key-inp" type="text" />
-                <span className='new-addr__label'>Key</span>
+            <div className='new-addr__top'>
+                <div className='new-addr__switcher'>
+                    <Switcher animation={state.animatedSwitcher} switchTo='import' createOnClick={() => { state.setCurrentWindow('create') }} />
+                </div>
+                <div className='import-addr__key new-addr__item'>
+                    <input className='new-addr__main-inp' id="import-addr__key-inp" type="text" />
+                    <span className='new-addr__label'>Key</span>
+                </div>
             </div>
             <div className='import-addr__bottom'>
                 <div className='import-addr__tf'>

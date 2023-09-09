@@ -14,20 +14,15 @@ interface IContextMenuItemProps {
     onClick: (ev: React.MouseEvent<HTMLDivElement, MouseEvent>) => void
 }
 
-interface IContextMenuState {
-    isShowed: boolean,
-    setIsShowed: React.Dispatch<React.SetStateAction<boolean>>,
-    pos: IContextMenuPos
-    setPos: React.Dispatch<React.SetStateAction<IContextMenuPos>>,
-}
-
 interface IContextMenuProps extends PropsWithChildren {
     items: ReactElement<HTMLUListElement>,
     effect?: (isShowed: boolean) => void,
 }
 
 function ContextMenuItem({ name, onClick }: IContextMenuItemProps) {
-    return <div className='contextmenu__item' onMouseUp={ev => onClick(ev)}><span>{name}</span></div>
+    return <div className='contextmenu__item' onMouseUp={ev => {if (ev.button === 0) { onClick(ev); } else if (ev.button === 2) { ev.preventDefault(); ev.stopPropagation() }}}>
+        <span>{name}</span>
+    </div>
 }
 
 function ContextMenuDivider() {
@@ -72,12 +67,17 @@ function ContextMenu({ items, effect, children }: IContextMenuProps) {
             { children }
             { createPortal((
                 <div>
-                    <div ref={menuRef} className="contextmenu" tabIndex={0} onBlur={() => { setIsShowed(false) }} style={{ zIndex: 4, top: pos.top - 5, left: pos.left - 5 }}>
+                    <div ref={menuRef}
+                         className="contextmenu"
+                         tabIndex={0}
+                         onContextMenu={ev => { ev.stopPropagation(); ev.preventDefault() }}
+                         onBlur={() => { setIsShowed(false) }}
+                         style={{ zIndex: 4, top: pos.top - 5, left: pos.left - 5 }}>
                         <div className='contextmenu__container' onMouseUp={() => { setIsShowed(false) }}>
                             { items }
                         </div>
                     </div>
-                    <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', zIndex: 3 }}></div>
+                    <div onContextMenu={ev => ev.stopPropagation()} style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', zIndex: 3 }}></div>
                 </div>
             ), (document.getElementById('root') as HTMLElement)) }
         </>

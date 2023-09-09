@@ -26,6 +26,13 @@ function Modal({ context, children }: IModalContextProps) {
     const { isShowed, setIsShowed } = useContext(context)
     const ref = useRef<HTMLDivElement>(null)
     const [mouseDownElement, setMouseDownElement] = useState<EventTarget>()
+
+    window.addEventListener('keydown', ev => {
+        if (ev.key == 'Escape') {
+            setIsShowed(false)
+        }
+    })
+
     return (
         <>
             { isShowed && <div className="modal"
