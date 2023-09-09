@@ -1,5 +1,5 @@
 import './Transactions.css'
-import { useContext, useRef } from 'react'
+import { useContext, useRef, useEffect } from 'react'
 import { InputsContext } from '../crt/context'
 import { setBuffer, toBitcoins, wrapString } from '../../../../utils'
 import { ContextMenu, ContextMenuDivider, ContextMenuItem } from '../../common/context-menu/contextmenu'
@@ -57,6 +57,11 @@ function Transaction({ id, confs, s_timestamp, amount, fee }: ITransaction) {
     const { inps, setInps } = useContext(InputsContext)
     const currentTransaction = useRef<HTMLDivElement>(null)
 
+    useEffect(() => {
+        const classList = currentTransaction.current?.classList
+        inps.some(inp => inp.txid === id) ? classList?.add('selected') : classList?.remove('selected')
+    }, [inps])
+
     return (
         <ContextMenu items={
             <>
@@ -72,13 +77,7 @@ function Transaction({ id, confs, s_timestamp, amount, fee }: ITransaction) {
                               (currentTransaction.current as HTMLDivElement).style.backgroundColor = '#E7E7E7' : 
                               currentTransaction.current?.removeAttribute('style')}>
             <div className="transaction tx" ref={currentTransaction} onClick={() => {
-                for (let inp of inps) {
-                    if (inp.txid === id) {
-                        return
-                    }
-                }
-                setInps([...inps, { txid: id, amount: amount }])
-                currentTransaction.current?.classList.add('selected')
+                setInps(inps.some(inp => inp.txid === id) ? inps.filter(inp => inp.txid !== id) : [...inps, { txid: id, amount }])
             }}>
                 <div className="transaction__left">
                     <div className="transaction__id">
