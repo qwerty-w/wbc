@@ -3,6 +3,7 @@ import { useContext } from 'react'
 import { ContextMenuItem, ContextMenuDivider, ContextMenu } from '../../common/context-menu/contextmenu'
 import { InputsContext, OutputsContext } from './context'
 import { wrapString, toBitcoins, BTCamountInput } from '../../../../utils'
+import { NewOutputContext } from '../new-output/NewOutput'
 
 export type { IInput, IOutput }
 export { Creator }
@@ -65,6 +66,7 @@ interface ICreatorTopProps {
 }
 
 function CreatorTop({ inps, outs }: ICreatorTopProps) {
+    const setNewOutputIsShowed = useContext(NewOutputContext).setIsShowed
     return (
         <div className="crt__top">
             <div className="crt__top-left">
@@ -78,7 +80,7 @@ function CreatorTop({ inps, outs }: ICreatorTopProps) {
             <div className="crt__top-vline"></div>
             <ContextMenu items={
                 <>
-                    <ContextMenuItem  name="Add new output" onClick={ ev => {} } />
+                    <ContextMenuItem  name="Add new output" onClick={ ev => { setNewOutputIsShowed(true) } } />
                 </>
             }>
                 <div className="crt__top-right">

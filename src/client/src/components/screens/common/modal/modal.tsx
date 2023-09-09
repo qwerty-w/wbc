@@ -1,7 +1,7 @@
 import './modal.css'
-import { PropsWithChildren, useRef, useState } from 'react'
+import { PropsWithChildren, useRef, useState, useContext } from 'react'
 
-export { type ModalShowType, Modal }
+export { type ModalShowType, ModalContextProvider, Modal }
 
 
 type ModalShowType = { 
@@ -9,7 +9,21 @@ type ModalShowType = {
     setIsShowed: React.Dispatch<React.SetStateAction<boolean>>
 }
 
-function Modal({ isShowed, setIsShowed, children }: ModalShowType & PropsWithChildren) {
+interface IModalContextProps extends PropsWithChildren {
+    context: React.Context<ModalShowType>
+}
+
+function ModalContextProvider({ context, children }: IModalContextProps) { 
+    const [isShowed, setIsShowed] = useState(false)
+    return (
+        <context.Provider value={{ isShowed, setIsShowed }}>
+            {children}
+        </context.Provider>
+    )
+}
+
+function Modal({ context, children }: IModalContextProps) {
+    const { isShowed, setIsShowed } = useContext(context)
     const ref = useRef<HTMLDivElement>(null)
     const [mouseDownElement, setMouseDownElement] = useState<EventTarget>()
     return (
