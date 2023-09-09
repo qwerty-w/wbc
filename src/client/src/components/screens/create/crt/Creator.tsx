@@ -1,8 +1,8 @@
 import './Creator.css'
-import { useState, useContext } from 'react'
+import { useContext } from 'react'
 import { ContextMenuItem, ContextMenuDivider, ContextMenu } from '../../common/context-menu/contextmenu'
 import { InputsContext, OutputsContext } from './context'
-import { wrapString, toBitcoins } from '../../../../utils'
+import { wrapString, toBitcoins, BTCamountInput } from '../../../../utils'
 
 export type { IInput, IOutput }
 export { Creator }
@@ -95,32 +95,7 @@ function CreatorTop({ inps, outs }: ICreatorTopProps) {
 }
 
 function Fee() {
-    const [fee, setFee] = useState('0.0008')
-    return (
-        <input
-            type="text"
-            value={fee}
-            onBlur={e => {
-                if (!e.target.value) {
-                    return e.target.value
-                }
-                setFee(String(Number(e.target.value)))
-            }}
-            onChange={e => {
-                let val = ''
-                for (let letter of e.target.value) {
-                    if ('0123456789'.includes(letter)) {
-                        val += letter
-                    }
-                    else if ('.,'.includes(letter) && !val.includes('.')) {
-                        val += '.'
-                    }
-                }
-
-                setFee(val)
-            }}
-        />
-    )
+    return <BTCamountInput defval='0.0008' />
 }
 
 function CreatorBot() {
