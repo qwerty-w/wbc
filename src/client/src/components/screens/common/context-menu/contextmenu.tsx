@@ -19,13 +19,13 @@ interface IContextMenuProps extends PropsWithChildren {
     effect?: (isShowed: boolean) => void,
 }
 
-function ContextMenuItem({ name, onClick }: IContextMenuItemProps) {
+const ContextMenuItem = ({ name, onClick }: IContextMenuItemProps) => {
     return <div className='contextmenu__item' onMouseUp={ev => {if (ev.button === 0) { onClick(ev); } else if (ev.button === 2) { ev.preventDefault(); ev.stopPropagation() }}}>
         <span>{name}</span>
     </div>
 }
 
-function ContextMenuDivider() {
+const ContextMenuDivider =() => {
     return (
         <div onMouseUp={ev => { ev.stopPropagation() }} className="contextmenu__divider">
             <div className='contextmenu__divider-line' />
@@ -33,7 +33,7 @@ function ContextMenuDivider() {
     )
 }
 
-function ContextMenu({ items, effect, children }: IContextMenuProps) {
+const ContextMenu = ({ items, effect, children }: IContextMenuProps) => {
     const menuRef = useRef<HTMLDivElement>(null)
     const [isShowed, setIsShowed] = useState<boolean>(false)
     const [pos, setPos] = useState<IContextMenuPos>({ top: 0, left: 0 })
