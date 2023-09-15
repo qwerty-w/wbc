@@ -1,5 +1,5 @@
 import './Transactions.css'
-import { useContext, useRef, useEffect } from 'react'
+import { useContext, useRef } from 'react'
 import { formateDate, setBuffer, toBitcoins, wrapString } from '../../../../utils'
 import { ContextMenu, ContextMenuDivider, ContextMenuItem } from '../../common/context-menu/contextmenu'
 import { GlobalStateContext } from '../Create'
@@ -112,12 +112,18 @@ const TransactionView = observer(({ tx }: PropsWithTransaction) => {
 })
 
 const TransactionsView = observer(() => {
-    const state = useContext(GlobalStateContext)
+    const { txs, creator } = useContext(GlobalStateContext)
     return (
-        <div className='txs'>
-            {
-                state.txs.arr.map(tx => <TransactionView key={tx.id} tx={tx} />)
-            }
-        </div>
+        <ContextMenu items={
+            <>
+                <ContextMenuItem name='Select all' onClick={ev => creator.inps.extend(txs.arr.filter(tx => !creator.inps.has(tx.id)).map(tx => new Input(tx.id, tx.amount)))} />
+            </>
+        }>
+            <div className='txs'>
+                {
+                    txs.arr.map(tx => <TransactionView key={tx.id} tx={tx} />)
+                }
+            </div>
+        </ContextMenu>
     )
 })
