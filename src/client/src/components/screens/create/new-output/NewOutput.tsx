@@ -1,27 +1,39 @@
 import './NewOutput.css'
-import { createContext, useContext, useState, useEffect } from 'react'
-import { ModalShowType, Modal } from '../../common/modal/modal'
+import { useContext, useState, useEffect } from 'react'
+import { observable, action, makeObservable } from 'mobx'
+import { Modal, ModalView } from '../../common/modal/modal'
 import { toSatoshis, FiltredInput, FiltredInputView, BTCamountInputView } from '../../../../utils'
-import { GlobalStateContext } from '../Create'
+import { GlobalStore } from '../Create'
 import { Output } from '../crt/Creator'
 import { observer } from 'mobx-react-lite'
 
-export { NewOutputContext, NewOutputModal }
+export { NewOutputModal, NewOutputModalView }
 
-const NewOutputContext = createContext<ModalShowType>({ isShowed: false, setIsShowed: () => {} })
 
-const NewOutputModal = observer(() => {
-    const { isShowed, setIsShowed } = useContext(NewOutputContext)
-    const creator = useContext(GlobalStateContext).creator
-    const { outs } = creator
+class NewOutputModal extends Modal {
+    continueIsDisabled: boolean = true
+    
+    constructor() {
+        super()
+        makeObservable(this, {
+            continueIsDisabled: observable,
+            setContinueIsDisable: action
+        })
+    }
+    setContinueIsDisable(val: boolean) {
+        this.continueIsDisabled = val
+    }
+}
 
+const NewOutputModalView = observer(() => {
+    const { creator, modals: { newout } } = useContext(GlobalStore)
     const [continueDisabled, setContinueDisabled] = useState(true)
     
     const [address] = useState(new FiltredInput((pos, value) => { return { pos, value } }))
     const [amount] = useState(new FiltredInput((pos, value) => { return { pos, value } }, undefined, '0'))
 
-    useEffect(() => { address.value === '' ? setContinueDisabled(true) : setContinueDisabled(false) }, [address.value])
-    useEffect(() => { address.setInvalid(false); amount.setInvalid(false) }, [isShowed])
+    useEffect(() => { setContinueDisabled(address.value === '') }, [address.value])
+    useEffect(() => { address.setInvalid(false); amount.setInvalid(false) }, [newout.isShowed])
 
     const onContinue = () => {
         const [addr, am] = [address.value, toSatoshis(Number(amount.value))]
@@ -32,12 +44,12 @@ const NewOutputModal = observer(() => {
             return 
         }
 
-        outs.add(new Output(addr, am))
-        setIsShowed(false)
+        creator.outs.add(new Output(addr, am))
+        newout.setShowed(false)
     }
 
     return (
-        <Modal context={NewOutputContext}>
+        <ModalView modal={newout}>
             <div className='new-out'>
                 <div className='new-out__addr new-out__item'>
                     <FiltredInputView inp={address} />
@@ -51,6 +63,6 @@ const NewOutputModal = observer(() => {
                     <button className={`new-out__continue${continueDisabled ? ' disabled' : ''}`} disabled={continueDisabled} onClick={onContinue}>Continue</button>
                 </div>
             </div>
-        </Modal>
+        </ModalView>
     )
 })

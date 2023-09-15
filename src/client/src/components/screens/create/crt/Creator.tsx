@@ -4,8 +4,7 @@ import { observer } from 'mobx-react-lite'
 import { observable, action, computed, makeObservable, makeAutoObservable } from 'mobx'
 import { ContextMenuItem, ContextMenuDivider, ContextMenu } from '../../common/context-menu/contextmenu'
 import { Container, wrapString, toBitcoins, BTCamountInputView, FiltredInput } from '../../../../utils'
-import { NewOutputContext } from '../new-output/NewOutput'
-import { GlobalStateContext } from '../Create'
+import { GlobalStore } from '../Create'
 
 export { Input, Output, Creator, CreatorView }
 
@@ -99,7 +98,7 @@ class Creator {
 }
 
 const InputView = observer(({ txid, amount }: IInput) => {
-    const { inps } = useContext(GlobalStateContext).creator
+    const { inps } = useContext(GlobalStore).creator
     return (
         <ContextMenu items={
             <>
@@ -120,15 +119,14 @@ const InputView = observer(({ txid, amount }: IInput) => {
 })
 
 const OutputView = observer(({ address, amount }: IOutput) => {
-    const { outs } = useContext(GlobalStateContext).creator
-    const { setIsShowed } = useContext(NewOutputContext)
+    const { modals: { newout }, creator: { outs } } = useContext(GlobalStore)
 
     return (
         <ContextMenu items={
             <>
                 <ContextMenuItem  name="Remove output" onClick={ ev => { outs.remove(address) } } />
                 <ContextMenuDivider/>
-                <ContextMenuItem  name="Add new output" onClick={ ev => { setIsShowed(true) } } />
+                <ContextMenuItem  name="Add new output" onClick={ ev => { newout.setShowed(true) } } />
             </>
         }>
             <div className="crt__output crt__io">
@@ -143,8 +141,7 @@ const OutputView = observer(({ address, amount }: IOutput) => {
 })
 
 const CreatorTop = observer(() => {
-    const { inps, outs } = useContext(GlobalStateContext).creator
-    const setNewOutputIsShowed = useContext(NewOutputContext).setIsShowed
+    const { modals: { newout }, creator: { inps, outs } } = useContext(GlobalStore)
     return (
         <div className="crt__top">
             <div className="crt__top-left">
@@ -159,7 +156,7 @@ const CreatorTop = observer(() => {
             <div className="crt__top-vline"></div>
             <ContextMenu items={
                 <>
-                    <ContextMenuItem  name="Add new output" onClick={ ev => { setNewOutputIsShowed(true) } } />
+                    <ContextMenuItem  name="Add new output" onClick={ ev => { newout.setShowed(true) } } />
                 </>
             }>
                 <div className="crt__top-right">
@@ -176,7 +173,7 @@ const CreatorTop = observer(() => {
 })
 
 const CreatorBot = observer(() => {
-    const state = useContext(GlobalStateContext).creator
+    const state = useContext(GlobalStore).creator
     const [fee] = useState(new FiltredInput((pos, value) => {return {pos, value}}, undefined, '0.0008'))
 
     const create = () => {
