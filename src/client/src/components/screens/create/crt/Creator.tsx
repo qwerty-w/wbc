@@ -144,15 +144,21 @@ const CreatorTop = observer(() => {
     const { modals: { newout }, creator: { inps, outs } } = useContext(GlobalStore)
     return (
         <div className="crt__top">
-            <div className="crt__top-left">
-                <span className="crt__io-label">Inputs</span>
-                <div className="crt__ios">
-                    {
+            <ContextMenuView items={
+                <>
+                    <ContextMenuItem name='Clear all' onClick={() => inps.clear()} />
+                </>
+            }>
+                <div className="crt__top-left">
+                    <span className="crt__io-label">Inputs</span>
+                    <div className="crt__ios">
+                        {
 
-                        inps.arr.map(inp => <InputView key={inp.txid} txid={inp.txid} amount={inp.amount} />)
-                    }
+                            inps.arr.map(inp => <InputView key={inp.txid} txid={inp.txid} amount={inp.amount} />)
+                        }
+                    </div>
                 </div>
-            </div>
+            </ContextMenuView>
             <div className="crt__top-vline"></div>
             <ContextMenuView items={
                 <>
