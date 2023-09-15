@@ -126,7 +126,7 @@ const OutputView = observer(({ address, amount }: IOutput) => {
             <>
                 <ContextMenuItem  name="Remove output" onClick={ ev => { outs.remove(address) } } />
                 <ContextMenuDivider/>
-                <ContextMenuItem  name="Add new output" onClick={ ev => { newout.setShowed(true) } } />
+                <ContextMenuItem  name="Add new output" onClick={ ev => { newout.show() } } />
             </>
         }>
             <div className="crt__output crt__io">
@@ -156,7 +156,7 @@ const CreatorTop = observer(() => {
             <div className="crt__top-vline"></div>
             <ContextMenuView items={
                 <>
-                    <ContextMenuItem  name="Add new output" onClick={ ev => { newout.setShowed(true) } } />
+                    <ContextMenuItem  name="Add new output" onClick={ ev => { newout.show() } } />
                 </>
             }>
                 <div className="crt__top-right">
