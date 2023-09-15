@@ -1,7 +1,7 @@
 import './Transactions.css'
 import { useContext, useRef } from 'react'
 import { formateDate, setBuffer, toBitcoins, wrapString } from '../../../../utils'
-import { ContextMenu, ContextMenuDivider, ContextMenuItem } from '../../common/context-menu/contextmenu'
+import { ContextMenuItem, ContextMenuDivider, ContextMenuView } from '../../common/context-menu/contextmenu'
 import { GlobalStore } from '../Create'
 import { Input } from '../crt/Creator'
 import { observer } from 'mobx-react-lite'
@@ -49,11 +49,11 @@ const getTransactions = (): Transaction[] => {  // TODO
     ]
 }
 
-interface PropsWithTransaction {
+interface IPropsWithTransaction {
     tx: Transaction
 }
 
-const FormattedDate = ({ tx }: PropsWithTransaction) => {
+const FormattedDate = ({ tx }: IPropsWithTransaction) => {
     return (
         <div className="transaction__date">
             <span className="transaction__date-label">Date:</span>&nbsp;
@@ -62,7 +62,7 @@ const FormattedDate = ({ tx }: PropsWithTransaction) => {
     )
 }
 
-const Fee = ({ tx }: PropsWithTransaction) => {
+const Fee = ({ tx }: IPropsWithTransaction) => {
     return (
         <div className="transaction__fee">
             <span className="transaction__fee-label">Fee</span>&nbsp;
@@ -71,11 +71,11 @@ const Fee = ({ tx }: PropsWithTransaction) => {
     )
 }
 
-const TransactionView = observer(({ tx }: PropsWithTransaction) => {
+const TransactionView = observer(({ tx }: IPropsWithTransaction) => {
     const { inps } = useContext(GlobalStore).creator
     const currentTransaction = useRef<HTMLDivElement>(null)
     return (
-        <ContextMenu items={
+        <ContextMenuView items={
             <>
                 <ContextMenuItem name='View detail' onClick={ev => {  }} />
                 <ContextMenuDivider/>
@@ -85,9 +85,7 @@ const TransactionView = observer(({ tx }: PropsWithTransaction) => {
                 <ContextMenuItem name='Copy amount' onClick={ () => setBuffer(tx.btcAmount) } />
                 <ContextMenuItem name='Copy fee' onClick={ () => setBuffer(tx.btcFee) } />
             </>
-        } effect={isShowed => isShowed ? 
-                              (currentTransaction.current as HTMLDivElement).style.backgroundColor = '#E7E7E7' : 
-                              currentTransaction.current?.removeAttribute('style')}>
+        } effect={menu => menu.isShowed ? (currentTransaction.current as HTMLDivElement).style.backgroundColor = '#E7E7E7' : currentTransaction.current?.removeAttribute('style')}>
             <div className={`transaction tx ${inps.has(tx.id) ? 'selected' : ''}`}
                  ref={currentTransaction}
                  onClick={() => !inps.has(tx.id) ? inps.add(new Input(tx.id, tx.amount)) : inps.remove(tx.id)}>
@@ -107,14 +105,14 @@ const TransactionView = observer(({ tx }: PropsWithTransaction) => {
                     <Fee tx={tx} />
                 </div>
             </div>
-        </ContextMenu>
+        </ContextMenuView>
     )
 })
 
 const TransactionsView = observer(() => {
     const { txs, creator } = useContext(GlobalStore)
     return (
-        <ContextMenu items={
+        <ContextMenuView items={
             <>
                 <ContextMenuItem name='Select all' onClick={ev => creator.inps.extend(txs.arr.filter(tx => !creator.inps.has(tx.id)).map(tx => new Input(tx.id, tx.amount)))} />
             </>
@@ -124,6 +122,6 @@ const TransactionsView = observer(() => {
                     txs.arr.map(tx => <TransactionView key={tx.id} tx={tx} />)
                 }
             </div>
-        </ContextMenu>
+        </ContextMenuView>
     )
 })
