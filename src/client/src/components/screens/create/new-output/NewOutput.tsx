@@ -45,7 +45,7 @@ const NewOutputModalView = observer(() => {
         }
 
         creator.outs.add(new Output(addr, am))
-        newout.setShowed(false)
+        newout.hide()
     }
 
     return (

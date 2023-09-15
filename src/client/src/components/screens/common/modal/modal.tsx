@@ -10,11 +10,15 @@ class Modal {
     constructor(public isShowed: boolean = false) {
         makeObservable(this, {
             isShowed: observable,
-            setShowed: action
+            show: action,
+            hide: action
         })
     }
-    setShowed(val: boolean) {
-        this.isShowed = val
+    show() {
+        this.isShowed = true
+    }
+    hide() {
+        this.isShowed = false
     }
 }
 
@@ -28,7 +32,7 @@ const ModalView = observer(({ modal, children }: IModalContextProps) => {
 
     window.addEventListener('keydown', ev => {
         if (ev.key == 'Escape') {
-            modal.setShowed(false)
+            modal.hide()
         }
     })
 
@@ -37,7 +41,7 @@ const ModalView = observer(({ modal, children }: IModalContextProps) => {
             { modal.isShowed && <div className="modal"
                 ref={ref}
                 onMouseDown={ev => { setMouseDownElement(ev.target) }}
-                onMouseUp={ev => { if (ev.button == 0 && ev.target === ref.current && ref.current === mouseDownElement) { modal.setShowed(false) } }}
+                onMouseUp={ev => { if (ev.button == 0 && ev.target === ref.current && ref.current === mouseDownElement) { modal.hide() } }}
             >
                 { children }
             </div> }

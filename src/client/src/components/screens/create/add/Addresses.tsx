@@ -55,7 +55,7 @@ const AddressView = observer(({ address }: IAddressViewProps) => {
     return (
         <ContextMenuView items={
             <>
-                <ContextMenuItem name='Add new address' onClick={ ev => { modals.newaddr.setShowed(true) } } />
+                <ContextMenuItem name='Add new address' onClick={ ev => { modals.newaddr.show() } } />
                 <ContextMenuDivider />
                 <ContextMenuItem name='Copy name' onClick={ ev => { setBuffer(address.name) } } />
                 <ContextMenuItem name='Copy address' onClick={ ev => { setBuffer(address.str) } } />
@@ -89,7 +89,7 @@ const AddressesView = observer(() => {
     return (
         <ContextMenuView items={
             <>
-                <ContextMenuItem name='Add new address' onClick={ ev => { newaddr.setShowed(true) } } />
+                <ContextMenuItem name='Add new address' onClick={ ev => { newaddr.show() } } />
             </>
         }>
             <div className='add'>
