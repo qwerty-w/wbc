@@ -1,130 +1,123 @@
 import './Transactions.css'
 import { useContext, useRef, useEffect } from 'react'
-import { InputsContext } from '../crt/context'
-import { setBuffer, toBitcoins, wrapString } from '../../../../utils'
+import { formateDate, setBuffer, toBitcoins, wrapString } from '../../../../utils'
 import { ContextMenu, ContextMenuDivider, ContextMenuItem } from '../../common/context-menu/contextmenu'
+import { GlobalStateContext } from '../Create'
+import { Input } from '../crt/Creator'
+import { observer } from 'mobx-react-lite'
 
-export { type ITransaction, Transactions }
+export { getTransactions, Transaction, TransactionsView }
 
-interface ITransaction {
-    id: string,
-    confs: number,
-    s_timestamp: number,
-    amount: number,
-    fee: number
+
+class Transaction {
+    feeFormatter = Intl.NumberFormat('en', { notation: 'compact', minimumFractionDigits: 1, maximumFractionDigits: 1 });
+
+    constructor(public id: string, public confs: number, public s_timestamp: number, public amount: number, public fee: number) {}
+    get date() {
+        return formateDate(this.s_timestamp)
+    }
+    get formattedFee() {
+        return this.fee < 1000 ? String(this.fee) : this.feeFormatter.format(this.fee)
+    }
+    get wrappedID() { 
+        return wrapString(this.id)    
+    }
+    get btcAmount() {
+        return toBitcoins(this.amount)
+    }
+    get btcFee() {
+        return toBitcoins(this.fee)
+    }
 }
 
-interface IFeeProps {
-    amount: number
+const getTransactions = (): Transaction[] => {  // TODO
+    return [
+        new Transaction(
+            '4902f9e3fad8473d2a13c4a07efca3c01df38643e8a3d375858c34e869c7bf63',
+            0,
+            1688334358,
+            3612443,
+            4000
+        ),
+        new Transaction(
+            'fg10f9e3fad8473d2a13c4a07efca3c01df38643e8a3d375858c34e869c7lk92',
+            0,
+            1688334358,
+            3612443,
+            4000
+        )
+    ]
 }
 
-interface IDateProps {
-    s_timestamp: number
+interface PropsWithTransaction {
+    tx: Transaction
 }
 
-function zeroFill(val: string | number, length: number = 2): string {
-    return String(val).padStart(length, '0')
-}
-
-function formateDate(s_timestamp: number) {
-    let ms_timestamp = s_timestamp * 1000
-    var date = new Date(ms_timestamp)
-    return `${zeroFill(date.getDay())}.${zeroFill(date.getMonth())}.${date.getFullYear()}, ${zeroFill(date.getHours())}:${zeroFill(date.getMinutes())}:${zeroFill(date.getSeconds())}`
-}
-
-function FormattedDate({ s_timestamp }: IDateProps) {
+const FormattedDate = ({ tx }: PropsWithTransaction) => {
     return (
         <div className="transaction__date">
             <span className="transaction__date-label">Date:</span>&nbsp;
-            <span className="transaction__date-value">{formateDate(s_timestamp)}</span>
+            <span className="transaction__date-value">{tx.date}</span>
         </div>
     )
 }
 
-function Fee({ amount }: IFeeProps) {
-    let formatter = Intl.NumberFormat('en', { notation: 'compact', minimumFractionDigits: 1, maximumFractionDigits: 1 });
-    var fee = amount < 1000 ? String(amount) : formatter.format(amount)
-
+const Fee = ({ tx }: PropsWithTransaction) => {
     return (
         <div className="transaction__fee">
             <span className="transaction__fee-label">Fee</span>&nbsp;
-            <span className="transaction__fee-value">{fee}</span>
+            <span className="transaction__fee-value">{tx.formattedFee}</span>
         </div>
     )
 }
 
-function Transaction({ id, confs, s_timestamp, amount, fee }: ITransaction) {
-    const { inps, setInps } = useContext(InputsContext)
+const TransactionView = observer(({ tx }: PropsWithTransaction) => {
+    const { inps } = useContext(GlobalStateContext).creator
     const currentTransaction = useRef<HTMLDivElement>(null)
-
-    useEffect(() => {
-        const classList = currentTransaction.current?.classList
-        inps.some(inp => inp.txid === id) ? classList?.add('selected') : classList?.remove('selected')
-    }, [inps])
-
     return (
         <ContextMenu items={
             <>
                 <ContextMenuItem name='View detail' onClick={ev => {  }} />
                 <ContextMenuDivider/>
-                <ContextMenuItem name='Copy ID' onClick={() => { setBuffer(id) }} />
-                <ContextMenuItem name='Copy confirmations' onClick={() => { setBuffer(String(confs)) }} />
-                <ContextMenuItem name='Copy date' onClick={() => { setBuffer(formateDate(s_timestamp)) }} />
-                <ContextMenuItem name='Copy amount' onClick={() => { setBuffer(String(toBitcoins(amount))) }} />
-                <ContextMenuItem name='Copy fee' onClick={() => { setBuffer(String(toBitcoins(fee))) }} />
+                <ContextMenuItem name='Copy ID' onClick={ () => setBuffer(tx.id) } />
+                <ContextMenuItem name='Copy confirmations' onClick={ () => setBuffer(tx.confs) } />
+                <ContextMenuItem name='Copy date' onClick={ () => setBuffer(tx.formattedFee) } />
+                <ContextMenuItem name='Copy amount' onClick={ () => setBuffer(tx.btcAmount) } />
+                <ContextMenuItem name='Copy fee' onClick={ () => setBuffer(tx.btcFee) } />
             </>
         } effect={isShowed => isShowed ? 
                               (currentTransaction.current as HTMLDivElement).style.backgroundColor = '#E7E7E7' : 
                               currentTransaction.current?.removeAttribute('style')}>
-            <div className="transaction tx" ref={currentTransaction} onClick={() => {
-                setInps(inps.some(inp => inp.txid === id) ? inps.filter(inp => inp.txid !== id) : [...inps, { txid: id, amount }])
-            }}>
-                <div className="transaction__left">
+            <div className={`transaction tx ${inps.has(tx.id) ? 'selected' : ''}`}
+                 ref={currentTransaction}
+                 onClick={() => !inps.has(tx.id) ? inps.add(new Input(tx.id, tx.amount)) : inps.remove(tx.id)}>
+                <div className="transaction__left"> 
                     <div className="transaction__id">
                         <span className="transaction__id-label">ID:</span>&nbsp;
-                        <span className="transaction__id-value">{wrapString(id)}</span>
+                        <span className="transaction__id-value">{tx.wrappedID}</span>
                     </div>
                     <div className="transaction__confs">
                         <span className="transaction__confs-label">Confirmations:</span>&nbsp;
-                        <span className="transaction__confs-value">{confs}</span>
+                        <span className="transaction__confs-value">{tx.confs}</span>
                     </div>
-                    <FormattedDate s_timestamp={s_timestamp} />
+                    <FormattedDate tx={tx} />
                 </div>
                 <div className="transaction__right">
-                    <span className="transaction__amount">{toBitcoins(amount)}</span>
-                    <Fee amount={fee} />
+                    <span className="transaction__amount">{tx.btcAmount}</span>
+                    <Fee tx={tx} />
                 </div>
             </div>
         </ContextMenu>
     )
-}
+})
 
-function getTransactions(): ITransaction[] {  // TODO
-    return [
-        {
-            id: '4902f9e3fad8473d2a13c4a07efca3c01df38643e8a3d375858c34e869c7bf63',
-            confs: 0,
-            s_timestamp: 1688334358,
-            amount: 3612443,
-            fee: 4000
-        },
-        {
-            id: 'fg10f9e3fad8473d2a13c4a07efca3c01df38643e8a3d375858c34e869c7lk92',
-            confs: 0,
-            s_timestamp: 1688334358,
-            amount: 3612443,
-            fee: 4000
-        }
-    ]
-}
-
-function Transactions() {
-    var txs = getTransactions()
+const TransactionsView = observer(() => {
+    const state = useContext(GlobalStateContext)
     return (
         <div className='txs'>
             {
-                txs.map(tx => <Transaction key={tx.id} {...tx} />)
+                state.txs.arr.map(tx => <TransactionView key={tx.id} tx={tx} />)
             }
         </div>
     )
-}
+})

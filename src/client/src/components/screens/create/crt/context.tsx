@@ -1,7 +1,15 @@
 import { PropsWithChildren, createContext, useState } from 'react'
-import { IInput, IOutput } from './Creator'
 
 export { InputsContext, OutputsContext, IOProvider }
+
+interface IInput {
+    txid: string,
+    amount: number
+}
+interface IOutput {
+    address: string,
+    amount: number
+}
 
 type InputsContextType = {
     inps: IInput[],

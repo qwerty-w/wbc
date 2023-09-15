@@ -65,3 +65,7 @@
     cursor: pointer;
     background-color: #E5965D;
 }
+.new-out__continue.disabled {
+    cursor: default;
+    opacity: .3;
+}
