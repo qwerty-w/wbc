@@ -1,7 +1,12 @@
 import { PropsWithChildren, createContext, useState } from 'react'
-import { ITransaction } from './Transactions'
 
 export { TransactionsContext, TransactionProvider }
+
+
+interface ITransaction {
+    id: string,
+    amount: number
+}
 
 type TransactionsContextType = {
     txs: ITransaction[],

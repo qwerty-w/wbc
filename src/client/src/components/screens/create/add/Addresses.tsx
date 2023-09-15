@@ -1,20 +1,57 @@
 import './Addresses.css'
-import { useContext, useRef } from 'react'
-import { setBuffer } from '../../../../utils'
+import { useContext, useRef, useEffect } from 'react'
+import { makeObservable, observable, computed, action } from 'mobx'
+import { observer } from 'mobx-react-lite'
+
+import { Container, setBuffer } from '../../../../utils'
 import { ContextMenu, ContextMenuDivider, ContextMenuItem } from '../../common/context-menu/contextmenu'
 import { NewAddressContext } from '../new-address/NewAddress'
+import { GlobalStateContext } from '../Create'
+import { getTransactions } from '../txs/Transactions'
 
 const { default: ArrowSvg } = require('./icons/arrow.svg') as { default: string }
 const { default: AddressIcon } = require('./icons/butterfly.svg') as { default: string }
 
-export { type IAddress, Address, Addresses }
+export { Address, AddressContainer, getAddresses, AddressesView }
 
-interface IAddress {
-    str: string,
-    name: string
+
+class Address {
+    constructor(public str: string, public name: string, public icon?: any) {
+        makeObservable(this, {
+            name: observable,
+            changeName: action
+        })
+    }
+    changeName(name: string) {
+        this.name = name
+    }
 }
 
-function Address({ str, name }: IAddress) {
+class AddressContainer extends Container<Address> {
+    constructor(iter?: Iterable<Address>, public current: string | null = null) {
+        super('str', iter)
+        makeObservable(this, {
+            current: observable,
+            setCurrent: action
+        })
+    }
+    setCurrent(addressString: string) {
+        this.current = addressString
+    }
+}
+
+const getAddresses = (): Array<Address> => {  // TODO
+    return [
+        new Address('address-string', 'My address #1')
+    ]
+}
+
+interface IAddressViewProps {
+    address: Address
+}
+
+const AddressView = observer(({ address }: IAddressViewProps) => {
+    const { addrs, txs } = useContext(GlobalStateContext)
     const ref = useRef<HTMLDivElement>(null)
     const setNewAddressIsShowed = useContext(NewAddressContext).setIsShowed
     return (
@@ -22,19 +59,24 @@ function Address({ str, name }: IAddress) {
             <>
                 <ContextMenuItem name='Add new address' onClick={ ev => { setNewAddressIsShowed(true) } } />
                 <ContextMenuDivider />
-                <ContextMenuItem name='Copy name' onClick={ ev => { setBuffer(name) } } />
-                <ContextMenuItem name='Copy address' onClick={ ev => { setBuffer(str) } } />
+                <ContextMenuItem name='Copy name' onClick={ ev => { setBuffer(address.name) } } />
+                <ContextMenuItem name='Copy address' onClick={ ev => { setBuffer(address.str) } } />
                 <ContextMenuItem name='Copy emoji' onClick={ ev => { setBuffer('🦋') } } />  {/* TODO */}
             </>
         } effect={isShowed => { isShowed ?
                                 (ref.current as HTMLDivElement).style.backgroundColor = '#E7E7E7' : 
                                 ref.current?.removeAttribute('style') }}>
-            <div className="address" ref={ref}>
+            <div className={`address ${addrs.current === address.str ? 'selected' : ''}`} ref={ref} onClick={() => {
+                if (txs.isEmpty()) {
+                    txs.extend(getTransactions())
+                }
+                addrs.setCurrent(address.str)
+            }}>
                 <div className="address__left">
                     <img src={AddressIcon} alt="ico" />
                 </div>
                 <div className="address__right">
-                    <span className="address__name">{name}</span>
+                    <span className="address__name">{address.name}</span>
                     <div className="address__arrow">
                         <img src={ArrowSvg} alt="-->" />       
                     </div>
@@ -42,20 +84,12 @@ function Address({ str, name }: IAddress) {
             </div>
         </ContextMenu>
     )
-}
+})
 
-function getAddresses(): IAddress[] {  // TODO
-    return [
-        {
-            str: 'address-string',
-            name: 'My address #1'
-        }
-    ]
-}
-
-function Addresses() {
+const AddressesView = observer(() => {
     const setNewAddressIsShowed = useContext(NewAddressContext).setIsShowed
-    const addresses: IAddress[] = getAddresses()
+    const { addrs } = useContext(GlobalStateContext)
+
     return (
         <ContextMenu items={
             <>
@@ -64,9 +98,9 @@ function Addresses() {
         }>
             <div className='add'>
                 {
-                    addresses.map((address, index) => <Address key={index} {...address} />)
+                    addrs.arr.map(address => <AddressView key={address.str} address={address} />)
                 }
             </div>
         </ContextMenu>
     )
-}
+})

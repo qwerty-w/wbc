@@ -179,6 +179,8 @@
     align-items: center;
     cursor: pointer;
     user-select: none;
+
+    border: none;
 }
 #crt__create-btn:hover {
     background-color: #E5965D;
