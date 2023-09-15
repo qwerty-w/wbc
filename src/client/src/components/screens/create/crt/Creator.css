@@ -44,6 +44,7 @@
     gap: 7px;
 }
 .crt__io {
+    position: relative;
     height: 58px;
     padding-top: 12px;
     padding-bottom: 13px;
