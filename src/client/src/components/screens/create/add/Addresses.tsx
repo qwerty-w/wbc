@@ -1,12 +1,11 @@
 import './Addresses.css'
-import { useContext, useRef, useEffect } from 'react'
-import { makeObservable, observable, computed, action } from 'mobx'
+import { useContext, useRef } from 'react'
+import { makeObservable, observable, action } from 'mobx'
 import { observer } from 'mobx-react-lite'
 
 import { Container, setBuffer } from '../../../../utils'
 import { ContextMenu, ContextMenuDivider, ContextMenuItem } from '../../common/context-menu/contextmenu'
-import { NewAddressContext } from '../new-address/NewAddress'
-import { GlobalStateContext } from '../Create'
+import { GlobalStore } from '../Create'
 import { getTransactions } from '../txs/Transactions'
 
 const { default: ArrowSvg } = require('./icons/arrow.svg') as { default: string }
@@ -51,13 +50,12 @@ interface IAddressViewProps {
 }
 
 const AddressView = observer(({ address }: IAddressViewProps) => {
-    const { addrs, txs } = useContext(GlobalStateContext)
+    const { addrs, txs, modals } = useContext(GlobalStore)
     const ref = useRef<HTMLDivElement>(null)
-    const setNewAddressIsShowed = useContext(NewAddressContext).setIsShowed
     return (
         <ContextMenu items={
             <>
-                <ContextMenuItem name='Add new address' onClick={ ev => { setNewAddressIsShowed(true) } } />
+                <ContextMenuItem name='Add new address' onClick={ ev => { modals.newaddr.setShowed(true) } } />
                 <ContextMenuDivider />
                 <ContextMenuItem name='Copy name' onClick={ ev => { setBuffer(address.name) } } />
                 <ContextMenuItem name='Copy address' onClick={ ev => { setBuffer(address.str) } } />
@@ -87,13 +85,13 @@ const AddressView = observer(({ address }: IAddressViewProps) => {
 })
 
 const AddressesView = observer(() => {
-    const setNewAddressIsShowed = useContext(NewAddressContext).setIsShowed
-    const { addrs } = useContext(GlobalStateContext)
+    const { newaddr } = useContext(GlobalStore).modals
+    const { addrs } = useContext(GlobalStore)
 
     return (
         <ContextMenu items={
             <>
-                <ContextMenuItem name='Add new address' onClick={ ev => { setNewAddressIsShowed(true) } } />
+                <ContextMenuItem name='Add new address' onClick={ ev => { newaddr.setShowed(true) } } />
             </>
         }>
             <div className='add'>

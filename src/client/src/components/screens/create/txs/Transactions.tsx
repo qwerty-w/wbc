@@ -2,7 +2,7 @@ import './Transactions.css'
 import { useContext, useRef } from 'react'
 import { formateDate, setBuffer, toBitcoins, wrapString } from '../../../../utils'
 import { ContextMenu, ContextMenuDivider, ContextMenuItem } from '../../common/context-menu/contextmenu'
-import { GlobalStateContext } from '../Create'
+import { GlobalStore } from '../Create'
 import { Input } from '../crt/Creator'
 import { observer } from 'mobx-react-lite'
 
@@ -72,7 +72,7 @@ const Fee = ({ tx }: PropsWithTransaction) => {
 }
 
 const TransactionView = observer(({ tx }: PropsWithTransaction) => {
-    const { inps } = useContext(GlobalStateContext).creator
+    const { inps } = useContext(GlobalStore).creator
     const currentTransaction = useRef<HTMLDivElement>(null)
     return (
         <ContextMenu items={
@@ -112,7 +112,7 @@ const TransactionView = observer(({ tx }: PropsWithTransaction) => {
 })
 
 const TransactionsView = observer(() => {
-    const { txs, creator } = useContext(GlobalStateContext)
+    const { txs, creator } = useContext(GlobalStore)
     return (
         <ContextMenu items={
             <>

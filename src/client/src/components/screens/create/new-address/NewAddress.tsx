@@ -1,21 +1,15 @@
 import './NewAddress.css'
-import { useState, useEffect, useRef, createContext, useContext } from "react";
-import { ModalShowType, Modal } from '../../common/modal/modal'
+import { useContext, useEffect, useRef } from "react";
+import { observable, action, makeObservable } from 'mobx'
+import { Modal, ModalView } from '../../common/modal/modal'
+import { observer } from 'mobx-react-lite';
+import { GlobalStore } from '../Create';
 
 
-export { type INewAddressState, NewAddressContext, NewAddressModal }
+export { NewAddressModal, NewAddressModalView }
 
-interface INewAddressState {
-    currentWindow: "create" | "import",
-    setCurrentWindow: React.Dispatch<React.SetStateAction<"create" | "import">>,
-    animatedSwitcher: boolean
-}
 
-interface INewAddressOptionProps {
-    state: INewAddressState
-}
-
-function TypeSelector() {
+const TypeSelector = () => {
     return (
         <select className='new-addr__type-selector'>
             <option value="P2PKH">P2PKH</option>
@@ -26,7 +20,7 @@ function TypeSelector() {
     )
 }
 
-function KeyFormatSelector() {
+const KeyFormatSelector = () => {
     return (
         <select className='import-addr__format-selector'>
             <option value="WIF">WIF</option>
@@ -44,7 +38,7 @@ interface ISwitcherProps {
     importOnClick?: (ev: React.MouseEvent) => void,
 }
 
-function Switcher({ switchTo, animation = true, createOnClick, importOnClick }: ISwitcherProps) {
+const Switcher = ({ switchTo, animation = true, createOnClick, importOnClick }: ISwitcherProps) => {
     const createRef = useRef<HTMLDivElement>(null)
     const importRef = useRef<HTMLDivElement>(null)
 
@@ -70,11 +64,42 @@ function Switcher({ switchTo, animation = true, createOnClick, importOnClick }: 
     )
 }
 
-function CreateAddress({ state }: INewAddressOptionProps) {
+class NewAddressModal extends Modal {
+    currentWindow: 'create' | 'import' = 'create'
+    animatedSwitcher: boolean = false
+    isFirstOpen: boolean = true
+
+    constructor() {
+        super()
+        makeObservable(this, {
+            currentWindow: observable,
+            animatedSwitcher: observable,
+            isFirstOpen: observable,
+            setCurrentWindow: action,
+            setAnimatedSwitcher: action,
+            setFirstOpen: action
+        })
+    }
+    setCurrentWindow(window: 'create' | 'import') {
+        this.currentWindow = window
+    }
+    setAnimatedSwitcher(val: boolean) {
+        this.animatedSwitcher = val
+    }
+    setFirstOpen(val: boolean) {
+        this.isFirstOpen = val
+    }
+}
+
+interface INewAddressModalWindowProps {
+    newaddr: NewAddressModal
+}
+
+const CreateAddress = ({ newaddr }: INewAddressModalWindowProps) => {
     return (
         <div className="create-addr new-addr">
             <div className='new-addr__top'>
-                <Switcher animation={state.animatedSwitcher} switchTo='create' importOnClick={() => { state.setCurrentWindow('import') }} />
+                <Switcher animation={newaddr.animatedSwitcher} switchTo='create' importOnClick={() => { newaddr.setCurrentWindow('import') }} />
                 <div className='create-addr__name new-addr__item'>
                     <input className='new-addr__main-inp' id='create-addr__name-inp' type="text" />
                     <span className='new-addr__label'>Name</span>
@@ -91,12 +116,12 @@ function CreateAddress({ state }: INewAddressOptionProps) {
     )
 }
 
-function ImportAddress({ state }: INewAddressOptionProps) {
+const ImportAddress = ({ newaddr }: INewAddressModalWindowProps) => {
     return (
         <div className="import-addr new-addr">
             <div className='new-addr__top'>
                 <div className='new-addr__switcher'>
-                    <Switcher animation={state.animatedSwitcher} switchTo='import' createOnClick={() => { state.setCurrentWindow('create') }} />
+                    <Switcher animation={newaddr.animatedSwitcher} switchTo='import' createOnClick={() => { newaddr.setCurrentWindow('create') }} />
                 </div>
                 <div className='import-addr__key new-addr__item'>
                     <input className='new-addr__main-inp' id="import-addr__key-inp" type="text" />
@@ -120,18 +145,13 @@ function ImportAddress({ state }: INewAddressOptionProps) {
     )
 }
 
-const NewAddressContext = createContext<ModalShowType>({ isShowed: false, setIsShowed: () => { } })
-
-function NewAddressModal() {
-    const { isShowed } = useContext(NewAddressContext)
-    const [currentWindow, setCurrentWindow] = useState<'create' | 'import'>('create')
-    const [firstOpen, setFirstOpen] = useState(true)
-    const state = { currentWindow: currentWindow, setCurrentWindow: setCurrentWindow, animatedSwitcher: !firstOpen }
-    useEffect(() => { setFirstOpen(!isShowed) }, [isShowed])
+const NewAddressModalView = observer(() => {
+    const { newaddr } = useContext(GlobalStore).modals
+    useEffect(() => { newaddr.setAnimatedSwitcher(!newaddr.isShowed) }, [newaddr.isShowed])  // no anim for first open
 
     return (
-        <Modal context={NewAddressContext}>
-            { currentWindow === 'create' ? <CreateAddress state={state} /> : <ImportAddress state={state}/> }
-        </Modal>
+        <ModalView modal={newaddr}>
+            { newaddr.currentWindow === 'create' ? <CreateAddress newaddr={newaddr} /> : <ImportAddress newaddr={newaddr} /> }
+        </ModalView>
     )
-}
+})
