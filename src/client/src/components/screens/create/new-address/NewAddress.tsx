@@ -67,17 +67,14 @@ const Switcher = ({ switchTo, animation = true, createOnClick, importOnClick }: 
 class NewAddressModal extends Modal {
     currentWindow: 'create' | 'import' = 'create'
     animatedSwitcher: boolean = false
-    isFirstOpen: boolean = true
 
     constructor() {
         super()
         makeObservable(this, {
             currentWindow: observable,
             animatedSwitcher: observable,
-            isFirstOpen: observable,
             setCurrentWindow: action,
             setAnimatedSwitcher: action,
-            setFirstOpen: action
         })
     }
     setCurrentWindow(window: 'create' | 'import') {
@@ -85,9 +82,6 @@ class NewAddressModal extends Modal {
     }
     setAnimatedSwitcher(val: boolean) {
         this.animatedSwitcher = val
-    }
-    setFirstOpen(val: boolean) {
-        this.isFirstOpen = val
     }
 }
 
@@ -147,7 +141,7 @@ const ImportAddress = ({ newaddr }: INewAddressModalWindowProps) => {
 
 const NewAddressModalView = observer(() => {
     const { newaddr } = useContext(GlobalStore).modals
-    useEffect(() => { newaddr.setAnimatedSwitcher(!newaddr.isShowed) }, [newaddr.isShowed])  // no anim for first open
+    useEffect(() => { newaddr.setAnimatedSwitcher(newaddr.isShowed) }, [newaddr.isShowed])  // no anim for first open
 
     return (
         <ModalView modal={newaddr}>
