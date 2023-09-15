@@ -4,7 +4,7 @@ import { makeObservable, observable, action } from 'mobx'
 import { observer } from 'mobx-react-lite'
 
 import { Container, setBuffer } from '../../../../utils'
-import { ContextMenu, ContextMenuDivider, ContextMenuItem } from '../../common/context-menu/contextmenu'
+import { ContextMenuItem, ContextMenuDivider, ContextMenuView  } from '../../common/context-menu/contextmenu'
 import { GlobalStore } from '../Create'
 import { getTransactions } from '../txs/Transactions'
 
@@ -53,7 +53,7 @@ const AddressView = observer(({ address }: IAddressViewProps) => {
     const { addrs, txs, modals } = useContext(GlobalStore)
     const ref = useRef<HTMLDivElement>(null)
     return (
-        <ContextMenu items={
+        <ContextMenuView items={
             <>
                 <ContextMenuItem name='Add new address' onClick={ ev => { modals.newaddr.setShowed(true) } } />
                 <ContextMenuDivider />
@@ -61,9 +61,7 @@ const AddressView = observer(({ address }: IAddressViewProps) => {
                 <ContextMenuItem name='Copy address' onClick={ ev => { setBuffer(address.str) } } />
                 <ContextMenuItem name='Copy emoji' onClick={ ev => { setBuffer('🦋') } } />  {/* TODO */}
             </>
-        } effect={isShowed => { isShowed ?
-                                (ref.current as HTMLDivElement).style.backgroundColor = '#E7E7E7' : 
-                                ref.current?.removeAttribute('style') }}>
+        } effect={menu => { menu.isShowed ? (ref.current as HTMLDivElement).style.backgroundColor = '#E7E7E7' : ref.current?.removeAttribute('style') }}>
             <div className={`address ${addrs.current === address.str ? 'selected' : ''}`} ref={ref} onClick={() => {
                 if (txs.isEmpty()) {
                     txs.extend(getTransactions())
@@ -80,7 +78,7 @@ const AddressView = observer(({ address }: IAddressViewProps) => {
                     </div>
                 </div>
             </div>
-        </ContextMenu>
+        </ContextMenuView>
     )
 })
 
@@ -89,7 +87,7 @@ const AddressesView = observer(() => {
     const { addrs } = useContext(GlobalStore)
 
     return (
-        <ContextMenu items={
+        <ContextMenuView items={
             <>
                 <ContextMenuItem name='Add new address' onClick={ ev => { newaddr.setShowed(true) } } />
             </>
@@ -99,6 +97,6 @@ const AddressesView = observer(() => {
                     addrs.arr.map(address => <AddressView key={address.str} address={address} />)
                 }
             </div>
-        </ContextMenu>
+        </ContextMenuView>
     )
 })

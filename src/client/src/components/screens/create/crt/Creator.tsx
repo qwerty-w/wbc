@@ -2,7 +2,7 @@ import './Creator.css'
 import { useContext, useState } from 'react'
 import { observer } from 'mobx-react-lite'
 import { observable, action, computed, makeObservable, makeAutoObservable } from 'mobx'
-import { ContextMenuItem, ContextMenuDivider, ContextMenu } from '../../common/context-menu/contextmenu'
+import { ContextMenuItem, ContextMenuDivider, ContextMenuView } from '../../common/context-menu/contextmenu'
 import { Container, wrapString, toBitcoins, BTCamountInputView, FiltredInput } from '../../../../utils'
 import { GlobalStore } from '../Create'
 
@@ -100,7 +100,7 @@ class Creator {
 const InputView = observer(({ txid, amount }: IInput) => {
     const { inps } = useContext(GlobalStore).creator
     return (
-        <ContextMenu items={
+        <ContextMenuView items={
             <>
                 <ContextMenuItem name='Remove input' onClick={ev => { inps.remove(txid) }} />
             </>
@@ -114,7 +114,7 @@ const InputView = observer(({ txid, amount }: IInput) => {
                     <div className="crt__io-amount">{toBitcoins(amount)}</div>
                 </div>
             </div>
-        </ContextMenu>
+        </ContextMenuView>
     )
 })
 
@@ -122,7 +122,7 @@ const OutputView = observer(({ address, amount }: IOutput) => {
     const { modals: { newout }, creator: { outs } } = useContext(GlobalStore)
 
     return (
-        <ContextMenu items={
+        <ContextMenuView items={
             <>
                 <ContextMenuItem  name="Remove output" onClick={ ev => { outs.remove(address) } } />
                 <ContextMenuDivider/>
@@ -136,7 +136,7 @@ const OutputView = observer(({ address, amount }: IOutput) => {
                 </div>
                 <div className="crt__io-amount">{toBitcoins(amount)}</div>
             </div>
-        </ContextMenu>
+        </ContextMenuView>
     )
 })
 
@@ -154,7 +154,7 @@ const CreatorTop = observer(() => {
                 </div>
             </div>
             <div className="crt__top-vline"></div>
-            <ContextMenu items={
+            <ContextMenuView items={
                 <>
                     <ContextMenuItem  name="Add new output" onClick={ ev => { newout.setShowed(true) } } />
                 </>
@@ -167,7 +167,7 @@ const CreatorTop = observer(() => {
                         }
                     </div>
                 </div>
-            </ContextMenu>
+            </ContextMenuView>
         </div>
     ) 
 })

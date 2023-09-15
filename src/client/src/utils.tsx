@@ -102,11 +102,11 @@ export class FiltredInput {
     }
 }
 
-interface FiltredInputProps {
+interface IFiltredInputProps {
     inp: FiltredInput
 }
 
-export const FiltredInputView = observer(({ inp }: FiltredInputProps) => {
+export const FiltredInputView = observer(({ inp }: IFiltredInputProps) => {
     const ref = useRef<HTMLInputElement>(null)
     const [changed, setChanged] = useState<boolean>(false)
 
@@ -133,7 +133,7 @@ export const FiltredInputView = observer(({ inp }: FiltredInputProps) => {
     )
 })
 
-export const BTCamountInputView = ({ inp }: FiltredInputProps) => {
+export const BTCamountInputView = ({ inp }: IFiltredInputProps) => {
     inp.onBlur = val => String(Number(val))
     inp.filter = (pos, raw) => { 
         let value = ''
