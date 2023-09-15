@@ -55,11 +55,11 @@ const AddressView = observer(({ address }: IAddressViewProps) => {
     return (
         <ContextMenuView items={
             <>
-                <ContextMenuItem name='Add new address' onClick={ ev => { modals.newaddr.show() } } />
-                <ContextMenuDivider />
                 <ContextMenuItem name='Copy name' onClick={ ev => { setBuffer(address.name) } } />
                 <ContextMenuItem name='Copy address' onClick={ ev => { setBuffer(address.str) } } />
                 <ContextMenuItem name='Copy emoji' onClick={ ev => { setBuffer('🦋') } } />  {/* TODO */}
+                <ContextMenuDivider />
+                <ContextMenuItem name='Add new address' onClick={ ev => { modals.newaddr.show() } } />
             </>
         } effect={menu => { menu.isShowed ? (ref.current as HTMLDivElement).style.backgroundColor = '#E7E7E7' : ref.current?.removeAttribute('style') }}>
             <div className={`address ${addrs.current === address.str ? 'selected' : ''}`} ref={ref} onClick={() => {
