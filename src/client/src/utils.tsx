@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react"
-import { makeObservable, observable, computed, action, IObservableFactory, IComputedFactory, IActionFactory } from 'mobx'
+import { makeObservable, observable, action} from 'mobx'
+import { observer } from "mobx-react-lite"
 
 
 export class Container<T extends Record<string, any>> {
@@ -72,67 +73,69 @@ export async function setBuffer(text: any) {
     await navigator.clipboard.writeText(text)
 }
 
-export interface IFiltredInputStateInstance {
-    currentValue: string,
-    isInvalid: boolean
-}
+export class FiltredInput {
+    value: string
+    cursorPos: number
 
-export interface IFiltredInputState {
-    ins: IFiltredInputStateInstance,
-    set: React.Dispatch<React.SetStateAction<IFiltredInputStateInstance>>
+    constructor(public filter: (pos: number, value: string) => { pos: number, value: string },
+                public onBlur?: (ev: React.FocusEvent<HTMLInputElement>) => string, defaultValue: string = '',
+                public isInvalid: boolean = false) {
+        this.value = defaultValue
+        this.cursorPos = 0
+        makeObservable(this, {
+            value: observable,
+            cursorPos: observable,
+            isInvalid: observable,
+            setValue: action,
+            setCursorPos: action,
+            setInvalid: action
+        })
+    }
+    setValue(val: string) {
+        this.value = val
+    }
+    setCursorPos(pos: number) {
+        this.cursorPos = pos
+    }
+    setInvalid(val: boolean) {
+        this.isInvalid = val
+    }
 }
 
 interface FiltredInputProps {
-    filter: (pos: number, value: string) => { pos: number, value: string },
-    state: IFiltredInputState,
-    onBlur?: (value: string) => string,
-    defaultValue?: string
+    inp: FiltredInput
 }
 
-export function FiltredInput({ filter, state, onBlur, defaultValue = '' }: FiltredInputProps) {
+export const FiltredInputView = observer(({ inp }: FiltredInputProps) => {
     const ref = useRef<HTMLInputElement>(null)
-    const [value, setValue] = useState<string>(defaultValue)
-    const [cursorPos, setCursorPos] = useState<number | null>(null)
-    const [wasChanged, setWasChanged] = useState<boolean>(false)
+    const [changed, setChanged] = useState<boolean>(false)
 
-    const toggleChange = () => { setWasChanged(!wasChanged) }
+    const toggleChange = () => { setChanged(!changed) }
 
     useEffect(() => {
-        if (cursorPos === null) { 
-            return
-        }
-        ref.current?.setSelectionRange(cursorPos, cursorPos)
-    }, [wasChanged])
-    useEffect(() => state.set({ ...state.ins, currentValue: value }), [value])
+        ref.current?.setSelectionRange(inp.cursorPos, inp.cursorPos)
+    }, [changed])
  
     return (
         <input
             ref={ref}
-            className={state.ins.isInvalid ? 'invalid' : undefined}
+            className={inp.isInvalid ? 'invalid' : undefined}
             type="text"
-            value={value}
-            onBlur={ev => {
-                if (onBlur) {
-                    setValue(onBlur(ev.target.value))
-                }
-            }}
+            value={inp.value}
+            onBlur={ev => { if (inp.onBlur) { inp.onBlur(ev) } } }
             onChange={ev => {
-                const { pos, value } = filter((ev.target.selectionStart as number), ev.target.value)
-                setValue(value)
-                setCursorPos(pos)
+                const { pos, value } = inp.filter((ev.target.selectionStart as number), ev.target.value)
+                inp.setValue(value)
+                inp.setCursorPos(pos)
                 toggleChange()
             }}
         /> 
     )
-}
+})
 
-interface BTCamountInputProps {
-    state: IFiltredInputState,
-    defaultValue: string
-}
-
-export function BTCamountInput({ state, defaultValue }: BTCamountInputProps) {
-    return <FiltredInput filter={(pos, raw) => { 
+export const BTCamountInputView = ({ inp }: FiltredInputProps) => {
+    inp.onBlur = val => String(Number(val))
+    inp.filter = (pos, raw) => { 
         let value = ''
 
         for (let char of raw) {
@@ -148,5 +151,6 @@ export function BTCamountInput({ state, defaultValue }: BTCamountInputProps) {
         }
 
         return { pos, value }
-     }} onBlur={val => String(Number(val))} state={state} defaultValue={defaultValue}/>
+    }
+    return <FiltredInputView inp={inp} />
 }

@@ -3,11 +3,11 @@ import { useContext, useState } from 'react'
 import { observer } from 'mobx-react-lite'
 import { observable, action, computed, makeObservable, makeAutoObservable } from 'mobx'
 import { ContextMenuItem, ContextMenuDivider, ContextMenu } from '../../common/context-menu/contextmenu'
-import { Container, wrapString, toBitcoins, BTCamountInput, IFiltredInputStateInstance, IFiltredInputState } from '../../../../utils'
+import { Container, wrapString, toBitcoins, BTCamountInputView, FiltredInput } from '../../../../utils'
 import { NewOutputContext } from '../new-output/NewOutput'
 import { GlobalStateContext } from '../Create'
 
-export { Input, Output, Creator, CreatorState }
+export { Input, Output, Creator, CreatorView }
 
 
 abstract class IO {
@@ -56,7 +56,7 @@ class Output extends IO implements IOutput {
     }
 }
 
-class CreatorState {
+class Creator {
     inps: Container<Input>
     outs: Container<Output>
     fee: number
@@ -175,22 +175,12 @@ const CreatorTop = observer(() => {
     ) 
 })
 
-interface IFeeProps {
-    state: IFiltredInputState
-}
-
-const Fee = ({ state }: IFeeProps) => {
-    return <BTCamountInput state={state} defaultValue='0.0008'/>
-}
-
 const CreatorBot = observer(() => {
     const state = useContext(GlobalStateContext).creator
-    const [feeState, setFeeState] = useState<IFiltredInputStateInstance>({ currentValue: String(), isInvalid: false })
+    const [fee] = useState(new FiltredInput((pos, value) => {return {pos, value}}, undefined, '0.0008'))
 
     const create = () => {
-        state.inps.add(new Input('saflafs', 21040))
-        state.outs.add(new Output('saflafs', 31040))
-        setFeeState({ ...feeState, isInvalid: true })
+        fee.setInvalid(true)
     }
 
     return (
@@ -206,7 +196,7 @@ const CreatorBot = observer(() => {
                         <span className="crt__bot-label">Remainder</span>
                     </div>
                     <div className="crt__bot-item">
-                        <Fee state={{ ins: feeState, set: setFeeState }}/>
+                        <BTCamountInputView inp={fee} />
                         <span className="crt__bot-label">Fee</span>
                     </div>
                 </div>
@@ -217,7 +207,7 @@ const CreatorBot = observer(() => {
                     </div>
                     <div className="crt__bot-item">
                         <span id="crt__total">{toBitcoins(state.totalIn)}</span>
-                        <span className="crt__bot-label">Total available</span>
+                        <span className="crt__bot-label">Total</span>
                     </div>
                     <button id="crt__create-btn" onClick={() => { create() }}>
                         <span>Create</span>
@@ -228,7 +218,7 @@ const CreatorBot = observer(() => {
     )
 })
 
-const Creator = () => {
+const CreatorView = () => {
     return (
         <div className="crt">
             <CreatorTop />
