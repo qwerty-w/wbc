@@ -7,12 +7,13 @@ import { Container, setBuffer } from '../../../../utils'
 import { ContextMenuItem, ContextMenuDivider, ContextMenuView  } from '../../common/context-menu/contextmenu'
 import { GlobalStore } from '../Create'
 import { getTransactions } from '../txs/Transactions'
-
-const { default: ArrowSvg } = require('./icons/arrow.svg') as { default: string }
-const { default: AddressIcon } = require('./icons/butterfly.svg') as { default: string }
+import { useNavigate } from 'react-router-dom'
 
 export { Address, AddressContainer, getAddresses, AddressesView }
 
+
+const { default: ArrowSvg } = require('./icons/arrow.svg') as { default: string }
+const { default: AddressIcon } = require('./icons/butterfly.svg') as { default: string }
 
 class Address {
     constructor(public str: string, public name: string, public icon?: any) {
@@ -52,9 +53,13 @@ interface IAddressViewProps {
 const AddressView = observer(({ address }: IAddressViewProps) => {
     const { addrs, txs, modals } = useContext(GlobalStore)
     const ref = useRef<HTMLDivElement>(null)
+    const navigate = useNavigate()
+
     return (
         <ContextMenuView items={
             <>
+                <ContextMenuItem name='View detail' onClick={ev => { navigate(`/address/${address.str}`) }} />
+                <ContextMenuDivider />
                 <ContextMenuItem name='Copy name' onClick={ ev => { setBuffer(address.name) } } />
                 <ContextMenuItem name='Copy address' onClick={ ev => { setBuffer(address.str) } } />
                 <ContextMenuItem name='Copy emoji' onClick={ ev => { setBuffer('🦋') } } />  {/* TODO */}
@@ -74,7 +79,7 @@ const AddressView = observer(({ address }: IAddressViewProps) => {
                 <div className="address__right">
                     <span className="address__name">{address.name}</span>
                     <div className="address__arrow">
-                        <img src={ArrowSvg} alt="-->" />       
+                        <img src={ArrowSvg} alt="-->" />
                     </div>
                 </div>
             </div>

@@ -6,7 +6,7 @@ import { GlobalStore } from '../Create'
 import { Input } from '../crt/Creator'
 import { observer } from 'mobx-react-lite'
 
-export { getTransactions, Transaction, TransactionsView }
+export { getTransactions, TransactionLeftView, TransactionRightView, Transaction, TransactionsView }
 
 
 class Transaction {
@@ -71,6 +71,31 @@ const Fee = ({ tx }: IPropsWithTransaction) => {
     )
 }
 
+const TransactionLeftView = ({ tx }: IPropsWithTransaction) => {
+    return (
+        <div className="transaction__left"> 
+            <div className="transaction__id">
+                <span className="transaction__id-label">ID:</span>&nbsp;
+                <span className="transaction__id-value">{tx.wrappedID}</span>
+            </div>
+            <div className="transaction__confs">
+                <span className="transaction__confs-label">Confirmations:</span>&nbsp;
+                <span className="transaction__confs-value">{tx.confs}</span>
+            </div>
+            <FormattedDate tx={tx} />
+        </div>
+    )
+}
+
+const TransactionRightView = ({ tx }: IPropsWithTransaction) => {
+    return (
+        <div className="transaction__right">
+            <span className="transaction__amount">{tx.btcAmount}</span>
+            <Fee tx={tx} />
+        </div>
+    )
+}
+
 const TransactionView = observer(({ tx }: IPropsWithTransaction) => {
     const { inps } = useContext(GlobalStore).creator
     const currentTransaction = useRef<HTMLDivElement>(null)
@@ -89,21 +114,8 @@ const TransactionView = observer(({ tx }: IPropsWithTransaction) => {
             <div className={`transaction tx ${inps.has(tx.id) ? 'selected' : ''}`}
                  ref={currentTransaction}
                  onClick={() => !inps.has(tx.id) ? inps.add(new Input(tx.id, tx.amount)) : inps.remove(tx.id)}>
-                <div className="transaction__left"> 
-                    <div className="transaction__id">
-                        <span className="transaction__id-label">ID:</span>&nbsp;
-                        <span className="transaction__id-value">{tx.wrappedID}</span>
-                    </div>
-                    <div className="transaction__confs">
-                        <span className="transaction__confs-label">Confirmations:</span>&nbsp;
-                        <span className="transaction__confs-value">{tx.confs}</span>
-                    </div>
-                    <FormattedDate tx={tx} />
-                </div>
-                <div className="transaction__right">
-                    <span className="transaction__amount">{tx.btcAmount}</span>
-                    <Fee tx={tx} />
-                </div>
+                <TransactionLeftView tx={tx} />
+                <TransactionRightView tx={tx} />
             </div>
         </ContextMenuView>
     )
