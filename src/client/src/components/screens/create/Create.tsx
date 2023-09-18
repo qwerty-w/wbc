@@ -9,7 +9,7 @@ import { NewAddressModal, NewAddressModalView } from './new-address/NewAddress'
 import { NewOutputModal, NewOutputModalView } from './new-output/NewOutput'
 
 
-export { GlobalStore, Create }
+export { GlobalStore, CreateView }
 
 interface IModals {
     newaddr: NewAddressModal,
@@ -33,7 +33,7 @@ const GlobalStore = createContext<IGlobalStore>({
     }
 })
 
-const Create = () => {
+const CreateView = () => {
     return (
         <GlobalStore.Provider value={useContext(GlobalStore)}>
             <div className='main'>
