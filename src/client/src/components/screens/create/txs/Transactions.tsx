@@ -5,6 +5,7 @@ import { ContextMenuItem, ContextMenuDivider, ContextMenuView } from '../../comm
 import { GlobalStore } from '../Create'
 import { Input } from '../crt/Creator'
 import { observer } from 'mobx-react-lite'
+import { useNavigate } from 'react-router'
 
 export { getTransactions, TransactionLeftView, TransactionRightView, Transaction, TransactionsView }
 
@@ -99,10 +100,11 @@ const TransactionRightView = ({ tx }: IPropsWithTransaction) => {
 const TransactionView = observer(({ tx }: IPropsWithTransaction) => {
     const { inps } = useContext(GlobalStore).creator
     const currentTransaction = useRef<HTMLDivElement>(null)
+    const navigate = useNavigate()
     return (
         <ContextMenuView items={
             <>
-                <ContextMenuItem name='View detail' onClick={ev => {  }} />
+                <ContextMenuItem name='View detail' onClick={ev => { navigate(`/transaction/${tx.id}`) }} />
                 <ContextMenuDivider/>
                 <ContextMenuItem name='Copy ID' onClick={ () => setBuffer(tx.id) } />
                 <ContextMenuItem name='Copy confirmations' onClick={ () => setBuffer(tx.confs) } />
