@@ -1,22 +1,102 @@
-import './address-detail.css'
+import * as detail from '../common/detail/detail'
 import { useParams } from 'react-router-dom'
 import { toBitcoins } from '../../../utils'
 import * as txs from '../create/txs/Transactions'
+import styled from 'styled-components'
 
 export { AddressDetailView }
 
 
-const { default: qrSVG } = require('../common/detail-icons/qr-code.svg')
-const { default: copySVG } = require('../common/detail-icons/copy.svg')
 const { default: walletSVG } = require('./icons/wallet.svg')
 const { default: transactionInSVG } = require('./icons/tx-in.svg')
 const { default: transactionOutSVG } = require('./icons/tx-out.svg')
 
-interface ITopProps {
-    str: string
-}
+const StyledType = styled(detail.StyledOption)`
+    gap: 6px;
+    user-select: text;
+    
+    img {
+        user-select: none;
+    }
+`
+const StyledBottom = styled.div`
+    width: 100%;
+    height: 100%;
+    padding: 37px 54px;
 
-class BottomTransaction extends txs.Transaction {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+`
+const StyledInfo = styled.div`
+    width: 308px;
+    height: 401px;
+    border-radius: 20px;
+    background-color: #f2f2f2;
+
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+    align-items: center;
+    gap: 20px;
+
+    padding: 20px 29px;
+`
+const StyledInfoItem = styled.div`
+    border-radius: 18px;
+`
+const StyledTransactionContainer = styled.div`
+    width: 570px;
+    height: 401px;
+    border: 1px solid #E0E0E0;
+    border-radius: 20px;
+    background-color: #f2f2f2;
+`
+const StyledTransaction = styled.div`
+    height: 80px;
+    padding: 13px 16px;
+    background-color: #fff;
+    border-bottom: 1px solid #E0E0E0;
+
+    display: flex;
+    justify-content: space-between;
+
+    &:hover {
+        background-color: #fdfdfd;
+        cursor: pointer;
+    }
+
+    &:first-child {
+        border-radius: 20px 20px 0px 0px;
+    }
+`
+const StyledTransactionLeft = styled.div`
+    display: flex;
+    align-items: center;
+    gap: 16px;
+
+    .transaction__left {
+        height: 100%;
+        font-size: 14px;
+
+        gap: unset;
+        justify-content: space-between;
+    }
+`
+const StyledTransactionRight = styled.div`
+    display: flex;
+    align-items: center;
+
+    .transaction__amount {
+        font-size: 18px;
+    }
+    .transaction__fee {
+        font-size: 14px;
+    }
+`
+
+
+class Transaction extends txs.Transaction {
     type: 'in' | 'out'
 
     constructor(id: string, confs: number, s_timestamp: number, amount: number, fee: number, type: 'in' | 'out') {
@@ -25,44 +105,57 @@ class BottomTransaction extends txs.Transaction {
     }
 }
 
-const TopView = ({ str }: ITopProps) => {
+const TopLeftOptionsView = ({ copyString }: { copyString: string }) => {
     return (
-        <div className='address-detail__top'>
-            <div className='address-detail__top-string'><span>{str}</span></div>
-            <div className='address-detail__top-opt'>
-
-                <div className='address-detail__top-buttons'>
-                    <div className='address-detail__top-qr detail-top-button'>
-                        <img src={qrSVG} alt="qr" />
-                    </div>
-                    <div className='address-detail__top-copy detail-top-button'>
-                        <img src={copySVG} alt="copy" />
-                    </div>
-                </div>
-                <div className='address-detail__top-type'>
-                    <div className='address-detail__top-type-wallet'>
-                        <img src={walletSVG} alt="." />
-                    </div>
-                    <span>P2WPKH</span>
-                </div>
-            </div>
-        </div>
+        <>
+            <detail.QrButton data=""/>
+            <detail.CopyButton string={copyString} />
+        </>
     )
 }
 
-interface IBottomTransactionProps {
-    tx: BottomTransaction
+const TopRightOptionsView = () => {
+    return (
+        <StyledType $width='120px' $height='33px' $borderRadius='10px'>
+            <img src={walletSVG} alt="." />
+            <span>P2WPKH</span>
+        </StyledType>
+    )
 }
 
-const BottomTransactionView = ({ tx }: IBottomTransactionProps) => {
+const InfoItemView = ({ label, value }: { label: string, value: any }) => {
     return (
-        <div className='address-detail__bot-tx'>
-            <div className='address-detail__bot-tx-left'>
+        <detail.InfoItemView label={label} value={value} asStyledItem={StyledInfoItem} />
+    )
+}
+
+const TransactionView = ({ tx }: { tx: Transaction }) => {
+    return (
+        <StyledTransaction>
+            <StyledTransactionLeft>
                 <img src={tx.type === 'in' ? transactionInSVG : transactionOutSVG} alt={tx.type} />
                 <txs.TransactionLeftView tx={tx} />
-            </div>
-            <txs.TransactionRightView tx={tx} />
-        </div>
+            </StyledTransactionLeft>
+            <StyledTransactionRight>
+                <txs.TransactionRightView tx={tx} />
+            </StyledTransactionRight>
+        </StyledTransaction>
+    )
+}
+
+const BottomView = ({ info }: { info: IAddressDetailInfo }) => {
+    return (
+        <StyledBottom>
+            <StyledInfo>
+                <InfoItemView label='Balance' value={toBitcoins(info.balance)} />
+                <InfoItemView label='Transactions count' value={info.txCount} />
+                <InfoItemView label='Total received' value={toBitcoins(info.received)} />
+                <InfoItemView label='Total sent' value={toBitcoins(info.sent)} />
+            </StyledInfo>
+            <StyledTransactionContainer>
+                { info.txs.map(tx => <TransactionView tx={tx} />) }
+            </StyledTransactionContainer>
+        </StyledBottom>
     )
 }
 
@@ -71,39 +164,7 @@ interface IAddressDetailInfo {
     txCount: number,
     received: number,
     sent: number,
-    txs: BottomTransaction[]
-}
-
-interface IBottomProps {
-    info: IAddressDetailInfo
-}
-
-const BottomView = ({ info }: IBottomProps) => {
-    return (
-        <div className='address-detail__bot'>
-            <div className='address-detail__bot-info'>
-                <div className='address-detail__bot-info-item'>
-                    <span className='address-detail__bot-info-label'>Balance</span>
-                    <span className='address-detail__bot-info-value'>{toBitcoins(info.balance)}</span>
-                </div>
-                <div className='address-detail__bot-info-item'>
-                    <span className='address-detail__bot-info-label'>Transactions count</span>
-                    <span className='address-detail__bot-info-value'>{info.txCount}</span>
-                </div>
-                <div className='address-detail__bot-info-item'>
-                    <span className='address-detail__bot-info-label'>Total received</span>
-                    <span className='address-detail__bot-info-value'>{toBitcoins(info.received)}</span>
-                </div>
-                <div className='address-detail__bot-info-item'>
-                    <span className='address-detail__bot-info-label'>Total sent</span>
-                    <span className='address-detail__bot-info-value'>{toBitcoins(info.sent)}</span>
-                </div>
-            </div>
-            <div className='address-detail__bot-txs'>
-                { info.txs.map(tx => <BottomTransactionView tx={tx} />) }
-            </div>
-        </div>
-    )
+    txs: Transaction[]
 }
 
 function getAddressInfo(address: string): IAddressDetailInfo {
@@ -113,7 +174,7 @@ function getAddressInfo(address: string): IAddressDetailInfo {
         received: 2240745028,
         sent: 2224103871,
         txs: [
-            new BottomTransaction('96f4f76166b6f368ac6a9901446db7b27c057cb441f01589fe32b0d5d95f7cf7',
+            new Transaction('96f4f76166b6f368ac6a9901446db7b27c057cb441f01589fe32b0d5d95f7cf7',
                 4, 1694930749, 97261894, 8721, 'in')
         ]
     }
@@ -128,10 +189,7 @@ const AddressDetailView = () => {
 
     const inf = getAddressInfo(address)
 
-    return (
-        <div className='address-detail-main'>
-            <TopView str={address}/>
-            <BottomView info={inf}/>
-        </div>
-    )
+    return <detail.DetailView string={address}
+                       options={{ left: <TopLeftOptionsView copyString={address} />, right: <TopRightOptionsView /> }}
+                       bottom={<BottomView info={inf} />} />
 }
