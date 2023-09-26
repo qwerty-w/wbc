@@ -1,10 +1,8 @@
-import './global.css'
-
 import ReactDOM from 'react-dom/client';
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
-import { AddressDetailView } from './components/screens/address-detail/address-detail';
-import { TransactionDetailView } from './components/screens/transaction-detail/transaction-detail';
-import { CreateView } from './components/screens/create/Create'
+import { AddressDetailView } from './screens/address-detail';
+import { TransactionDetailView } from './screens/transaction-detail';
+import { CreateView } from './screens/create-transaction';
 
 const rootElement = document.getElementById('root') as HTMLElement
 const root = ReactDOM.createRoot(rootElement);
