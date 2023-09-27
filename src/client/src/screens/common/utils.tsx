@@ -78,7 +78,7 @@ export class FiltredInput {
     cursorPos: number
 
     constructor(public filter: (pos: number, value: string) => { pos: number, value: string },
-                public onBlur?: (ev: React.FocusEvent<HTMLInputElement>) => string, defaultValue: string = '',
+                public onBlur?: (ev: React.FocusEvent<HTMLInputElement>, input: FiltredInput) => void, defaultValue: string = '',
                 public isInvalid: boolean = false) {
         this.value = defaultValue
         this.cursorPos = 0
@@ -122,7 +122,7 @@ export const FiltredInputView = observer(({ inp }: IFiltredInputProps) => {
             className={inp.isInvalid ? 'invalid' : undefined}
             type="text"
             value={inp.value}
-            onBlur={ev => { if (inp.onBlur) { inp.onBlur(ev) } } }
+            onBlur={ev => { if (inp.onBlur) { inp.onBlur(ev, inp) } } }
             onChange={ev => {
                 const { pos, value } = inp.filter((ev.target.selectionStart as number), ev.target.value)
                 inp.setValue(value)
@@ -134,7 +134,7 @@ export const FiltredInputView = observer(({ inp }: IFiltredInputProps) => {
 })
 
 export const BTCamountInputView = ({ inp }: IFiltredInputProps) => {
-    inp.onBlur = val => String(Number(val))
+    inp.onBlur = (ev, inp) => inp.setValue(String(Number(inp.value)))
     inp.filter = (pos, raw) => { 
         let value = ''
 
