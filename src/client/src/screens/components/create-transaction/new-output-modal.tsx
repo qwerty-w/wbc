@@ -86,7 +86,7 @@ export const NewOutputModalView = observer(() => {
 
     const onContinue = () => {
         const [addr, am] = [address.value, toSatoshis(Number(amount.value))]
-        address.setInvalid(addr === '' || !addr.split('').every(char => '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz'.includes(char)))
+        address.setInvalid(addr === '' || !addr.split('').every(char => '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz'.includes(char)) || creator.outs.has(addr))
         amount.setInvalid(am <= 0 || Number.isNaN(am) || am > creator.remainder)
 
         if (address.isInvalid || amount.isInvalid) {

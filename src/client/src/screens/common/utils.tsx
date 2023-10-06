@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react"
 import { makeObservable, observable, action} from 'mobx'
 import { observer } from "mobx-react-lite"
+
 import { StyledInput } from "./screen"
 
 
@@ -31,11 +32,15 @@ export class Container<T extends Record<string, any>> {
     isEmpty() {
         return this.arr.length === 0
     }
-    add(value: T) {
-        this.arr.push(value)
+    add(item: T) {
+        if (!this.has(item[this.keyprop])) {
+            this.arr.push(item)
+        }
     }
     extend(iter: Iterable<T>) {
-        this.arr = [...this.arr, ...iter]
+        for (let item of iter) {
+            this.add(item)
+        }
     }
     remove(bykey: any) {
         this.arr = this.arr.filter(item => item[this.keyprop] != bykey)
