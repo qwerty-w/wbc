@@ -2,6 +2,9 @@ import { ReactNode } from 'react'
 import styled, { css } from 'styled-components'
 
 
+export const StyledInput = styled.input<{ invalid?: boolean }>`
+    color: ${ props => props.invalid ? '#E73838' : 'unset' };
+`
 export const StyledContinueButton = styled.button.attrs<{ 
     $width: string,
     $height: string,

@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react"
 import { makeObservable, observable, action} from 'mobx'
 import { observer } from "mobx-react-lite"
+import { StyledInput } from "./screen"
 
 
 export class Container<T extends Record<string, any>> {
@@ -117,9 +118,9 @@ export const FiltredInputView = observer(({ inp }: IFiltredInputProps) => {
     }, [changed])
  
     return (
-        <input
+        <StyledInput
             ref={ref}
-            className={inp.isInvalid ? 'invalid' : undefined}
+            invalid={inp.isInvalid}
             type="text"
             value={inp.value}
             onBlur={ev => { if (inp.onBlur) { inp.onBlur(ev, inp) } } }
@@ -129,7 +130,7 @@ export const FiltredInputView = observer(({ inp }: IFiltredInputProps) => {
                 inp.setCursorPos(pos)
                 toggleChange()
             }}
-        /> 
+        />
     )
 })
 

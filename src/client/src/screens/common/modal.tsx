@@ -1,4 +1,4 @@
-import { PropsWithChildren, useRef, useState } from 'react'
+import { PropsWithChildren, useRef, useState, useEffect } from 'react'
 import { observable, action, makeObservable } from 'mobx'
 import { observer } from 'mobx-react-lite'
 import styled from 'styled-components'
@@ -18,7 +18,6 @@ const StyledModal = styled.div`
     justify-content: center;
 `
 
-
 export class Modal {
     constructor(public isShowed: boolean = false) {
         makeObservable(this, {
@@ -29,6 +28,7 @@ export class Modal {
     }
     show() {
         this.isShowed = true
+        
     }
     hide() {
         this.isShowed = false
@@ -36,18 +36,27 @@ export class Modal {
 }
 
 interface IModalContextProps extends PropsWithChildren {
-    modal: Modal
+    modal: Modal,
+    onEnter?: (event: KeyboardEvent) => void
 }
 
-export const ModalView = observer(({ modal, children }: IModalContextProps) => {
+export const ModalView = observer(({ modal, onEnter, children }: IModalContextProps) => {
     const ref = useRef<HTMLDivElement>(null)
     const [mouseDownElement, setMouseDownElement] = useState<EventTarget>()
 
-    window.addEventListener('keydown', ev => {
-        if (ev.key == 'Escape') {
-            modal.hide()
-        }
-    })
+    useEffect(() => {
+        document.addEventListener('keydown', ev => {
+            if (!modal.isShowed) {
+                return
+            }
+            if (ev.key === 'Escape') {
+                modal.hide()
+            }
+            else if (onEnter && ev.key === 'Enter') {
+                onEnter(ev)
+            }
+        })
+    }, [])
 
     return (
         <>
