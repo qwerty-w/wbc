@@ -98,7 +98,7 @@ export const NewOutputModalView = observer(() => {
     }
 
     return (
-        <ModalView modal={newout}>
+        <ModalView modal={newout} onEnter={onContinue} >
             <StyledNewOutput>
                 <StyledAddress>
                     <FiltredInputView inp={address} />

@@ -109,6 +109,10 @@ const CreateAddress = ({ newaddr }: INewAddressModalWindowProps) => {
 }
 
 const ImportAddress = ({ newaddr }: INewAddressModalWindowProps) => {
+    const onContinue = () => {
+
+    }
+
     return (
         <styled.Import>
             <styled.Top>
@@ -140,7 +144,7 @@ export const NewAddressModalView = observer(() => {
     useEffect(() => { newaddr.setAnimatedSwitcher(newaddr.isShowed) }, [newaddr.isShowed])  // no anim for first open
 
     return (
-        <ModalView modal={newaddr}>
+        <ModalView modal={newaddr} onEnter={() => newaddr.hide()}>
             { newaddr.currentWindow === 'create' ? <CreateAddress newaddr={newaddr} /> : <ImportAddress newaddr={newaddr} /> }
         </ModalView>
     )
