@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react"
 import { makeObservable, observable, action} from 'mobx'
 import { observer } from "mobx-react-lite"
+import Decimal from "decimal.js"
 
 import { StyledInput } from "./screen"
 
@@ -68,11 +69,11 @@ export function wrapString(str: string, letters: number = 4) {
 }
 
 export function toSatoshis(num: number) {
-    return num * 10 ** 8
+    return new Decimal(num).mul(10 ** 8).toNumber()
 }
 
 export function toBitcoins(num: number) {
-    return num / 10 ** 8
+    return new Decimal(num).div(10 ** 8).toNumber()
 }
 
 export async function setBuffer(text: any) {
@@ -125,7 +126,7 @@ export const FiltredInputView = observer(({ inp }: IFiltredInputProps) => {
     return (
         <StyledInput
             ref={ref}
-            invalid={inp.isInvalid}
+            $invalid={inp.isInvalid}
             type="text"
             value={inp.value}
             onBlur={ev => { if (inp.onBlur) { inp.onBlur(ev, inp) } } }

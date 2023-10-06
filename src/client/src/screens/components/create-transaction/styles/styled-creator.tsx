@@ -43,7 +43,7 @@ export const ioItems = styled.div`
 
     display: flex;
     flex-direction: column;
-    gap: 7px;
+    gap: 12px;
 `
 export const ioItem = styled.div`
     position: relative;
