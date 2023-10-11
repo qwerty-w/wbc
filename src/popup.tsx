@@ -1,61 +1,13 @@
-import React, { ComponentPropsWithRef, ElementType, PropsWithRef, ReactElement, forwardRef, useEffect, useLayoutEffect, useRef, useState } from "react"
+import React, { ComponentPropsWithRef, ElementType, PropsWithChildren, PropsWithRef, ReactElement, createRef, forwardRef, useEffect, useLayoutEffect, useRef, useState } from "react"
 import { createPortal } from "react-dom"
 import { BrowserRouter, Routes, Route, useNavigate, Outlet, useLocation } from 'react-router-dom'
 import { observable, computed, action, makeAutoObservable, makeObservable } from 'mobx'
 import { observer } from 'mobx-react-lite'
 
-import styled, { css } from 'styled-components'
+import styled, { css, keyframes } from 'styled-components'
 
 
-// ms
-const ADD_ANIMATION_DURATION = 400
-const REMOVE_ANIMATION_DURATION = 400
-
-const StyledMain = styled.div`
-    width: 100%;
-    height: 100%;
-    background-color: #f2f2f2;
-    font-family: 'Inter';
-    font-weight: 500;
-
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 30px;
-`
-const StyledBox = styled.div`
-    width: 400px;
-    height: 400px;
-    background-color: #fff;
-    color: #404040;
-    border-radius: 20px;
-
-    display: flex;
-    justify-content: space-around;
-    align-items: center;
-`
-const StyledButton = styled.button`
-    width: 80px;
-    height: 40px;
-
-    outline: none;
-    border: none;
-    border-radius: 14px;
-    color: #fff;
-    background-color: #ED9B60;
-    opacity: 0.9;
-
-    transition: transform .2s;
-
-    &:hover {
-        cursor: pointer;
-        opacity: 1;
-    }
-    &:active {
-        transform: scale(.95);
-    }
-`
-const StyledPopup = styled.div<{ $top?: string, $height?: string, $addAnim?: boolean, $removeAnim?: boolean }>`
+const StyledPopup = styled.div<{ $top?: string, $height?: string, $addAnim?: boolean, $removeAnim?: boolean, $animation?: AnimationType }>`
     position: fixed;
     top: ${props => props.$top || '0' };
     right: 5%;
@@ -71,10 +23,17 @@ const StyledPopup = styled.div<{ $top?: string, $height?: string, $addAnim?: boo
     flex-direction: column;
     align-items: center;
 
-    transition: ${props => [
-        props.$addAnim && `top ${ADD_ANIMATION_DURATION / 1000}s`,
-        props.$removeAnim && `height ${REMOVE_ANIMATION_DURATION / 1000}s`
-    ].filter(v => v).join(', ')};
+    animation: ${props => props.$animation ? keyframes`
+        from {
+            top: ${props.$animation.from.top}px;
+            height: ${props.$animation.from.height}px;
+        }
+        to {
+            top: 0px;
+            height: ${props.$animation.to.height}px;
+        }
+    ` : undefined} 2s;
+    /* animation-fill-mode: forwards; */
 `
 const StyledPopupLeft = styled.div`
     width: 41px;
@@ -113,26 +72,33 @@ const StyledPopupItem = styled.div`
 `
 
 
-enum ItemType {
+type AnimationType = {
+    from: {
+        height: number,
+        top: number
+    }
+    to: {
+        height: number,
+        top: number
+    }
+}
+
+export enum ItemType {
     INFO = 'INFO',
     WARN = 'WARNING',
     ERROR = 'ERROR'
 }
 enum ItemStatus {
-    PENDING = 'PENDING',  // waiting for add handler
-    MOUNTING = 'MOUNTING',  // calculate height
-    PREPARED = 'PREPARED',  // handled before add animation
-    ADDING = 'ADDING',  // start add animation
-
+    MOUNTING = 'MOUNT_PENDING',
     RENDERED = 'RENDERED',  // rendered, end of add animation
-
     UNMOUNTING = 'UNMOUNTING',  // wait for del handler
-    HANDLING = 'HANDLING',  // handled before del animation
-    DELETING = 'DELETING'  // animation is playing, delete after
 }
 
-class Item {
-    public status: ItemStatus
+const getHeight = (ref: React.RefObject<HTMLDivElement>): number => {
+    return ref.current ? ref.current.getBoundingClientRect().height : 0
+}
+
+export class Item {
     private static icons: Record<ItemType, string> = {
         [ItemType.INFO]: 'info.svg',
         [ItemType.WARN]: 'warning.svg',
@@ -144,11 +110,19 @@ class Item {
         [ItemType.ERROR]: 'err'
     }
 
+    public status: ItemStatus
+    public height: number | null = null
+    public ref: React.RefObject<HTMLDivElement>
+
     constructor(public type: ItemType, public text: string) {
-        this.status = ItemStatus.PENDING
+        this.status = ItemStatus.MOUNTING
+        this.ref = createRef()
+
         makeObservable(this, {
             status: observable,
-            setStatus: action
+            height: observable,
+            setStatus: action,
+            updateHeight: action
         })
     }
     get icoUrl() {
@@ -163,6 +137,9 @@ class Item {
     setStatus(status: ItemStatus) {
         this.status = status
     }
+    updateHeight() {
+        this.height = this.ref.current ? getHeight(this.ref) : null
+    }
 }
 
 class ItemContainer {  // queue
@@ -176,28 +153,11 @@ class ItemContainer {  // queue
             pop: action
         })
     }
+    vertices() {
+        return [this.peek(), this.tail()]
+    }
     peek() {
-        const find = (status: ItemStatus, reverse: boolean = true) => {
-            return reverse ? this.arr.slice().reverse().find(item => item.statusIs(status)) : this.arr.find(item => item.statusIs(status))
-        }
-
-        return find(ItemStatus.MOUNTING) || find(ItemStatus.PREPARED) || find(ItemStatus.ADDING) || find(ItemStatus.PENDING) || find(ItemStatus.RENDERED)
-
-        const items: Partial<Record<ItemStatus, Item | undefined>> = {
-            [ItemStatus.MOUNTING]: undefined,
-            [ItemStatus.PENDING]: undefined,
-            [ItemStatus.RENDERED]: undefined,
-        }
-
-        const renderedIndex = this.arr.findIndex(item => item.statusIs(ItemStatus.RENDERED))
-
-        for (let item of this.arr.slice(0, renderedIndex > 0 ? renderedIndex : undefined).reverse()) {
-            if (item.statusIs(ItemStatus.PENDING, ItemStatus.MOUNTING)) {
-                return item
-            }
-        }
-
-        return this.arr[renderedIndex]
+        return this.arr[0]
     }
     tail() {
         return this.arr.slice(-1)[0]
@@ -208,65 +168,46 @@ class ItemContainer {  // queue
     pop() {
         return this.arr.pop()
     }
-}
-
-type PopupItemViewProps = JSX.IntrinsicElements["div"] & {
-    item: Item
-}
-
-const PopupItemView = forwardRef<HTMLDivElement, PopupItemViewProps>(({ item }: PopupItemViewProps, ref) => {
-    return (
-        <StyledPopupItem ref={ref}>
-            <StyledPopupLeft><img src={item.icoUrl} alt={item.icoAlt}/></StyledPopupLeft>
-            <StyledPopupRight>
-                <span>{ item.text }</span>
-            </StyledPopupRight>
-        </StyledPopupItem>
-    )
-})
-
-type ExtendedItemType = {
-    item?: Item,
-    ref: React.RefObject<HTMLDivElement>,
-    height: {
-        value: number,
-        set: React.Dispatch<React.SetStateAction<number>>
-    },
-    remove: () => void
-}
-
-const useExtendedItem = (item?: Item, onRemove?: () => void): ExtendedItemType => {
-    const [value, set] = useState<number>(0)
-    return {
-        item,
-        ref: useRef<HTMLDivElement>(null),
-        height: { value, set },
-        remove: () => {
-            if (onRemove) {
-                onRemove()
-            }
-            set(0)
-        }
+    clear() {
+        this.arr = []
     }
 }
 
-const useVertices = (items: ItemContainer) => {
-    return [useExtendedItem(items.peek()), useExtendedItem(items.tail(), () => items.pop())]
-}
-
-const getHeight = (ref: React.RefObject<HTMLDivElement>): number => {
-    return ref.current ? ref.current.getBoundingClientRect().height : 0
-}
-
-class Popup {
+export class Popup {
     public items: ItemContainer = new ItemContainer()
-    public height: number = 0
+    public height: number | null = null
+    public ref: React.RefObject<HTMLDivElement>
+    public locked: boolean = false
+    public pending: Item[] = []
 
     constructor() {
-        makeAutoObservable(this)
+        this.ref = createRef()
+        makeObservable(this, {
+            items: observable,
+            height: observable,
+            add: action,
+            remove: action,
+            updateHeight: action,
+            clear: action
+        })
+    }
+    lock() {
+        this.locked = true
+    }
+    unlock() {
+        this.locked = false
+
+        const pending = this.pending.pop()
+        if (pending) {
+            this.add(pending)
+        }
     }
     add(item: Item) {
+        if (this.locked) {
+            return this.pending.unshift(item)
+        }
         this.items.add(item)
+        this.lock()
     }
     have(...statuses: ItemStatus[]) {
         return this.items.arr.some(item => item.statusIs(statuses))
@@ -275,92 +216,102 @@ class Popup {
         const item = Array.from(this.items.arr).reverse().find(item => item.statusIs(ItemStatus.RENDERED))  // todo: подписаться на изменение статуса, когда статус станет rendered - удалить
         item?.setStatus(ItemStatus.UNMOUNTING)
     }
-    setHeight(value: number) {
-        this.height = value
+    updateHeight() {
+        this.height = this.ref.current ? getHeight(this.ref) : null
+    }
+    clear() {  // todo: animate
+        this.height = 0
+        this.items.clear()
     }
 }
 
-const PopupView = observer(({ popup }: { popup: Popup }) => {
-    const [top, bot] = useVertices(popup.items)
-    const popupRef = useRef<HTMLDivElement>(null)
+type PopupItemViewProps = JSX.IntrinsicElements["div"] & {
+    item: Item
+}
 
-    if (top.item?.statusIs(ItemStatus.PENDING)) {
-        top.item.setStatus(ItemStatus.MOUNTING)
-    }
-
-    useLayoutEffect(() => {
-        if (top.item?.statusIs(ItemStatus.MOUNTING)) {
-            const topHeight = getHeight(top.ref)
-            top.height.set(topHeight)
-            popup.setHeight(popup.height + topHeight)
-
-            top.item.setStatus(ItemStatus.PREPARED)
-        }
-        
-    })
-    useEffect(() => {
-        if (top.item?.status === ItemStatus.PREPARED) {
-            setTimeout(() => top.item?.setStatus(ItemStatus.ADDING), 20)  // start animation through 20ms
-            setTimeout(() => top.item?.setStatus(ItemStatus.RENDERED), ADD_ANIMATION_DURATION + 20)
-        }
-
-        if (bot.item?.statusIs(ItemStatus.UNMOUNTING)) {
-            setTimeout(() => {  // start remove animation
-                popup.setHeight(popup.height - getHeight(bot.ref))  // - 1px cause last-child haven't border
-                bot.item?.setStatus(ItemStatus.DELETING)
-
-                setTimeout(() => bot.remove(), REMOVE_ANIMATION_DURATION + 10)  // delete item after end of remove animation
-            }, 20)
-
-            bot.item.setStatus(ItemStatus.HANDLING)
-        }
-    })
-
+export const PopupItemView = forwardRef<HTMLDivElement, PopupItemViewProps>(({ item }: PopupItemViewProps, ref) => {
     return (
-        <StyledPopup
-        $top={top.item?.status === ItemStatus.PREPARED ? -top.height.value + 'px': undefined}
-        $addAnim={top.item?.statusIs(ItemStatus.ADDING)}
-        $height={popup.height + 'px'}
-        $removeAnim={bot.item?.statusIs(ItemStatus.DELETING)}
-        ref={popupRef}>
-            {
-                popup.items.arr.filter(item => !item.statusIs(ItemStatus.PENDING)).map(
-                    (item, index, arr) => <PopupItemView key={index} item={item} ref={!index ? top.ref : index === arr.length - 1 ? bot.ref : undefined}/>
-                )
-            }
-        </StyledPopup>
+        <StyledPopupItem id={String(parseInt(item.text.replace(/[^\d\.]*/g, '')))} ref={ref}>
+            <StyledPopupLeft><img src={item.icoUrl} alt={item.icoAlt}/></StyledPopupLeft>
+            <StyledPopupRight>
+                <span>{ item.text }</span>
+            </StyledPopupRight>
+        </StyledPopupItem>
     )
 })
 
-export const MainView = () => {
-    const [popup] = useState(new Popup())
-    const [counter, setCounter] = useState(0)
+type BasePopupViewProps = {
+    popup: Popup,
+    animation?: AnimationType
+}
 
-    const add = (ev?: any, item?: Item) => {
-        const newItem: Item = item ? item : new Item(ItemType.INFO, 'Transactionhasbeencreatedand repeated ' + counter)
+const BasePopupView = ({ popup, animation }: BasePopupViewProps) => {
+    const { items } = popup
+    const top = items.peek()
+    const start = items.arr.findIndex(item => item === top)
 
-        popup.add(newItem)
-        setCounter(counter + 1)
+    return (
+        <StyledPopup
+            $animation={animation}
+            ref={popup.ref}>
+                {
+                    popup.items.arr.slice(start).map((item, index) => <PopupItemView key={index} item={item} ref={item.ref} />)
+                }
+        </StyledPopup>
+    )
+}
 
-    }
-    const addBig = () => {
-        add(undefined, new Item(ItemType.ERROR, 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Suspendisse sodales quam ut vestibulum ultrices.'))
-    }
-    const addRemove = () => {
-        add(undefined)
-        popup.remove()
+const Transition = ({ timeout, x }: { timeout: number, x: any }) => {
+    const [state, setState] = useState('entering')
+    useEffect(() => {
+        setTimeout(() => {
+            setState('entered')
+        }, timeout)
+    })
+    return <>{ x(state) }</>
+}
+
+export const PopupView = observer(({ popup }: { popup: Popup }) => {
+    const [top, bot] = popup.items.vertices()
+
+    useLayoutEffect(() => {
+        top?.updateHeight()
+        bot?.updateHeight()
+        popup.updateHeight()
+    })
+
+    if (!popup.items.arr.length || [popup, top, bot].some(object => object?.height === null) || [top, bot].every(item => item?.status === ItemStatus.RENDERED)) {
+        return <BasePopupView popup={popup} />
     }
 
     return (
-        <StyledMain>
-            <StyledBox>
-                <StyledButton onClick={add}>Add</StyledButton>
-                <StyledButton onClick={addBig}>Add big</StyledButton>
-                <StyledButton onClick={addRemove}>Add and Remove</StyledButton>
-                <StyledButton onClick={() => popup.remove()}>Remove</StyledButton>
-            </StyledBox>
-            <StyledBox>This is Box !</StyledBox>
-            <PopupView popup={popup}/>
-        </StyledMain>
+        <Transition timeout={1600} x=
+            {
+                (state: any) => {
+                    if (state === 'entering') {
+                        const animation = {
+                            from: {
+                                top: top?.status === ItemStatus.MOUNTING ? -(top.height as number) : 0,
+                                height: (popup.height as number)
+                            },
+                            to: {
+                                top: 0,
+                                height: bot?.status === ItemStatus.UNMOUNTING ? (popup.height as number) - (bot?.height as number) : (popup.height as number)
+                            }
+                        }
+                        return <BasePopupView popup={popup} animation={animation} />
+                    }
+                    else if (state === 'entered') {
+                        top?.setStatus(ItemStatus.RENDERED)
+
+                        if (bot?.status === ItemStatus.UNMOUNTING) {
+                            popup.items.pop()
+                        }
+                        popup.unlock()
+                    }
+                    return <BasePopupView popup={popup} />
+
+                }
+            } />
     )
-}
+})
