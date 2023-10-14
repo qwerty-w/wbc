@@ -7,13 +7,18 @@ import { observer } from 'mobx-react-lite'
 import styled, { css, keyframes } from 'styled-components'
 
 
-const StyledPopup = styled.div<{ $top?: string, $height?: string, $addAnim?: boolean, $removeAnim?: boolean, $animation?: AnimationType }>`
+
+const StyledPopup = styled.div.attrs<{ $top?: string,  $transition?: number }>(props => {
+    const style = {
+        top: props.$top || '0',
+        transition: props.$transition !== undefined ? `top ${props.$transition}ms` : ''  // fixme: undefined ?
+    }
+    return { style }
+})`
     position: fixed;
-    top: ${props => props.$top || '0' };
     right: 5%;
 
     width: 215px;
-    height: ${props => props.$height || ""};
 
     border-radius: 0px 0px 20px 20px;
     background-color: #fff;
@@ -22,28 +27,16 @@ const StyledPopup = styled.div<{ $top?: string, $height?: string, $addAnim?: boo
     display: flex;
     flex-direction: column;
     align-items: center;
-
-    animation: ${props => props.$animation ? keyframes`
-        from {
-            top: ${props.$animation.from.top}px;
-            height: ${props.$animation.from.height}px;
-        }
-        to {
-            top: 0px;
-            height: ${props.$animation.to.height}px;
-        }
-    ` : undefined} 2s;
-    /* animation-fill-mode: forwards; */
 `
-const StyledPopupLeft = styled.div`
+const StyledItemLeft = styled.div`
     width: 41px;
     padding: 0px 13px;
+
     display: flex;
     justify-content: center;
     align-items: center;
 `
-const StyledPopupRight = styled.div`
-    flex-grow: 1;
+const StyledItemRight = styled.div`
     padding: 10px 0px;
     padding-right: 13px;
     border-bottom: 1px solid #f2f2f2;
@@ -59,29 +52,29 @@ const StyledPopupRight = styled.div`
         overflow: hidden;
     }
 `
-const StyledPopupItem = styled.div`
-    width: 100%;
-    min-height: 35px;
+const StyledItemFlex = styled.div`
+    overflow: hidden;
+    display: flex;
     flex-shrink: 0;
+`
+const StyledItem = styled.div.attrs<{ $height?: string, $transition?: number }>(props => {
+    const style = {
+        height: props.$height,
+        transition: props.$transition ? `height ${props.$transition}ms` : undefined
+    }
+    return { style }
+})`
+    width: 100%;
+    min-height: ${props => props.$height === undefined ? '35px' : undefined};
 
     display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
 
-    &:last-child ${StyledPopupRight} {
+    &:last-child ${StyledItemRight} {
         border-bottom: 1px solid rgba(0, 0, 0, 0);
     }
 `
-
-
-type AnimationType = {
-    from: {
-        height: number,
-        top: number
-    }
-    to: {
-        height: number,
-        top: number
-    }
-}
 
 export enum ItemType {
     INFO = 'INFO',
@@ -89,9 +82,9 @@ export enum ItemType {
     ERROR = 'ERROR'
 }
 enum ItemStatus {
-    MOUNTING = 'MOUNT_PENDING',
+    MOUNTING = 'MOUNTING',
     RENDERED = 'RENDERED',  // rendered, end of add animation
-    UNMOUNTING = 'UNMOUNTING',  // wait for del handler
+    UNMOUNTING = 'UNMOUNTING'  // wait for del handler
 }
 
 const getHeight = (ref: React.RefObject<HTMLDivElement>): number => {
@@ -131,9 +124,6 @@ export class Item {
     get icoAlt() {
         return Item.iconsAlt[this.type]
     }
-    statusIs(...statuses: ItemStatus[] | any[]) {
-        return statuses.includes(this.status)
-    }
     setStatus(status: ItemStatus) {
         this.status = status
     }
@@ -142,7 +132,7 @@ export class Item {
     }
 }
 
-class ItemContainer {  // queue
+class ItemContainer {
     public arr: Item[]
 
     constructor() {
@@ -173,12 +163,21 @@ class ItemContainer {  // queue
     }
 }
 
+enum PopupLock {
+    onadd = 'onadd',
+    ondel = 'ondel'
+}
+type PopupPendingQueue = {
+    onadd: Item[],
+    ondel: number
+}
+
 export class Popup {
     public items: ItemContainer = new ItemContainer()
     public height: number | null = null
     public ref: React.RefObject<HTMLDivElement>
-    public locked: boolean = false
-    public pending: Item[] = []
+    public locked: Record<PopupLock, boolean> = { onadd: false, ondel: false }
+    public pending: PopupPendingQueue = { onadd: [], ondel: 0 }
 
     constructor() {
         this.ref = createRef()
@@ -186,35 +185,45 @@ export class Popup {
             items: observable,
             height: observable,
             add: action,
-            remove: action,
+            del: action,
             updateHeight: action,
             clear: action
         })
     }
-    lock() {
-        this.locked = true
+    lock(type: PopupLock) {
+        this.locked[type] = true
     }
-    unlock() {
-        this.locked = false
+    unlock(type: PopupLock) {
+        this.locked[type] = false
 
-        const pending = this.pending.pop()
-        if (pending) {
-            this.add(pending)
+        if (type === PopupLock.onadd && this.pending.onadd.length) {
+            this.add(this.pending.onadd.pop() as Item)
+        }
+        else if (type === PopupLock.ondel && this.pending.ondel) {
+            this.pending.ondel--
+            this.del()
         }
     }
     add(item: Item) {
-        if (this.locked) {
-            return this.pending.unshift(item)
+        if (this.locked.onadd) {
+            return this.pending.onadd.unshift(item)
         }
         this.items.add(item)
-        this.lock()
+        this.lock(PopupLock.onadd)
     }
-    have(...statuses: ItemStatus[]) {
-        return this.items.arr.some(item => item.statusIs(statuses))
-    }
-    remove() {
-        const item = Array.from(this.items.arr).reverse().find(item => item.statusIs(ItemStatus.RENDERED))  // todo: подписаться на изменение статуса, когда статус станет rendered - удалить
-        item?.setStatus(ItemStatus.UNMOUNTING)
+    del() {
+        // todo
+        const tail = this.items.tail()
+
+        if (tail?.status === ItemStatus.RENDERED) {
+            if (this.locked.ondel) {
+                this.pending.ondel++
+            }
+            else {
+                tail.setStatus(ItemStatus.UNMOUNTING)
+                this.lock(PopupLock.ondel)
+            }
+        }
     }
     updateHeight() {
         this.height = this.ref.current ? getHeight(this.ref) : null
@@ -225,93 +234,112 @@ export class Popup {
     }
 }
 
-type PopupItemViewProps = JSX.IntrinsicElements["div"] & {
-    item: Item
+type BasePopupItemViewProps = {
+    item: Item,
+    height?: string,
+    transition?: number
 }
 
-export const PopupItemView = forwardRef<HTMLDivElement, PopupItemViewProps>(({ item }: PopupItemViewProps, ref) => {
+const BasePopupItemView = ({ item, height, transition }: BasePopupItemViewProps) => {
     return (
-        <StyledPopupItem id={String(parseInt(item.text.replace(/[^\d\.]*/g, '')))} ref={ref}>
-            <StyledPopupLeft><img src={item.icoUrl} alt={item.icoAlt}/></StyledPopupLeft>
-            <StyledPopupRight>
-                <span>{ item.text }</span>
-            </StyledPopupRight>
-        </StyledPopupItem>
+        <StyledItem id={String(parseInt(item.text.replace(/[^\d\.]*/g, '')))} $height={height} $transition={transition} ref={item.ref}>
+            <StyledItemFlex>
+                <StyledItemLeft><img src={item.icoUrl} alt={item.icoAlt}/></StyledItemLeft>
+                <StyledItemRight>
+                    <span>{ item.text }</span>
+                </StyledItemRight>
+            </StyledItemFlex>
+        </StyledItem>
     )
+}
+
+export const PopupItemView = observer(({ popup, item }: { popup: Popup, item: Item }) => {
+    if (item.status !== ItemStatus.UNMOUNTING) {
+        return <BasePopupItemView item={item} />
+    }
+
+    return <Transition timeout={1800} callback={
+        state => {
+            switch (state) {
+                case TransitionState.BASE:
+                    return <BasePopupItemView item={item} height={(item.height as number) + 'px'} />
+
+                case TransitionState.ENTERING:
+                    return <BasePopupItemView item={item} height={'0'} transition={2000} />
+
+                case TransitionState.ENTERED:
+                    popup.items.arr.splice(popup.items.arr.findIndex(object => object === item), 1)
+                    popup.unlock(PopupLock.ondel)
+            }
+        }
+    } />
 })
+
+enum TransitionState {
+    BASE = 'BASE',
+    ENTERING = 'ENTERING',
+    ENTERED = 'ENTERED'
+}
+
+type TransitionProps = {
+    timeout: number,
+    callback: (state: TransitionState) => void
+}
+
+const Transition = ({ timeout, callback }: TransitionProps) => {
+    const [state, setState] = useState(TransitionState.BASE)
+
+    useEffect(() => {
+        setTimeout(() => {
+            setState(TransitionState.ENTERING)
+            setTimeout(() => setState(TransitionState.ENTERED), timeout)
+        }, 10)
+    })
+    return <>{ callback(state) }</>
+}
 
 type BasePopupViewProps = {
     popup: Popup,
-    animation?: AnimationType
+    top?: string,
+    transition?: number
 }
 
-const BasePopupView = ({ popup, animation }: BasePopupViewProps) => {
-    const { items } = popup
-    const top = items.peek()
-    const start = items.arr.findIndex(item => item === top)
-
+const BasePopupView = ({ popup, top, transition }: BasePopupViewProps) => {
     return (
-        <StyledPopup
-            $animation={animation}
-            ref={popup.ref}>
-                {
-                    popup.items.arr.slice(start).map((item, index) => <PopupItemView key={index} item={item} ref={item.ref} />)
-                }
+        <StyledPopup id="popup" $top={top} $transition={transition} ref={popup.ref}>
+            {
+                popup.items.arr.map((item, index) => <PopupItemView key={index} popup={popup} item={item} />)
+            }
         </StyledPopup>
     )
 }
 
-const Transition = ({ timeout, x }: { timeout: number, x: any }) => {
-    const [state, setState] = useState('entering')
-    useEffect(() => {
-        setTimeout(() => {
-            setState('entered')
-        }, timeout)
-    })
-    return <>{ x(state) }</>
-}
-
 export const PopupView = observer(({ popup }: { popup: Popup }) => {
-    const [top, bot] = popup.items.vertices()
+    const top = popup.items.peek()
 
     useLayoutEffect(() => {
         top?.updateHeight()
-        bot?.updateHeight()
-        popup.updateHeight()
+        popup.updateHeight()  // todo: remove
     })
 
-    if (!popup.items.arr.length || [popup, top, bot].some(object => object?.height === null) || [top, bot].every(item => item?.status === ItemStatus.RENDERED)) {
+    if (!popup.items.arr.length || [popup, top].some(object => object?.height === null) || top.status !== ItemStatus.MOUNTING) {
         return <BasePopupView popup={popup} />
     }
 
-    return (
-        <Transition timeout={1600} x=
-            {
-                (state: any) => {
-                    if (state === 'entering') {
-                        const animation = {
-                            from: {
-                                top: top?.status === ItemStatus.MOUNTING ? -(top.height as number) : 0,
-                                height: (popup.height as number)
-                            },
-                            to: {
-                                top: 0,
-                                height: bot?.status === ItemStatus.UNMOUNTING ? (popup.height as number) - (bot?.height as number) : (popup.height as number)
-                            }
-                        }
-                        return <BasePopupView popup={popup} animation={animation} />
-                    }
-                    else if (state === 'entered') {
-                        top?.setStatus(ItemStatus.RENDERED)
+    return <Transition timeout={1700} callback={
+        state => {
+            switch (state) {
+                case TransitionState.BASE:
+                    return <BasePopupView popup={popup} top={'-' + top.height + 'px'} />
 
-                        if (bot?.status === ItemStatus.UNMOUNTING) {
-                            popup.items.pop()
-                        }
-                        popup.unlock()
-                    }
-                    return <BasePopupView popup={popup} />
+                case TransitionState.ENTERING:
+                    return <BasePopupView popup={popup} transition={2000} />
 
-                }
-            } />
-    )
+                case TransitionState.ENTERED:
+                    top.setStatus(ItemStatus.RENDERED)
+                    popup.unlock(PopupLock.onadd)
+            }
+            return <BasePopupView popup={popup} />
+        }
+    } />
 })
