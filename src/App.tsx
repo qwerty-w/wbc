@@ -92,11 +92,78 @@ export const MainView = () => {
     )
 }
 
+class MyList {
+    keys: string[] = []
+
+    constructor() {
+        makeObservable(this, {
+            keys: observable,
+            add: action,
+            remove: action
+        })
+    }
+    add(key: string) {
+        this.keys.push(key)
+    }
+    remove() {
+        this.keys.pop()
+    }
+}
+
+const InnerView = React.memo(({ name, counter }: {name: string, counter: number}) => {
+    const [state, setState] = useState(true)
+
+    useEffect(() => {
+        console.log(`mount ${name}`)
+        return () => console.log(`unmount ${name}`)
+    }, [])
+    useEffect(() => {
+        console.log(`render ${name}`)
+    })
+
+    return (
+        <>
+            <span>Counter { counter } \ Name {name} </span>
+            <button onClick={() => setState(!state)}>Change inner state {String(state)}</button>
+        </>
+    )
+})
+
+const WrapperView = ({list, counter, setCounter, short, setShort, inp, setInp, background}: any) => {
+    return (
+        <div style={{ background: background }}>
+            { list.keys.map((key: any) => <InnerView key={key} name={key} counter={counter} />) }
+            <input value={inp} onChange={e => setInp(e.target.value) } />
+            <button onClick={() => list.add(inp)}>Add list</button>
+            <button onClick={() => setCounter(counter + 1)}>+counter</button>
+            <button onClick={() => setShort(!short)}>Short</button>
+        </div>
+    )
+}
+
+const TestView = observer(() => {
+    const [counter, setCounter] = useState(0)
+    const [inp, setInp] = useState('')
+    const [list] = useState<MyList>(new MyList())
+    const x = list.keys.length
+
+    const [short, setShort] = useState(false)
+
+    if (short) {
+        return <WrapperView list={list} counter={counter} setCounter={setCounter} short={short} setShort={setShort} inp={inp} setInp={setInp} background="red" />
+    }
+
+    return (
+        <WrapperView list={list} counter={counter} setCounter={setCounter} short={short} setShort={setShort} inp={inp} setInp={setInp} background="green" />
+    )
+})
+
 const App = () => {
     return (
         <BrowserRouter>
             <Routes>
                 <Route path="/" element={<MainView />} />
+                <Route path="/test" element={<TestView />} />
             </Routes>
         </BrowserRouter>
     )
