@@ -1,7 +1,7 @@
 import React, { ComponentPropsWithRef, ElementType, PropsWithChildren, PropsWithRef, ReactElement, createRef, forwardRef, useEffect, useLayoutEffect, useRef, useState } from "react"
 import { createPortal } from "react-dom"
 import { BrowserRouter, Routes, Route, useNavigate, Outlet, useLocation } from 'react-router-dom'
-import { observable, computed, action, makeAutoObservable, makeObservable } from 'mobx'
+import { observable, computed, action, makeAutoObservable, makeObservable, autorun } from 'mobx'
 import { observer } from 'mobx-react-lite'
 
 import styled, { css, keyframes } from 'styled-components'
@@ -11,7 +11,7 @@ import styled, { css, keyframes } from 'styled-components'
 const StyledPopup = styled.div.attrs<{ $top?: string,  $transition?: number }>(props => {
     const style = {
         top: props.$top || '0',
-        transition: props.$transition !== undefined ? `top ${props.$transition}ms` : ''  // fixme: undefined ?
+        transition: props.$transition !== undefined ? `top ${props.$transition}ms` : undefined
     }
     return { style }
 })`
@@ -76,6 +76,70 @@ const StyledItem = styled.div.attrs<{ $height?: string, $transition?: number }>(
     }
 `
 
+function getHeight(ref: React.RefObject<HTMLDivElement>): number {
+    return ref.current ? ref.current.getBoundingClientRect().height : 0
+}
+
+enum TransitionState {
+    DEFAULT = 'DEFAULT',
+    ENTER = 'ENTER',
+    ENTERING = 'ENTERING',
+    ENTERED = 'ENTERED'
+}
+
+class Transition {
+    public started: boolean = false
+    public state: TransitionState = TransitionState.DEFAULT
+
+    constructor() {
+        makeObservable(this, {
+            started: observable,
+            state: observable,
+            start: action,
+            reset: action,
+            setState: action
+        })
+    }
+    start() {
+        this.started = true
+    }
+    reset() {
+        this.started = false
+        this.state = TransitionState.DEFAULT
+    }
+    setState(state: TransitionState) {
+        this.state = state
+    }
+}
+
+type TransitionProps = {
+    transition: Transition,
+    timeout: number,
+    callback: (state: TransitionState) => void
+}
+
+const TransitionView = observer(({ transition, timeout, callback }: TransitionProps) => {
+    useEffect(() => {
+        if (!transition.started) {
+            return
+        }
+
+        switch (transition.state) {
+            case TransitionState.DEFAULT:
+                transition.setState(TransitionState.ENTER)
+                break
+
+            case TransitionState.ENTER:
+                setTimeout(() => {
+                    transition.setState(TransitionState.ENTERING)
+                    setTimeout(() => transition.setState(TransitionState.ENTERED), timeout)
+                }, 10)
+        }
+    }, [transition.started, transition.state])
+
+    return <>{ callback(transition.state) }</>
+})
+
 export enum ItemType {
     INFO = 'INFO',
     WARN = 'WARNING',
@@ -85,10 +149,6 @@ enum ItemStatus {
     MOUNTING = 'MOUNTING',
     RENDERED = 'RENDERED',  // rendered, end of add animation
     UNMOUNTING = 'UNMOUNTING'  // wait for del handler
-}
-
-const getHeight = (ref: React.RefObject<HTMLDivElement>): number => {
-    return ref.current ? ref.current.getBoundingClientRect().height : 0
 }
 
 export class Item {
@@ -109,7 +169,7 @@ export class Item {
     public ref: React.RefObject<HTMLDivElement>
 
     constructor(public type: ItemType, public text: string) {
-        this.key = 0
+        this.key = NaN
         this.status = ItemStatus.MOUNTING
         this.ref = createRef()
 
@@ -200,21 +260,28 @@ export class Popup {
         this.locked[type] = false
 
         if (type === PopupLock.onadd && this.pending.onadd.length) {
-            this.add(this.pending.onadd.pop() as Item)
+            this.add(this.pending.onadd.pop() as Item, false)
         }
         else if (type === PopupLock.ondel && this.pending.ondel) {
             this.pending.ondel--
             this.del()
         }
     }
-    add(item: Item) {
-        item.key = this.count++
+    add(item: Item, setkey: boolean = true) {
+        if (setkey) {
+            item.key = this.count++
+        }
 
         if (this.locked.onadd) {
             return this.pending.onadd.unshift(item)
         }
         this.items.add(item)
         this.lock(PopupLock.onadd)
+        autorun(() => {
+            if (item.status === ItemStatus.RENDERED) {
+                this.unlock(PopupLock.onadd)
+            }
+        })
     }
     del() {
         // todo
@@ -247,7 +314,7 @@ type BasePopupItemViewProps = {
 
 const BasePopupItemView = ({ item, height, transition }: BasePopupItemViewProps) => {
     return (
-        <StyledItem id={String(parseInt(item.text.replace(/[^\d\.]*/g, '')))} $height={height} $transition={transition} ref={item.ref}>
+        <StyledItem $height={height} $transition={transition} ref={item.ref}>
             <StyledItemFlex>
                 <StyledItemLeft><img src={item.icoUrl} alt={item.icoAlt}/></StyledItemLeft>
                 <StyledItemRight>
@@ -259,66 +326,35 @@ const BasePopupItemView = ({ item, height, transition }: BasePopupItemViewProps)
 }
 
 export const PopupItemView = observer(({ popup, item }: { popup: Popup, item: Item }) => {
+    const [transition] = useState(new Transition())
 
     useEffect(() => {
-        console.log('Item ', item.key, ' is mount')
-
-        return () => {
-            console.log('Item ', item.key, 'is unmount')
+        if (item.status === ItemStatus.UNMOUNTING) {
+            transition.start()
         }
-    }, [])
+    }, [item.status])
 
-    useEffect(() => {
-        console.log('render', item.key)
-    })
-
-    if (item.status !== ItemStatus.UNMOUNTING) {
-        return <BasePopupItemView item={item} />
-    }
-
-    return <Transition start={true} timeout={1800} callback={
+    return <TransitionView transition={transition} timeout={350} callback={
         state => {
+            
             switch (state) {
-                case TransitionState.BASE:
+                case TransitionState.DEFAULT:
+                    return <BasePopupItemView item={item} />
+
+                case TransitionState.ENTER:
                     return <BasePopupItemView item={item} height={(item.height as number) + 'px'} />
 
                 case TransitionState.ENTERING:
-                    return <BasePopupItemView item={item} height={'0'} transition={2000} />
+                    return <BasePopupItemView item={item} height={'0'} transition={400} />
 
                 case TransitionState.ENTERED:
                     popup.items.arr.splice(popup.items.arr.findIndex(object => object === item), 1)
                     popup.unlock(PopupLock.ondel)
+                    return <BasePopupItemView item={item} height={'0'} />
             }
         }
     } />
 })
-
-enum TransitionState {
-    BASE = 'BASE',
-    ENTERING = 'ENTERING',
-    ENTERED = 'ENTERED'
-}
-
-type TransitionProps = {
-    start: boolean,
-    timeout: number,
-    callback: (state: TransitionState, reset: () => void) => void
-}
-
-const Transition = ({ start, timeout, callback }: TransitionProps) => {
-    const [state, setState] = useState(TransitionState.BASE)
-    const reset = () => setState(TransitionState.BASE)
-
-    useEffect(() => {
-        if (start && timeout > 0) {
-            setTimeout(() => {
-                setState(TransitionState.ENTERING)
-                setTimeout(() => setState(TransitionState.ENTERED), timeout)
-            }, 10)
-        }
-    }, [start])
-    return <>{ callback(state, reset) }</>
-}
 
 type BasePopupViewProps = {
     popup: Popup,
@@ -327,16 +363,8 @@ type BasePopupViewProps = {
 }
 
 const BasePopupView = ({ popup, top, transition }: BasePopupViewProps) => {
-    useEffect(() => {
-        console.log('mount BasePopupView')
-        return () => console.log('unmount BasePopupView')
-    }, [])
-    useEffect(() => {
-        console.log('render BasePopupView')
-    })
-
     return (
-        <StyledPopup id="popup" $top={top} $transition={transition} ref={popup.ref}>
+        <StyledPopup $top={top} $transition={transition} ref={popup.ref}>
             {
                 popup.items.arr.map((item) => <PopupItemView key={item.key} popup={popup} item={item} />)
             }
@@ -346,32 +374,35 @@ const BasePopupView = ({ popup, top, transition }: BasePopupViewProps) => {
 
 export const PopupView = observer(({ popup }: { popup: Popup }) => {
     const top = popup.items.peek()
+    const [transition] = useState(new Transition())
 
     useLayoutEffect(() => {
         top?.updateHeight()
-        popup.updateHeight()  // todo: remove
+        popup.updateHeight()
+    })
+    useEffect(() => {
+        if (Boolean(popup.items.arr.length) && top?.height !== null && top.status === ItemStatus.MOUNTING) {
+            transition.start()
+        }
     })
 
-    if (!popup.items.arr.length || [popup, top].some(object => object?.height === null) || top.status !== ItemStatus.MOUNTING) {
-        return <Transition start={false} timeout={0} callback={() => <BasePopupView popup={popup} />} />
-    }
-
-    return <Transition start={true} timeout={1700} callback={
-        (state, reset) => {
-            console.log('state:', state)
+    return <TransitionView transition={transition} timeout={350} callback={
+        state => {
             switch (state) {
-                case TransitionState.BASE:
+                case TransitionState.ENTER:
                     return <BasePopupView popup={popup} top={'-' + top.height + 'px'} />
 
                 case TransitionState.ENTERING:
-                    return <BasePopupView popup={popup} transition={2000} />
+                    return <BasePopupView popup={popup} transition={400} />
 
+                // @ts-ignore
                 case TransitionState.ENTERED:
                     top.setStatus(ItemStatus.RENDERED)
-                    popup.unlock(PopupLock.onadd)
-                    reset()
+                    transition.reset()
+
+                case TransitionState.DEFAULT:
+                    return <BasePopupView popup={popup} />
             }
-            return <BasePopupView popup={popup} />
         }
     } />
 })
