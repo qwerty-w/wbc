@@ -340,6 +340,9 @@ export class Popup {
         }
     }
     clear() {
+        if (this.locked.onclear) {
+            return
+        }
         this.lock(PopupLock.onclear)
 
         if (this.locked.onadd) {
