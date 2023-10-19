@@ -5,7 +5,6 @@ import { observer } from 'mobx-react-lite'
 import styled from 'styled-components'
 
 
-
 const StyledPopup = styled.div.attrs<{ $top?: string, $height?: string, $transition?: number, $transitionType?: string }>(props => {
     const style = {
         top: props.$top || '0',
@@ -301,6 +300,15 @@ export class Popup {
                 this.unlock(PopupLock.onadd)
             }
         })
+    }
+    info(text: string) {
+        this.add(new Item(ItemType.INFO, text))
+    }
+    warning(text: string) {
+        this.add(new Item(ItemType.WARN, text))
+    }
+    error(text: string) {
+        this.add(new Item(ItemType.ERROR, text))
     }
     del() {
         if (!this.items.arr.length) {
