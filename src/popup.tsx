@@ -1,10 +1,8 @@
-import React, { ComponentPropsWithRef, ElementType, PropsWithChildren, PropsWithRef, ReactElement, createRef, forwardRef, useEffect, useLayoutEffect, useRef, useState } from "react"
-import { createPortal } from "react-dom"
-import { BrowserRouter, Routes, Route, useNavigate, Outlet, useLocation } from 'react-router-dom'
-import { observable, computed, action, makeAutoObservable, makeObservable, autorun } from 'mobx'
+import React, { createRef, useEffect, useLayoutEffect, useState } from "react"
+import { observable, action, makeObservable, autorun } from 'mobx'
 import { observer } from 'mobx-react-lite'
 
-import styled, { css, keyframes } from 'styled-components'
+import styled from 'styled-components'
 
 
 
@@ -271,6 +269,9 @@ export class Popup {
             finishClearing: action
         })
     }
+    updateHeight() {
+        this.height = this.ref.current ? getHeight(this.ref) : null
+    }
     lock(type: PopupLock) {
         this.locked[type] = true
     }
@@ -302,6 +303,10 @@ export class Popup {
         })
     }
     del() {
+        if (!this.items.arr.length) {
+            return
+        }
+
         if (this.locked.ondel) {
             this.pending.ondel++
             return
@@ -326,9 +331,6 @@ export class Popup {
                 lock()
         }
     }
-    updateHeight() {
-        this.height = this.ref.current ? getHeight(this.ref) : null
-    }
     clear() {
         this.lock(PopupLock.onclear)
 
@@ -348,8 +350,11 @@ export class Popup {
     finishClearing() {
         this.items.clear()
         this.clearing = false
-        this.unlock(PopupLock.onadd)
         this.unlock(PopupLock.onclear)
+        this.unlock(PopupLock.onadd)
+
+        this.unlock(PopupLock.ondel)
+        this.pending.ondel = 0
     }
 }
 
