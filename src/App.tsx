@@ -28,8 +28,16 @@ const StyledBox = styled.div`
     border-radius: 20px;
 
     display: flex;
-    justify-content: space-around;
+    flex-direction: column;
+    justify-content: center;
     align-items: center;
+    gap: 20px;
+
+    & div {
+        width: 100%;
+        display: flex;
+        justify-content: space-around;
+    }
 `
 const StyledButton = styled.button`
     width: 80px;
@@ -43,6 +51,7 @@ const StyledButton = styled.button`
     opacity: 0.9;
 
     transition: transform .2s;
+    user-select: none;
 
     &:hover {
         cursor: pointer;
@@ -57,6 +66,7 @@ const StyledButton = styled.button`
 export const MainView = () => {
     const [popup] = useState(new Popup())
     const [counter, setCounter] = useState(0)
+    const [armCounter, setArmCounter] = useState(0)
 
     const add = (ev?: any, item?: Item) => {
         const newItem: Item = item ? item : new Item(ItemType.INFO, 'Transactionhasbeencreatedand repeated ' + counter)
@@ -68,23 +78,26 @@ export const MainView = () => {
     const addBig = () => {
         add(undefined, new Item(ItemType.ERROR, 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Suspendisse sodales quam ut vestibulum ultrices.'))
     }
-    const [armCounter, setArmCounter] = useState(0)
     const addRemove = () => {
         add(undefined)
         // add(undefined)
         // add(undefined)
         popup.del()
         setArmCounter(armCounter + 1)
-        console.log('pressed:', armCounter)
     }
 
     return (
         <StyledMain>
             <StyledBox>
-                <StyledButton onClick={add}>Add</StyledButton>
-                <StyledButton onClick={addBig}>Add big</StyledButton>
-                <StyledButton onClick={addRemove}>Add and Remove</StyledButton>
-                <StyledButton onClick={() => popup.del()}>Remove</StyledButton>
+                <div>
+                    <StyledButton onClick={add}>Add</StyledButton>
+                    <StyledButton onClick={addBig}>Add big</StyledButton>
+                    <StyledButton onClick={addRemove}>Add and Remove</StyledButton>
+                    <StyledButton onClick={() => popup.del()}>Remove</StyledButton>
+                </div>
+                <div>
+                    <StyledButton onClick={() => popup.clear()}>Clear</StyledButton>
+                </div>
             </StyledBox>
             <StyledBox>This is Box !</StyledBox>
             <PopupView popup={popup}/>

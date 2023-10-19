@@ -8,10 +8,11 @@ import styled, { css, keyframes } from 'styled-components'
 
 
 
-const StyledPopup = styled.div.attrs<{ $top?: string,  $transition?: number }>(props => {
+const StyledPopup = styled.div.attrs<{ $top?: string, $height?: string, $transition?: number, $transitionType?: string }>(props => {
     const style = {
         top: props.$top || '0',
-        transition: props.$transition !== undefined ? `top ${props.$transition}ms` : undefined
+        transition: props.$transition !== undefined ? `${props.$transitionType || 'top'} ${props.$transition}ms` : undefined,
+        height: props.$height
     }
     return { style }
 })`
@@ -147,8 +148,8 @@ export enum ItemType {
 }
 enum ItemStatus {
     MOUNTING = 'MOUNTING',
-    RENDERED = 'RENDERED',  // rendered, end of add animation
-    UNMOUNTING = 'UNMOUNTING'  // wait for del handler
+    RENDERED = 'RENDERED',
+    UNMOUNTING = 'UNMOUNTING'
 }
 
 export class Item {
@@ -194,30 +195,43 @@ export class Item {
     }
 }
 
+type OptionalItem = Item | undefined
+
 class ItemContainer {
-    public arr: Item[]
+    public arr: Item[] = []
 
     constructor() {
-        this.arr = []
         makeObservable(this, {
             arr: observable,
             add: action,
-            pop: action
+            remove: action,
+            pop: action,
+            clear: action
         })
     }
-    vertices() {
+    vertices(): (OptionalItem)[] {
         return [this.peek(), this.tail()]
     }
-    peek() {
+    peek(): OptionalItem {
         return this.arr[0]
     }
-    tail() {
+    tail(): OptionalItem {
         return this.arr.slice(-1)[0]
     }
-    add(item: Item) {
+    add(item: Item): number {
         return this.arr.unshift(item)
     }
-    pop() {
+    remove(item: Item): boolean {
+        const index = this.arr.findIndex(object => object === item)
+
+        if (index < 0) {
+            return false
+        }
+
+        this.arr.splice(index, 1)
+        return true
+    }
+    pop(): OptionalItem {
         return this.arr.pop()
     }
     clear() {
@@ -227,7 +241,8 @@ class ItemContainer {
 
 enum PopupLock {
     onadd = 'onadd',
-    ondel = 'ondel'
+    ondel = 'ondel',
+    onclear = 'onclear'
 }
 type PopupPendingQueue = {
     onadd: Item[],
@@ -238,8 +253,9 @@ export class Popup {
     public height: number | null = null
     public ref: React.RefObject<HTMLDivElement>
     public items: ItemContainer = new ItemContainer()
+    public clearing: boolean = false
     public count: number = 0
-    public locked: Record<PopupLock, boolean> = { onadd: false, ondel: false }
+    public locked: Record<PopupLock, boolean> = { onadd: false, ondel: false, onclear: false }
     public pending: PopupPendingQueue = { onadd: [], ondel: 0 }
 
     constructor() {
@@ -247,10 +263,12 @@ export class Popup {
         makeObservable(this, {
             items: observable,
             height: observable,
+            clearing: observable,
             add: action,
             del: action,
             updateHeight: action,
-            clear: action
+            clear: action,
+            finishClearing: action
         })
     }
     lock(type: PopupLock) {
@@ -278,31 +296,60 @@ export class Popup {
         this.items.add(item)
         this.lock(PopupLock.onadd)
         autorun(() => {
-            if (item.status === ItemStatus.RENDERED) {
+            if (item.status === ItemStatus.RENDERED && !this.locked.onclear) {
                 this.unlock(PopupLock.onadd)
             }
         })
     }
     del() {
-        // todo
-        const tail = this.items.tail()
-
         if (this.locked.ondel) {
             this.pending.ondel++
             return
         }
 
-        if (tail?.status === ItemStatus.RENDERED) {
-            tail.setStatus(ItemStatus.UNMOUNTING)
-            this.lock(PopupLock.ondel)
+        const tail = this.items.tail()
+        const lock = () => this.lock(PopupLock.ondel)
+        const unlock = () => this.unlock(PopupLock.ondel)
+
+        switch (tail?.status) {
+            case ItemStatus.MOUNTING:
+                autorun(() => {
+                    if (tail.status === ItemStatus.RENDERED) {
+                        setTimeout(() => { unlock(); this.del() }, 0)  // setTimeout for render item with .RENDERED status
+                    }
+                })
+                lock()
+                break
+
+            case ItemStatus.RENDERED:
+                tail.setStatus(ItemStatus.UNMOUNTING)
+                lock()
         }
     }
     updateHeight() {
         this.height = this.ref.current ? getHeight(this.ref) : null
     }
-    clear() {  // todo: animate
-        this.height = 0
+    clear() {
+        this.lock(PopupLock.onclear)
+
+        if (this.locked.onadd) {
+            const head = this.items.peek()
+            autorun(() => {
+                if (head?.status === ItemStatus.RENDERED) {
+                    this.clearing = true
+                }
+            })
+        }
+        else {
+            this.lock(PopupLock.onadd)
+            this.clearing = true
+        }
+    }
+    finishClearing() {
         this.items.clear()
+        this.clearing = false
+        this.unlock(PopupLock.onadd)
+        this.unlock(PopupLock.onclear)
     }
 }
 
@@ -336,7 +383,6 @@ export const PopupItemView = observer(({ popup, item }: { popup: Popup, item: It
 
     return <TransitionView transition={transition} timeout={350} callback={
         state => {
-            
             switch (state) {
                 case TransitionState.DEFAULT:
                     return <BasePopupItemView item={item} />
@@ -348,7 +394,7 @@ export const PopupItemView = observer(({ popup, item }: { popup: Popup, item: It
                     return <BasePopupItemView item={item} height={'0'} transition={400} />
 
                 case TransitionState.ENTERED:
-                    popup.items.arr.splice(popup.items.arr.findIndex(object => object === item), 1)
+                    popup.items.remove(item)
                     popup.unlock(PopupLock.ondel)
                     return <BasePopupItemView item={item} height={'0'} />
             }
@@ -359,12 +405,14 @@ export const PopupItemView = observer(({ popup, item }: { popup: Popup, item: It
 type BasePopupViewProps = {
     popup: Popup,
     top?: string,
-    transition?: number
+    height?: string,
+    transition?: number,
+    transitionType?: string
 }
 
-const BasePopupView = ({ popup, top, transition }: BasePopupViewProps) => {
+const BasePopupView = ({ popup, top, height, transition, transitionType }: BasePopupViewProps) => {
     return (
-        <StyledPopup $top={top} $transition={transition} ref={popup.ref}>
+        <StyledPopup $top={top} $height={height} $transition={transition} $transitionType={transitionType} ref={popup.ref}>
             {
                 popup.items.arr.map((item) => <PopupItemView key={item.key} popup={popup} item={item} />)
             }
@@ -374,35 +422,58 @@ const BasePopupView = ({ popup, top, transition }: BasePopupViewProps) => {
 
 export const PopupView = observer(({ popup }: { popup: Popup }) => {
     const top = popup.items.peek()
-    const [transition] = useState(new Transition())
+    const transition = {
+        add: useState(new Transition())[0],
+        clearing: useState(new Transition())[0]
+    }
+
+    const onadd = (state: TransitionState) => {
+        switch (state) {
+            case TransitionState.ENTER:
+                return <BasePopupView popup={popup} top={'-' + top?.height + 'px'} />
+
+            case TransitionState.ENTERING:
+                return <BasePopupView popup={popup} transition={400} />
+
+            // @ts-ignore
+            case TransitionState.ENTERED:
+                top?.setStatus(ItemStatus.RENDERED)
+                transition.add.reset()
+
+            case TransitionState.DEFAULT:
+                return <BasePopupView popup={popup} />
+        }
+    }
+    const onclearing = (state: TransitionState) => {
+        switch (state) {
+            case TransitionState.ENTER:
+                return <BasePopupView popup={popup} height={popup.height + 'px'} />
+
+            case TransitionState.ENTERING:
+                return <BasePopupView popup={popup} height='0' transition={800} transitionType='height' />
+
+            // @ts-ignore
+            case TransitionState.ENTERED:
+                popup.finishClearing()
+                transition.clearing.reset()
+
+            case TransitionState.DEFAULT:
+                return <BasePopupView popup={popup} />
+        }
+    }
 
     useLayoutEffect(() => {
         top?.updateHeight()
         popup.updateHeight()
     })
     useEffect(() => {
-        if (Boolean(popup.items.arr.length) && top?.height !== null && top.status === ItemStatus.MOUNTING) {
-            transition.start()
+        if (top && top.height !== null && top.status === ItemStatus.MOUNTING) {
+            transition.add.start()
+        }
+        if (popup.clearing) {
+            transition.clearing.start()
         }
     })
 
-    return <TransitionView transition={transition} timeout={350} callback={
-        state => {
-            switch (state) {
-                case TransitionState.ENTER:
-                    return <BasePopupView popup={popup} top={'-' + top.height + 'px'} />
-
-                case TransitionState.ENTERING:
-                    return <BasePopupView popup={popup} transition={400} />
-
-                // @ts-ignore
-                case TransitionState.ENTERED:
-                    top.setStatus(ItemStatus.RENDERED)
-                    transition.reset()
-
-                case TransitionState.DEFAULT:
-                    return <BasePopupView popup={popup} />
-            }
-        }
-    } />
+    return <TransitionView transition={!popup.clearing ? transition.add : transition.clearing} timeout={!popup.clearing ? 350 : 750} callback={!popup.clearing ? onadd : onclearing} />
 })
