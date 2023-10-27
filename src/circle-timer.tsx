@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from 'react'
+import React, { PropsWithChildren, useEffect, useState } from 'react'
 import { observable, action, computed, makeAutoObservable, makeObservable } from 'mobx'
 import { observer } from 'mobx-react-lite'
-import styled from 'styled-components'
+import styled, { IStyledComponent } from 'styled-components'
 
 
 const StyledMain = styled.div`
@@ -98,17 +98,18 @@ export class CircleTimer {
     }
 }
 
-type CircleTimerViewProps = {
+type CircleTimerViewProps = PropsWithChildren & {
     timer: CircleTimer,
     color: string,
-    strokeWidth: string
+    strokeWidth: string,
 }
-export const CircleTimerView = observer(({ timer, color, strokeWidth }: CircleTimerViewProps) => {
+export const CircleTimerView = observer(({ timer, color, strokeWidth, children }: CircleTimerViewProps) => {
     return (
         <StyledTimer $width={timer.size + 'px'} $height={timer.size + 'px'}>
             <StyledCircleSVG>
                 <StyledCircle $r={timer.radius} $circumference={timer.circumference} $passed={timer.passed} $strokeColor={color} $strokeWidth={strokeWidth} />
             </StyledCircleSVG>
+            { children }
         </StyledTimer>
     )
 })

@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from "react"
 import { BrowserRouter, Routes, Route, useNavigate, Outlet, useLocation } from 'react-router-dom'
 import { observable, computed, action, makeAutoObservable, makeObservable } from 'mobx'
 import { observer } from 'mobx-react-lite'
-import styled, { css, keyframes } from 'styled-components'
+import styled, { RuleSet, css, keyframes } from 'styled-components'
 
 import { PopupView, Popup, Item, ItemType } from './popup'
 import * as timer from './circle-timer'
@@ -154,29 +154,45 @@ const WrapperView = ({list, counter, setCounter, short, setShort, inp, setInp, b
     )
 }
 
-const TestView = observer(() => {
-    const [counter, setCounter] = useState(0)
-    const [inp, setInp] = useState('')
-    const [list] = useState<MyList>(new MyList())
-    const x = list.keys.length
+// const TestView = observer(() => {
+//     const [counter, setCounter] = useState(0)
+//     const [inp, setInp] = useState('')
+//     const [list] = useState<MyList>(new MyList())
+//     const x = list.keys.length
 
-    const [short, setShort] = useState(false)
+//     const [short, setShort] = useState(false)
 
-    if (short) {
-        return <WrapperView list={list} counter={counter} setCounter={setCounter} short={short} setShort={setShort} inp={inp} setInp={setInp} background="red" />
-    }
+//     if (short) {
+//         return <WrapperView list={list} counter={counter} setCounter={setCounter} short={short} setShort={setShort} inp={inp} setInp={setInp} background="red" />
+//     }
 
-    return (
-        <WrapperView list={list} counter={counter} setCounter={setCounter} short={short} setShort={setShort} inp={inp} setInp={setInp} background="green" />
-    )
-})
+//     return (
+//         <WrapperView list={list} counter={counter} setCounter={setCounter} short={short} setShort={setShort} inp={inp} setInp={setInp} background="green" />
+//     )
+// })
+
+
+const StyledDiv = styled.div<{ $additional?: RuleSet }>`
+    width: 40px;
+    height: 100px;
+    background-color: green;
+
+    ${props => props.$additional ? props.$additional : ''}
+`
+
+type TestViewProps = {
+    add?: RuleSet<object>
+}
+const TestView = ({ add }: TestViewProps) => {
+    return <StyledDiv $additional={add}>hi</StyledDiv>
+}
 
 const App = () => {
     return (
         <BrowserRouter>
             <Routes>
                 <Route path="/" element={<MainView />} />
-                <Route path="/test" element={<TestView />} />
+                <Route path="/test" element={<TestView  add={css`border: 1px solid black; width: 400px;`} />} />
                 <Route path="/timer" element={<timer.View />} />
             </Routes>
         </BrowserRouter>
