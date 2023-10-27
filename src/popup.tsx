@@ -3,6 +3,7 @@ import { observable, action, makeObservable, autorun } from 'mobx'
 import { observer } from 'mobx-react-lite'
 
 import styled from 'styled-components'
+import { CircleTimer, CircleTimerView } from "./circle-timer"
 
 
 const StyledPopup = styled.div.attrs<{ $top?: string, $height?: string, $transition?: number, $transitionType?: string }>(props => {
@@ -20,7 +21,6 @@ const StyledPopup = styled.div.attrs<{ $top?: string, $height?: string, $transit
 
     border-radius: 0px 0px 20px 20px;
     background-color: #fff;
-    overflow: hidden;
 
     display: flex;
     flex-direction: column;
@@ -35,13 +35,16 @@ const StyledItemLeft = styled.div`
     align-items: center;
 `
 const StyledItemRight = styled.div`
+    width: 100%;
     padding: 10px 0px;
     padding-right: 13px;
     border-bottom: 1px solid #f2f2f2;
     overflow: hidden;
 
     display: flex;
+    justify-content: space-between;
     align-items: center;
+    gap: 20px;
 
     & span {
         color: #404040;
@@ -49,11 +52,6 @@ const StyledItemRight = styled.div`
         font-weight: 500;
         overflow: hidden;
     }
-`
-const StyledItemFlex = styled.div`
-    overflow: hidden;
-    display: flex;
-    flex-shrink: 0;
 `
 const StyledItem = styled.div.attrs<{ $height?: string, $transition?: number }>(props => {
     const style = {
@@ -66,7 +64,6 @@ const StyledItem = styled.div.attrs<{ $height?: string, $transition?: number }>(
     min-height: ${props => props.$height === undefined ? '35px' : undefined};
 
     display: flex;
-    flex-direction: column;
     flex-shrink: 0;
 
     &:last-child ${StyledItemRight} {
@@ -376,14 +373,17 @@ type BasePopupItemViewProps = {
 }
 
 const BasePopupItemView = ({ item, height, transition }: BasePopupItemViewProps) => {
+    const [timer] = useState(new CircleTimer(20, 30))
+
     return (
         <StyledItem $height={height} $transition={transition} ref={item.ref}>
-            <StyledItemFlex>
-                <StyledItemLeft><img src={item.icoUrl} alt={item.icoAlt}/></StyledItemLeft>
-                <StyledItemRight>
-                    <span>{ item.text }</span>
-                </StyledItemRight>
-            </StyledItemFlex>
+            <StyledItemLeft><img src={item.icoUrl} alt={item.icoAlt}/></StyledItemLeft>
+            <StyledItemRight>
+                <span>{ item.text }</span>
+                <div style={{ flexShrink: 0 }}>
+                    <CircleTimerView timer={timer} color="#d9d9d9" strokeWidth="0.5px" />
+                </div>
+            </StyledItemRight>
         </StyledItem>
     )
 }
