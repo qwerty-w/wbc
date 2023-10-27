@@ -1,11 +1,11 @@
 import React, { useEffect, useRef, useState } from "react"
-import { createPortal } from "react-dom"
 import { BrowserRouter, Routes, Route, useNavigate, Outlet, useLocation } from 'react-router-dom'
 import { observable, computed, action, makeAutoObservable, makeObservable } from 'mobx'
 import { observer } from 'mobx-react-lite'
 import styled, { css, keyframes } from 'styled-components'
 
 import { PopupView, Popup, Item, ItemType } from './popup'
+import * as timer from './circle-timer'
 
 
 const StyledMain = styled.div`
@@ -177,6 +177,7 @@ const App = () => {
             <Routes>
                 <Route path="/" element={<MainView />} />
                 <Route path="/test" element={<TestView />} />
+                <Route path="/timer" element={<timer.View />} />
             </Routes>
         </BrowserRouter>
     )
