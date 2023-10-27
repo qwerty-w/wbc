@@ -34,6 +34,19 @@ const StyledItemLeft = styled.div`
     justify-content: center;
     align-items: center;
 `
+const StyledItemTimerSeconds = styled.div`
+    width: 100%;
+    height: 100%;
+    
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    & > span {
+        font-size: 10px;
+        color: #d9d9d9;
+    }
+`
 const StyledItemRight = styled.div`
     width: 100%;
     padding: 10px 0px;
@@ -46,7 +59,7 @@ const StyledItemRight = styled.div`
     align-items: center;
     gap: 20px;
 
-    & span {
+    & > span {
         color: #404040;
         font-size: 12px;
         font-weight: 500;
@@ -372,8 +385,12 @@ type BasePopupItemViewProps = {
     transition?: number
 }
 
-const BasePopupItemView = ({ item, height, transition }: BasePopupItemViewProps) => {
+const BasePopupItemView = observer(({ item, height, transition }: BasePopupItemViewProps) => {
     const [timer] = useState(new CircleTimer(20, 30))
+
+    useEffect(() => {
+        timer.start()
+    }, [])
 
     return (
         <StyledItem $height={height} $transition={transition} ref={item.ref}>
@@ -381,12 +398,14 @@ const BasePopupItemView = ({ item, height, transition }: BasePopupItemViewProps)
             <StyledItemRight>
                 <span>{ item.text }</span>
                 <div style={{ flexShrink: 0 }}>
-                    <CircleTimerView timer={timer} color="#d9d9d9" strokeWidth="0.5px" />
+                    <CircleTimerView timer={timer} color="#d9d9d9" strokeWidth="0.5px">
+                        <StyledItemTimerSeconds><span>{ timer.remaining }</span></StyledItemTimerSeconds>
+                    </CircleTimerView>
                 </div>
             </StyledItemRight>
         </StyledItem>
     )
-}
+})
 
 export const PopupItemView = observer(({ popup, item }: { popup: Popup, item: Item }) => {
     const [transition] = useState(new Transition())
