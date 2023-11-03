@@ -17,38 +17,42 @@ const StyledPopup = styled.div.attrs<{ $top?: string, $height?: string, $transit
     position: fixed;
     right: 5%;
 
-    width: 215px;
-
+    width: 250px;
     border-radius: 0px 0px 20px 20px;
     background-color: #fff;
+    overflow: hidden;
 
     display: flex;
     flex-direction: column;
     align-items: center;
 `
 const StyledItemLeft = styled.div`
-    width: 41px;
     padding: 0px 13px;
 
     display: flex;
     justify-content: center;
     align-items: center;
 `
-const StyledItemTimerSeconds = styled.div`
-    width: 100%;
-    height: 100%;
-    
+const StyledItemTimerSeconds = styled.span`
+    font-size: 10px;
+    color: #d9d9d9;
+`
+const StyledItemTimer = styled.div`
+    position: relative;
+    width: 20px;
+    height: 20px;
+    overflow: hidden;
+
     display: flex;
     justify-content: center;
     align-items: center;
+    flex-shrink: 0;
 
-    & > span {
-        font-size: 10px;
-        color: #d9d9d9;
+    & svg {
+        position: absolute;
     }
 `
 const StyledItemRight = styled.div`
-    width: 100%;
     padding: 10px 0px;
     padding-right: 13px;
     border-bottom: 1px solid #f2f2f2;
@@ -57,7 +61,8 @@ const StyledItemRight = styled.div`
     display: flex;
     justify-content: space-between;
     align-items: center;
-    gap: 20px;
+    gap: 13px;
+    flex-grow: 1;
 
     & > span {
         color: #404040;
@@ -77,6 +82,7 @@ const StyledItem = styled.div.attrs<{ $height?: string, $transition?: number }>(
     min-height: ${props => props.$height === undefined ? '35px' : undefined};
 
     display: flex;
+    flex-direction: column;
     flex-shrink: 0;
 
     &:last-child ${StyledItemRight} {
@@ -176,7 +182,7 @@ export class Item {
     public height: number | null = null
     public ref: React.RefObject<HTMLDivElement>
 
-    constructor(public type: ItemType, public text: string) {
+    constructor(public type: ItemType, public text: string, public lifetime: number = 100) {
         this.key = NaN
         this.status = ItemStatus.MOUNTING
         this.ref = createRef()
@@ -274,6 +280,8 @@ export class Popup {
             add: action,
             del: action,
             updateHeight: action,
+            // @ts-ignore
+            _clear: action,
             clear: action,
             finishClearing: action
         })
@@ -311,14 +319,14 @@ export class Popup {
             }
         })
     }
-    info(text: string) {
-        this.add(new Item(ItemType.INFO, text))
+    info(text: string, lifetime?: number) {
+        this.add(new Item(ItemType.INFO, text, lifetime))
     }
-    warning(text: string) {
-        this.add(new Item(ItemType.WARN, text))
+    warning(text: string, lifetime?: number) {
+        this.add(new Item(ItemType.WARN, text, lifetime))
     }
-    error(text: string) {
-        this.add(new Item(ItemType.ERROR, text))
+    error(text: string, lifetime?: number) {
+        this.add(new Item(ItemType.ERROR, text, lifetime))
     }
     del() {
         if (!this.items.arr.length) {
@@ -349,6 +357,9 @@ export class Popup {
                 lock()
         }
     }
+    protected _clear() {  // for mobx strict-mode warning
+        this.clearing = true
+    }
     clear() {
         if (this.locked.onclear) {
             return
@@ -359,13 +370,13 @@ export class Popup {
             const head = this.items.peek()
             autorun(() => {
                 if (head?.status === ItemStatus.RENDERED) {
-                    this.clearing = true
+                    this._clear()
                 }
             })
         }
         else {
             this.lock(PopupLock.onadd)
-            this.clearing = true
+            this._clear()
         }
     }
     finishClearing() {
@@ -386,7 +397,7 @@ type BasePopupItemViewProps = {
 }
 
 const BasePopupItemView = observer(({ item, height, transition }: BasePopupItemViewProps) => {
-    const [timer] = useState(new CircleTimer(20, 30))
+    const [timer] = useState(new CircleTimer(20, item.lifetime, () => item.setStatus(ItemStatus.UNMOUNTING), true))
 
     useEffect(() => {
         timer.start()
@@ -394,17 +405,18 @@ const BasePopupItemView = observer(({ item, height, transition }: BasePopupItemV
 
     return (
         <StyledItem $height={height} $transition={transition} ref={item.ref}>
-            <StyledItemLeft><img src={item.icoUrl} alt={item.icoAlt}/></StyledItemLeft>
-            <StyledItemRight>
-                <span>{ item.text }</span>
-                <div style={{ flexShrink: 0 }}>
-                    <CircleTimerView timer={timer} color="#d9d9d9" strokeWidth="0.5px">
-                        <StyledItemTimerSeconds><span>{ timer.remaining }</span></StyledItemTimerSeconds>
-                    </CircleTimerView>
-                </div>
-            </StyledItemRight>
+            <div style={{ display: 'flex' }}>
+                <StyledItemLeft><img src={item.icoUrl} alt={item.icoAlt}/></StyledItemLeft>
+                <StyledItemRight>
+                    <span>{ item.text }</span>
+                    <StyledItemTimer>
+                        <CircleTimerView timer={timer} color="#d9d9d9" strokeWidth="0.5px" />
+                        { timer.remaining > 0 ? <StyledItemTimerSeconds>{ timer.remaining }</StyledItemTimerSeconds> : undefined }
+                    </StyledItemTimer>
+                </StyledItemRight>
+            </div>
         </StyledItem>
-    )
+    )   
 })
 
 export const PopupItemView = observer(({ popup, item }: { popup: Popup, item: Item }) => {
@@ -505,7 +517,7 @@ export const PopupView = observer(({ popup }: { popup: Popup }) => {
         if (top && top.height !== null && top.status === ItemStatus.MOUNTING) {
             transition.add.start()
         }
-        if (popup.clearing) {
+        if (popup.clearing && popup.items.arr.length) {
             transition.clearing.start()
         }
     })
