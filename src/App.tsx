@@ -5,7 +5,7 @@ import { observer } from 'mobx-react-lite'
 import styled, { RuleSet, css, keyframes } from 'styled-components'
 
 import { PopupView, Popup, Item, ItemType } from './popup'
-import * as timer from './circle-timer'
+import { CircleTimer, CircleTimerView } from './circle-timer'
 
 
 const StyledMain = styled.div`
@@ -60,6 +60,15 @@ const StyledButton = styled.button`
     &:active {
         transform: scale(.95);
     }
+`
+const StyledTimerView = styled.div`
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 22px;
 `
 
 
@@ -172,6 +181,31 @@ const WrapperView = ({list, counter, setCounter, short, setShort, inp, setInp, b
 // })
 
 
+export const TimerView = observer(() => {
+    const [timer] = useState(new CircleTimer(20, 10))
+    const [tts, set] = useState(10)
+
+    const st = () => {
+        var tt = 9
+        setInterval(() => set(tt--), 1000)
+    }
+
+    return (
+        <StyledTimerView>
+            <div style={{ display: 'flex', gap: '20px' }}>
+                <div>
+                    <span>Remaining: {timer.remaining}</span>
+                </div>
+
+                <button onClick={() => {timer.start(); st()}}>Start</button>
+            </div>
+            <CircleTimerView timer={timer} color='black' strokeWidth='0.5px' />
+            <div><span>TT: {tts}</span></div>
+        </StyledTimerView>
+    )
+})
+
+
 const StyledDiv = styled.div<{ $additional?: RuleSet }>`
     width: 40px;
     height: 100px;
@@ -193,7 +227,7 @@ const App = () => {
             <Routes>
                 <Route path="/" element={<MainView />} />
                 <Route path="/test" element={<TestView  add={css`border: 1px solid black; width: 400px;`} />} />
-                <Route path="/timer" element={<timer.View />} />
+                <Route path="/timer" element={<TimerView />} />
             </Routes>
         </BrowserRouter>
     )
