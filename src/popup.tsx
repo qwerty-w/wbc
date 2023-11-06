@@ -1,8 +1,9 @@
 import React, { createRef, useEffect, useLayoutEffect, useState } from "react"
 import { observable, action, makeObservable, autorun } from 'mobx'
 import { observer } from 'mobx-react-lite'
-
 import styled from 'styled-components'
+
+import { Transition, TransitionView, TransitionState } from './transition'
 import { CircleTimer, CircleTimerView } from "./circle-timer"
 
 
@@ -80,6 +81,7 @@ const StyledItem = styled.div.attrs<{ $height?: string, $transition?: number }>(
 })`
     width: 100%;
     min-height: ${props => props.$height === undefined ? '35px' : undefined};
+    overflow: hidden;
 
     display: flex;
     flex-direction: column;
@@ -93,66 +95,6 @@ const StyledItem = styled.div.attrs<{ $height?: string, $transition?: number }>(
 function getHeight(ref: React.RefObject<HTMLDivElement>): number {
     return ref.current ? ref.current.getBoundingClientRect().height : 0
 }
-
-enum TransitionState {
-    DEFAULT = 'DEFAULT',
-    ENTER = 'ENTER',
-    ENTERING = 'ENTERING',
-    ENTERED = 'ENTERED'
-}
-
-class Transition {
-    public started: boolean = false
-    public state: TransitionState = TransitionState.DEFAULT
-
-    constructor() {
-        makeObservable(this, {
-            started: observable,
-            state: observable,
-            start: action,
-            reset: action,
-            setState: action
-        })
-    }
-    start() {
-        this.started = true
-    }
-    reset() {
-        this.started = false
-        this.state = TransitionState.DEFAULT
-    }
-    setState(state: TransitionState) {
-        this.state = state
-    }
-}
-
-type TransitionProps = {
-    transition: Transition,
-    timeout: number,
-    callback: (state: TransitionState) => void
-}
-
-const TransitionView = observer(({ transition, timeout, callback }: TransitionProps) => {
-    useEffect(() => {
-        if (!transition.started) {
-            return
-        }
-
-        switch (transition.state) {
-            case TransitionState.DEFAULT:
-                transition.setState(TransitionState.ENTER)
-                break
-
-            case TransitionState.ENTER:
-                setTimeout(() => {
-                    transition.setState(TransitionState.ENTERING)
-                    setTimeout(() => transition.setState(TransitionState.ENTERED), timeout)
-                }, 10)
-        }
-    }, [transition.started, transition.state])
-
-    return <>{ callback(transition.state) }</>
-})
 
 export enum ItemType {
     INFO = 'INFO',
@@ -180,9 +122,10 @@ export class Item {
     public key: number
     public status: ItemStatus
     public height: number | null = null
+    public timer?: CircleTimer
     public ref: React.RefObject<HTMLDivElement>
 
-    constructor(public type: ItemType, public text: string, public lifetime: number = 100) {
+    constructor(public type: ItemType, public text: string, public lifetime: number = 5) {
         this.key = NaN
         this.status = ItemStatus.MOUNTING
         this.ref = createRef()
@@ -205,6 +148,9 @@ export class Item {
     }
     updateHeight() {
         this.height = this.ref.current ? getHeight(this.ref) : null
+    }
+    setTimer(timer: CircleTimer) {
+        this.timer = timer
     }
 }
 
@@ -235,6 +181,7 @@ class ItemContainer {
         return this.arr.unshift(item)
     }
     remove(item: Item): boolean {
+        if (item.timer?.started) item.timer.stop()
         const index = this.arr.findIndex(object => object === item)
 
         if (index < 0) {
@@ -248,7 +195,7 @@ class ItemContainer {
         return this.arr.pop()
     }
     clear() {
-        this.arr = []
+        this.arr.slice().forEach(item => this.remove(item))
     }
 }
 
@@ -328,12 +275,12 @@ export class Popup {
     error(text: string, lifetime?: number) {
         this.add(new Item(ItemType.ERROR, text, lifetime))
     }
-    del() {
+    del() {        
         if (!this.items.arr.length) {
             return
         }
 
-        if (this.locked.ondel) {
+        if (this.locked.ondel && this.pending.ondel < this.items.arr.length) {
             this.pending.ondel++
             return
         }
@@ -390,33 +337,41 @@ export class Popup {
     }
 }
 
+const BasePopupItemTimerView = observer(({ popup, item }: { popup: Popup, item: Item }) => {
+    const [timer] = useState(new CircleTimer(20, 0.5, item.lifetime, () => popup.del(), false))
+
+    useEffect(() => {
+        item.setTimer(timer)
+        timer.start()
+    }, [])
+
+    return (
+        <StyledItemTimer>
+            <CircleTimerView timer={timer} color="#d9d9d9" />
+            { timer.remaining > 0 ? <StyledItemTimerSeconds>{ timer.remaining }</StyledItemTimerSeconds> : undefined }
+        </StyledItemTimer>
+    )
+})
+
 type BasePopupItemViewProps = {
+    popup: Popup,
     item: Item,
     height?: string,
     transition?: number
 }
 
-const BasePopupItemView = observer(({ item, height, transition }: BasePopupItemViewProps) => {
-    const [timer] = useState(new CircleTimer(20, item.lifetime, () => item.setStatus(ItemStatus.UNMOUNTING), true))
-
-    useEffect(() => {
-        timer.start()
-    }, [])
-
+const BasePopupItemView = observer(({ popup, item, height, transition }: BasePopupItemViewProps) => {
     return (
         <StyledItem $height={height} $transition={transition} ref={item.ref}>
             <div style={{ display: 'flex' }}>
                 <StyledItemLeft><img src={item.icoUrl} alt={item.icoAlt}/></StyledItemLeft>
                 <StyledItemRight>
                     <span>{ item.text }</span>
-                    <StyledItemTimer>
-                        <CircleTimerView timer={timer} color="#d9d9d9" strokeWidth="0.5px" />
-                        { timer.remaining > 0 ? <StyledItemTimerSeconds>{ timer.remaining }</StyledItemTimerSeconds> : undefined }
-                    </StyledItemTimer>
+                    <BasePopupItemTimerView popup={popup} item={item} />
                 </StyledItemRight>
             </div>
         </StyledItem>
-    )   
+    )
 })
 
 export const PopupItemView = observer(({ popup, item }: { popup: Popup, item: Item }) => {
@@ -432,18 +387,18 @@ export const PopupItemView = observer(({ popup, item }: { popup: Popup, item: It
         state => {
             switch (state) {
                 case TransitionState.DEFAULT:
-                    return <BasePopupItemView item={item} />
+                    return <BasePopupItemView popup={popup} item={item} />
 
                 case TransitionState.ENTER:
-                    return <BasePopupItemView item={item} height={(item.height as number) + 'px'} />
+                    return <BasePopupItemView popup={popup} item={item} height={(item.height as number) + 'px'} />
 
                 case TransitionState.ENTERING:
-                    return <BasePopupItemView item={item} height={'0'} transition={400} />
+                    return <BasePopupItemView popup={popup} item={item} height={'0'} transition={400} />
 
                 case TransitionState.ENTERED:
                     popup.items.remove(item)
                     popup.unlock(PopupLock.ondel)
-                    return <BasePopupItemView item={item} height={'0'} />
+                    return <BasePopupItemView popup={popup} item={item} height={'0'} />
             }
         }
     } />
@@ -468,7 +423,7 @@ const BasePopupView = ({ popup, top, height, transition, transitionType }: BaseP
 }
 
 export const PopupView = observer(({ popup }: { popup: Popup }) => {
-    const top = popup.items.peek()
+    const top = popup.items.peek()  // top item
     const transition = {
         add: useState(new Transition())[0],
         clearing: useState(new Transition())[0]
@@ -510,17 +465,18 @@ export const PopupView = observer(({ popup }: { popup: Popup }) => {
     }
 
     useLayoutEffect(() => {
-        top?.updateHeight()
         popup.updateHeight()
-    })
-    useEffect(() => {
-        if (top && top.height !== null && top.status === ItemStatus.MOUNTING) {
-            transition.add.start()
-        }
-        if (popup.clearing && popup.items.arr.length) {
-            transition.clearing.start()
-        }
-    })
+        top?.updateHeight()
 
-    return <TransitionView transition={!popup.clearing ? transition.add : transition.clearing} timeout={!popup.clearing ? 350 : 750} callback={!popup.clearing ? onadd : onclearing} />
+    }, [top])
+    
+    if (top && top.height !== null && top.status === ItemStatus.MOUNTING && !transition.add.started) {
+        transition.add.start()
+    }
+    if (popup.clearing && popup.items.arr.length && !transition.clearing.started) {
+        transition.clearing.start()
+    }
+
+    const add = !transition.clearing.started
+    return <TransitionView transition={add ? transition.add : transition.clearing} timeout={add ? 350 : 750} callback={add ? onadd : onclearing} />
 })
