@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react"
+import React, { PropsWithChildren, useEffect, useRef, useState } from "react"
 import { BrowserRouter, Routes, Route, useNavigate, Outlet, useLocation } from 'react-router-dom'
 import { observable, computed, action, makeAutoObservable, makeObservable } from 'mobx'
 import { observer } from 'mobx-react-lite'
@@ -6,6 +6,7 @@ import styled, { RuleSet, css, keyframes } from 'styled-components'
 
 import { PopupView, Popup, Item, ItemType } from './popup'
 import { CircleTimer, CircleTimerView } from './circle-timer'
+import Decimal from "decimal.js"
 
 
 const StyledMain = styled.div`
@@ -68,7 +69,7 @@ const StyledTimerView = styled.div`
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    gap: 22px;
+    gap: 60px;
 `
 
 
@@ -89,7 +90,7 @@ export const MainView = () => {
     }
     const addRemove = () => {
         add(undefined)
-        // add(undefined)
+        add(undefined)
         // add(undefined)
         popup.del()
         setArmCounter(armCounter + 1)
@@ -132,7 +133,28 @@ class MyList {
     }
 }
 
-const InnerView = React.memo(({ name, counter }: {name: string, counter: number}) => {
+class Test {
+    public list: MyList = new MyList()
+    public spancolor: string = 'aqua'
+    constructor() {
+        makeObservable(this, {
+            list: observable,
+            spancolor: observable,
+            toggleSpanColor: action
+        })
+    }
+
+    toggleSpanColor() {
+        this.spancolor = this.spancolor === 'aqua' ? 'lightblue' : 'aqua'
+    }
+}
+
+const SpanView = observer(({ test, children }: { test: Test } & PropsWithChildren) => {
+    console.log('span rerender')
+    return <span style={{ color: test.spancolor }}>{ children }</span>
+})
+
+const InnerView = observer(({ test, name, counter }: {test: Test, name: string, counter: number}) => {
     const [state, setState] = useState(true)
 
     useEffect(() => {
@@ -145,49 +167,55 @@ const InnerView = React.memo(({ name, counter }: {name: string, counter: number}
 
     return (
         <>
-            <span>Counter { counter } \ Name {name} </span>
+            <SpanView test={test}>{`Counter ${counter} \ Name ${name} `}</SpanView>
             <button onClick={() => setState(!state)}>Change inner state {String(state)}</button>
         </>
     )
 })
 
-const WrapperView = ({list, counter, setCounter, short, setShort, inp, setInp, background}: any) => {
+const WrapperView = ({test, counter, setCounter, short, setShort, inp, setInp, background}: any) => {
     return (
         <div style={{ background: background }}>
-            { list.keys.map((key: any) => <InnerView key={key} name={key} counter={counter} />) }
+            { test.list.keys.map((name: any) => <InnerView key={name} test={test} name={name} counter={counter} />) }
             <input value={inp} onChange={e => setInp(e.target.value) } />
-            <button onClick={() => list.add(inp)}>Add list</button>
+            <button onClick={() => test.list.add(inp)}>Add list</button>
             <button onClick={() => setCounter(counter + 1)}>+counter</button>
-            <button onClick={() => setShort(!short)}>Short</button>
+            <button onClick={() => setShort(!short)}>Change parrent state</button>
+            <button onClick={() => test.toggleSpanColor()}>Toggle span color</button>
         </div>
     )
 }
 
-// const TestView = observer(() => {
-//     const [counter, setCounter] = useState(0)
-//     const [inp, setInp] = useState('')
-//     const [list] = useState<MyList>(new MyList())
-//     const x = list.keys.length
+const TestView = observer(() => {
+    const [counter, setCounter] = useState(0)
+    const [inp, setInp] = useState('')
+    const [test] = useState(new Test())
+    const x = test.list.keys.length
 
-//     const [short, setShort] = useState(false)
+    const [short, setShort] = useState(false)
 
-//     if (short) {
-//         return <WrapperView list={list} counter={counter} setCounter={setCounter} short={short} setShort={setShort} inp={inp} setInp={setInp} background="red" />
-//     }
+    if (short) {
+        return <WrapperView test={test} counter={counter} setCounter={setCounter} short={short} setShort={setShort} inp={inp} setInp={setInp} background="red" />
+    }
 
-//     return (
-//         <WrapperView list={list} counter={counter} setCounter={setCounter} short={short} setShort={setShort} inp={inp} setInp={setInp} background="green" />
-//     )
-// })
+    return (
+        <WrapperView test={test} counter={counter} setCounter={setCounter} short={short} setShort={setShort} inp={inp} setInp={setInp} background="green" />
+    )
+})
 
 
 export const TimerView = observer(() => {
-    const [timer] = useState(new CircleTimer(20, 10))
-    const [tts, set] = useState(10)
+    const [timerProps, setTimerProps] = useState<any>([34, 0.5, 5, () => {}, false])
+    // @ts-ignore
+    const [timer, setTimer] = useState(new CircleTimer(...timerProps))
+    const [get, set] = useState(15);
+
+    (window as any).timer = timer;
+    (window as any).d = Decimal;
 
     const st = () => {
-        var tt = 9
-        setInterval(() => set(tt--), 1000)
+        var val = get
+        setInterval(() => {val--; set(val)}, 1000)
     }
 
     return (
@@ -199,34 +227,32 @@ export const TimerView = observer(() => {
 
                 <button onClick={() => {timer.start(); st()}}>Start</button>
             </div>
-            <CircleTimerView timer={timer} color='black' strokeWidth='0.5px' />
-            <div><span>TT: {tts}</span></div>
+            <div style={{ position: 'absolute' }}>
+                <CircleTimerView timer={timer} color='black' />
+            </div>
+            <div>
+                <div><span>TT: {get}</span></div>
+                <button onClick={() => { timerProps[0]++; setTimerProps(timerProps);
+                // @ts-ignore
+                setTimer(new CircleTimer(...timerProps)) }}>+1 timer size</button>
+                <button onClick={() => { timerProps[1] += 0.5; setTimerProps(timerProps); 
+                // @ts-ignore
+                setTimer(new CircleTimer(...timerProps)) }}>+0.5 timer stroke</button>
+                            <button onClick={() => { timerProps[1] -= 0.5; setTimerProps(timerProps); 
+                // @ts-ignore
+                setTimer(new CircleTimer(...timerProps)) }}>-0.5 timer stroke</button>
+            </div>
+            
         </StyledTimerView>
     )
 })
-
-
-const StyledDiv = styled.div<{ $additional?: RuleSet }>`
-    width: 40px;
-    height: 100px;
-    background-color: green;
-
-    ${props => props.$additional ? props.$additional : ''}
-`
-
-type TestViewProps = {
-    add?: RuleSet<object>
-}
-const TestView = ({ add }: TestViewProps) => {
-    return <StyledDiv $additional={add}>hi</StyledDiv>
-}
 
 const App = () => {
     return (
         <BrowserRouter>
             <Routes>
                 <Route path="/" element={<MainView />} />
-                <Route path="/test" element={<TestView  add={css`border: 1px solid black; width: 400px;`} />} />
+                <Route path="/test" element={<TestView />} />
                 <Route path="/timer" element={<TimerView />} />
             </Routes>
         </BrowserRouter>

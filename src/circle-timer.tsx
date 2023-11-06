@@ -2,9 +2,11 @@ import React, { PropsWithChildren } from 'react'
 import { observable, action, computed, makeObservable } from 'mobx'
 import { observer } from 'mobx-react-lite'
 import styled from 'styled-components'
+import Decimal from 'decimal.js'
 
 
 type StyledCircleProps = {
+    $center: number,
     $r: number,
     $circumference: number,
     $passed: number,
@@ -15,8 +17,8 @@ type StyledCircleProps = {
 const StyledCircle = styled.circle.attrs<StyledCircleProps>(props => {
     return {
         r: props.$r,
-        cx: props.$r,
-        cy: props.$r,
+        cx: props.$center,
+        cy: props.$center,
         strokeDasharray: props.$circumference,
         strokeDashoffset: props.$passed,
         strokeLinecap: 'round',
@@ -30,9 +32,8 @@ const StyledCircle = styled.circle.attrs<StyledCircleProps>(props => {
 `
 const StyledCircleSVG = styled.svg.attrs<{ $size: number }>(props => {
     return {
-        width: props.$size + 'px',
-        height: props.$size + 'px',
-        viewBox: `0 0 ${props.$size} ${props.$size}`
+        width: props.$size,
+        height: props.$size
     }
 })`
     transform: rotate(-90deg) rotateX(180deg);
@@ -42,18 +43,19 @@ const StyledCircleSVG = styled.svg.attrs<{ $size: number }>(props => {
 export class CircleTimer {
     public ms: number
     public radius: number
-    public circumference: number
-    public offset: number
+    public circumference: Decimal
+    public offset: Decimal
+    public interval?: NodeJS.Timer
 
-    public passed = 0
+    public passed = new Decimal(0)
     public frequency = 10
     public started = false
 
-    constructor(public size: number, public seconds: number, public onend?: CallableFunction, public keepPassed: boolean = false) {
+    constructor(public size: number, public strokeWidth: number, public seconds: number, public onend?: (timer: CircleTimer) => void, public resettable: boolean = true ) {
         this.ms = seconds * 1000
-        this.radius = size / 2
-        this.circumference = size * Math.PI
-        this.offset = this.circumference / this.ms * this.frequency
+        this.radius = (size - strokeWidth) / 2
+        this.circumference = new Decimal(size).mul(Math.PI)
+        this.offset = this.circumference.div(this.ms).mul(this.frequency)
 
         makeObservable(this, {
             passed: observable,
@@ -61,44 +63,47 @@ export class CircleTimer {
             remaining: computed,
             pass: action,
             start: action,
+            stop: action,
             reset: action
         })
     }
     get remaining() {
-        return this.seconds - Math.trunc(this.passed / this.offset * this.frequency / 1000)
+        return this.seconds - Math.trunc(+this.passed.div(this.offset).mul(this.frequency).div(1000))
     }
     pass() {
-        this.passed += this.offset
+        this.passed = this.passed.add(this.offset)
     }
     start() {
         if (this.started) return
 
         this.started = true
-        const interval = setInterval(() => {
+        this.interval = setInterval(() => {
             this.pass()
 
-            if (this.passed >= this.circumference) {
-                clearInterval(interval)
-                if (this.onend) this.onend()
-                this.reset()
+            if (+this.passed >= +this.circumference) {
+                if (this.onend) this.onend(this)
+                this[this.resettable ? 'reset' : 'stop']()
             }
         }, this.frequency)
     }
-    reset() {
+    stop() {
         this.started = false
-        if (!this.keepPassed) { this.passed = 0 }
+        if (this.interval) clearInterval(this.interval)
+    }
+    reset() {
+        this.stop()
+        this.passed = new Decimal(0)
     }
 }
 
 type CircleTimerViewProps = PropsWithChildren & {
     timer: CircleTimer,
-    color: string,
-    strokeWidth: string,
+    color: string
 }
-export const CircleTimerView = observer(({ timer, color, strokeWidth }: CircleTimerViewProps) => {
+export const CircleTimerView = observer(({ timer, color }: CircleTimerViewProps) => {
     return (
         <StyledCircleSVG $size={timer.size}>
-            <StyledCircle $r={timer.radius} $circumference={timer.circumference} $passed={timer.passed} $strokeColor={color} $strokeWidth={strokeWidth} />
+            <StyledCircle $center={timer.size / 2} $r={timer.radius} $circumference={+timer.circumference} $passed={+timer.passed} $strokeColor={color} $strokeWidth={timer.strokeWidth + 'px'} />
         </StyledCircleSVG>
     )
 })
