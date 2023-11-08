@@ -72,6 +72,16 @@ const StyledItemRight = styled.div`
         overflow: hidden;
     }
 `
+const StyledItemContainer = styled.div.attrs<{ $shift?: string, $ms?: number }>(props => {
+    const style = {
+        position: props.$shift && 'relative' as any,
+        left: props.$shift,
+        transition: props.$ms !== undefined ? `left ${props.$ms}ms` : undefined
+    }
+    return { style }
+})`
+    display: flex;
+`
 const StyledItem = styled.div.attrs<{ $height?: string, $transition?: number }>(props => {
     const style = {
         height: props.$height,
@@ -94,6 +104,10 @@ const StyledItem = styled.div.attrs<{ $height?: string, $transition?: number }>(
 
 function getHeight(ref: React.RefObject<HTMLDivElement>): number {
     return ref.current ? ref.current.getBoundingClientRect().height : 0
+}
+
+function randint(min: number, max: number): number {
+    return Math.random() * (max - min) + min;
 }
 
 export enum ItemType {
@@ -121,9 +135,19 @@ export class Item {
 
     public key: number
     public status: ItemStatus
+    public triggered: boolean = false
     public height: number | null = null
     public timer?: CircleTimer
     public ref: React.RefObject<HTMLDivElement>
+
+    public shifting = {
+        shift: 0,
+        passed: 0,
+        pxrange: [7, 8],
+        delay: 10,
+        transition: 50,
+        timeout: 800
+    }
 
     constructor(public type: ItemType, public text: string, public lifetime: number = 10) {
         this.key = NaN
@@ -132,7 +156,11 @@ export class Item {
 
         makeObservable(this, {
             status: observable,
+            triggered: observable,
             height: observable,
+            shifting: observable,
+            setShift: action,
+            trigger: action,
             setStatus: action,
             updateHeight: action
         })
@@ -142,6 +170,45 @@ export class Item {
     }
     get icoAlt() {
         return Item.iconsAlt[this.type]
+    }
+    setShift(value: number) {
+        this.shifting.shift = value
+    }
+    setShiftPassed(value: number) {
+        this.shifting.passed = value
+    }
+    protected _trigger() {
+        const { pxrange, delay, timeout } = this.shifting
+        const rand = (side: 0 | 1 | Boolean) => randint(pxrange[0], pxrange[1]) * (side ? 1 : -1)  // 0 - left (-px); 1 - right (px)
+
+        setTimeout(() => {
+            this.setShift(rand(Math.round(randint(0, 1)) as 0 | 1))  // random start side
+            const interval = setInterval(() => {
+                this.setShift(rand(this.shifting.shift < 0))
+                this.setShiftPassed(this.shifting.passed + delay)
+
+                if (this.shifting.passed >= timeout) {
+                    clearInterval(interval)
+                    this.trigger(false)
+                }
+            }, delay)
+        }, 10)
+    }
+    trigger(state: boolean = true) {
+        switch ([this.triggered, state].join(' ')) {
+            case 'true true':
+                return this.setShiftPassed(Math.trunc(this.shifting.timeout / 2))
+
+            case 'true false':
+                this.setShift(0)
+                this.setShiftPassed(0)
+                this.triggered = false
+                return
+
+            case 'false true':
+                this.triggered = true
+                this._trigger()
+        }
     }
     setStatus(status: ItemStatus) {
         this.status = status
@@ -243,16 +310,21 @@ export class Popup {
         this.locked[type] = false
 
         if (type === PopupLock.onadd && this.pending.onadd.length) {
-            this.add(this.pending.onadd.pop() as Item, false)
+            this.add(this.pending.onadd.pop() as Item)
         }
         else if (type === PopupLock.ondel && this.pending.ondel) {
             this.pending.ondel--
             this.del()
         }
     }
-    add(item: Item, setkey: boolean = true) {
-        if (setkey) {
+    add(item: Item) {
+        if (!item.key) {
             item.key = this.count++
+        }
+
+        const duplicate = this.items.arr.find(i => i === item || i.text === item.text)
+        if (duplicate) {
+            return duplicate.trigger()
         }
 
         if (this.locked.onadd) {
@@ -363,13 +435,13 @@ type BasePopupItemViewProps = {
 const BasePopupItemView = observer(({ popup, item, height, transition }: BasePopupItemViewProps) => {
     return (
         <StyledItem $height={height} $transition={transition} ref={item.ref}>
-            <div style={{ display: 'flex' }}>
+            <StyledItemContainer $shift={ item.triggered ? item.shifting.shift + 'px' : undefined } $ms={ item.triggered ? item.shifting.transition : undefined }>
                 <StyledItemLeft><img src={item.icoUrl} alt={item.icoAlt}/></StyledItemLeft>
                 <StyledItemRight>
                     <span>{ item.text }</span>
                     <BasePopupItemTimerView popup={popup} item={item} />
                 </StyledItemRight>
-            </div>
+            </StyledItemContainer>
         </StyledItem>
     )
 })
