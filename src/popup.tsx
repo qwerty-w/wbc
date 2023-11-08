@@ -81,11 +81,11 @@ const StyledItem = styled.div.attrs<{ $height?: string, $transition?: number }>(
 })`
     width: 100%;
     min-height: ${props => props.$height === undefined ? '35px' : undefined};
-    overflow: hidden;
 
     display: flex;
     flex-direction: column;
     flex-shrink: 0;
+    overflow: hidden;
 
     &:last-child ${StyledItemRight} {
         border-bottom: 1px solid rgba(0, 0, 0, 0);
@@ -125,7 +125,7 @@ export class Item {
     public timer?: CircleTimer
     public ref: React.RefObject<HTMLDivElement>
 
-    constructor(public type: ItemType, public text: string, public lifetime: number = 5) {
+    constructor(public type: ItemType, public text: string, public lifetime: number = 10) {
         this.key = NaN
         this.status = ItemStatus.MOUNTING
         this.ref = createRef()
@@ -308,7 +308,7 @@ export class Popup {
         this.clearing = true
     }
     clear() {
-        if (this.locked.onclear) {
+        if (this.locked.onclear || !this.items.arr.length || !this.ref.current) {
             return
         }
         this.lock(PopupLock.onclear)
@@ -338,7 +338,7 @@ export class Popup {
 }
 
 const BasePopupItemTimerView = observer(({ popup, item }: { popup: Popup, item: Item }) => {
-    const [timer] = useState(new CircleTimer(20, 0.5, item.lifetime, () => popup.del(), false))
+    const [timer] = useState(new CircleTimer(20, 0.5, item.lifetime, () => { if (item.status !== ItemStatus.UNMOUNTING) popup.del() }, false))
 
     useEffect(() => {
         item.setTimer(timer)
@@ -449,6 +449,7 @@ export const PopupView = observer(({ popup }: { popup: Popup }) => {
     const onclearing = (state: TransitionState) => {
         switch (state) {
             case TransitionState.ENTER:
+                popup.updateHeight()
                 return <BasePopupView popup={popup} height={popup.height + 'px'} />
 
             case TransitionState.ENTERING:
@@ -465,15 +466,13 @@ export const PopupView = observer(({ popup }: { popup: Popup }) => {
     }
 
     useLayoutEffect(() => {
-        popup.updateHeight()
         top?.updateHeight()
-
     }, [top])
     
     if (top && top.height !== null && top.status === ItemStatus.MOUNTING && !transition.add.started) {
         transition.add.start()
     }
-    if (popup.clearing && popup.items.arr.length && !transition.clearing.started) {
+    if (popup.clearing && !transition.clearing.started) {
         transition.clearing.start()
     }
 

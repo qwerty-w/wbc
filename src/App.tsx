@@ -90,7 +90,7 @@ export const MainView = () => {
     }
     const addRemove = () => {
         add(undefined)
-        add(undefined)
+        // add(undefined)
         // add(undefined)
         popup.del()
         setArmCounter(armCounter + 1)
@@ -103,9 +103,9 @@ export const MainView = () => {
                     <StyledButton onClick={add}>Add</StyledButton>
                     <StyledButton onClick={addBig}>Add big</StyledButton>
                     <StyledButton onClick={addRemove}>Add and Remove</StyledButton>
-                    <StyledButton onClick={() => popup.del()}>Remove</StyledButton>
                 </div>
-                <div>
+                <div style={{ display: 'flex', gap: '5px', justifyContent: 'center' }}>
+                    <StyledButton onClick={() => popup.del()}>Remove</StyledButton>
                     <StyledButton onClick={() => popup.clear()}>Clear</StyledButton>
                 </div>
             </StyledBox>
