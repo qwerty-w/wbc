@@ -352,8 +352,8 @@ export class Popup {
             return
         }
 
-        if (this.locked.ondel && this.pending.ondel < this.items.arr.length) {
-            this.pending.ondel++
+        if (this.locked.ondel) {
+            if (this.pending.ondel < this.items.arr.length) this.pending.ondel++
             return
         }
 
