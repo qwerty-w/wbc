@@ -149,7 +149,7 @@ export class Item {
         timeout: 800
     }
 
-    constructor(public type: ItemType, public text: string, public lifetime: number = 10) {
+    constructor(public type: ItemType, public text: string, public lifetime: number) {
         this.key = NaN
         this.status = ItemStatus.MOUNTING
         this.ref = createRef()
@@ -268,12 +268,12 @@ class ItemContainer {
 
 enum PopupLock {
     onadd = 'onadd',
-    ondel = 'ondel',
+    onremove = 'onremove',
     onclear = 'onclear'
 }
 type PopupPendingQueue = {
     onadd: Item[],
-    ondel: number
+    onremove: number
 }
 
 export class Popup {
@@ -282,17 +282,19 @@ export class Popup {
     public items: ItemContainer = new ItemContainer()
     public clearing: boolean = false
     public count: number = 0
-    public locked: Record<PopupLock, boolean> = { onadd: false, ondel: false, onclear: false }
-    public pending: PopupPendingQueue = { onadd: [], ondel: 0 }
+    public locked: Record<PopupLock, boolean> = { onadd: false, onremove: false, onclear: false }
+    public pending: PopupPendingQueue = { onadd: [], onremove: 0 }
 
-    constructor() {
+    constructor(public itemLifetime: number) {
         this.ref = createRef()
         makeObservable(this, {
             items: observable,
             height: observable,
             clearing: observable,
+            // @ts-ignore
+            _add: action,
             add: action,
-            del: action,
+            removeLast: action,
             updateHeight: action,
             // @ts-ignore
             _clear: action,
@@ -310,14 +312,14 @@ export class Popup {
         this.locked[type] = false
 
         if (type === PopupLock.onadd && this.pending.onadd.length) {
-            this.add(this.pending.onadd.pop() as Item)
+            this._add(this.pending.onadd.pop() as Item)
         }
-        else if (type === PopupLock.ondel && this.pending.ondel) {
-            this.pending.ondel--
-            this.del()
+        else if (type === PopupLock.onremove && this.pending.onremove) {
+            this.pending.onremove--
+            this.removeLast()
         }
     }
-    add(item: Item) {
+    protected _add(item: Item) {
         if (!item.key) {
             item.key = this.count++
         }
@@ -338,34 +340,39 @@ export class Popup {
             }
         })
     }
-    info(text: string, lifetime?: number) {
-        this.add(new Item(ItemType.INFO, text, lifetime))
+    add(type: ItemType, text: string) {
+        const item = new Item(type, text, this.itemLifetime)
+        this._add(item)
+        return item
     }
-    warning(text: string, lifetime?: number) {
-        this.add(new Item(ItemType.WARN, text, lifetime))
+    info(text: string) {
+        this.add(ItemType.INFO, text)
     }
-    error(text: string, lifetime?: number) {
-        this.add(new Item(ItemType.ERROR, text, lifetime))
+    warning(text: string) {
+        this.add(ItemType.WARN, text)
     }
-    del() {        
+    error(text: string) {
+        this.add(ItemType.ERROR, text)
+    }
+    removeLast() {        
         if (!this.items.arr.length) {
             return
         }
 
-        if (this.locked.ondel) {
-            if (this.pending.ondel < this.items.arr.length) this.pending.ondel++
+        if (this.locked.onremove) {
+            if (this.pending.onremove < this.items.arr.length) this.pending.onremove++
             return
         }
 
         const tail = this.items.tail()
-        const lock = () => this.lock(PopupLock.ondel)
-        const unlock = () => this.unlock(PopupLock.ondel)
+        const lock = () => this.lock(PopupLock.onremove)
+        const unlock = () => this.unlock(PopupLock.onremove)
 
         switch (tail?.status) {
             case ItemStatus.MOUNTING:
                 autorun(() => {
                     if (tail.status === ItemStatus.RENDERED) {
-                        setTimeout(() => { unlock(); this.del() }, 0)  // setTimeout for render item with .RENDERED status
+                        setTimeout(() => { unlock(); this.removeLast() }, 0)  // setTimeout for render item with .RENDERED status
                     }
                 })
                 lock()
@@ -404,13 +411,13 @@ export class Popup {
         this.unlock(PopupLock.onclear)
         this.unlock(PopupLock.onadd)
 
-        this.unlock(PopupLock.ondel)
-        this.pending.ondel = 0
+        this.unlock(PopupLock.onremove)
+        this.pending.onremove = 0
     }
 }
 
 const BasePopupItemTimerView = observer(({ popup, item }: { popup: Popup, item: Item }) => {
-    const [timer] = useState(new CircleTimer(20, 0.5, item.lifetime, () => { if (item.status !== ItemStatus.UNMOUNTING) popup.del() }, false))
+    const [timer] = useState(new CircleTimer(20, 0.5, item.lifetime, () => { if (item.status !== ItemStatus.UNMOUNTING) popup.removeLast() }, false))
 
     useEffect(() => {
         item.setTimer(timer)
@@ -469,7 +476,7 @@ export const PopupItemView = observer(({ popup, item }: { popup: Popup, item: It
 
                 case TransitionState.ENTERED:
                     popup.items.remove(item)
-                    popup.unlock(PopupLock.ondel)
+                    popup.unlock(PopupLock.onremove)
                     return <BasePopupItemView popup={popup} item={item} height={'0'} />
             }
         }
