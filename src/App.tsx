@@ -74,25 +74,25 @@ const StyledTimerView = styled.div`
 
 
 export const MainView = () => {
-    const [popup] = useState(new Popup())
+    const [popup] = useState(new Popup(10))
     const [counter, setCounter] = useState(0)
     const [armCounter, setArmCounter] = useState(0)
 
-    const add = (ev?: any, item?: Item) => {
-        const newItem: Item = item ? item : new Item(ItemType.INFO, 'Transactionhasbeencreatedand repeated ' + counter)
+    ;(window as any).popup = popup
 
-        popup.add(newItem)
+    const add = () => {
+        popup.add(ItemType.INFO, 'Transactionhasbeencreatedand repeated ' + counter)
         setCounter(counter + 1)
 
     }
     const addBig = () => {
-        add(undefined, new Item(ItemType.ERROR, 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Suspendisse sodales quam ut vestibulum ultrices.'))
+        popup.add(ItemType.ERROR, 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Suspendisse sodales quam ut vestibulum ultrices.')
     }
     const addRemove = () => {
-        add(undefined)
-        // add(undefined)
-        // add(undefined)
-        popup.del()
+        add()
+        // add()
+        // add()
+        popup.removeLast()
         setArmCounter(armCounter + 1)
     }
 
@@ -105,7 +105,7 @@ export const MainView = () => {
                     <StyledButton onClick={addRemove}>Add and Remove</StyledButton>
                 </div>
                 <div style={{ display: 'flex', gap: '5px', justifyContent: 'center' }}>
-                    <StyledButton onClick={() => popup.del()}>Remove</StyledButton>
+                    <StyledButton onClick={() => popup.removeLast()}>Remove</StyledButton>
                     <StyledButton onClick={() => popup.clear()}>Clear</StyledButton>
                 </div>
             </StyledBox>
