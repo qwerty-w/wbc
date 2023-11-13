@@ -7,6 +7,7 @@ import { Transaction, TransactionsView } from './components/create-transaction/t
 import { Creator, CreatorView } from './components/create-transaction/creator'
 import { NewAddressModal, NewAddressModalView } from './components/create-transaction/new-address-modal'
 import { NewOutputModal, NewOutputModalView } from './components/create-transaction/new-output-modal'
+import { Popup, PopupView } from './common/popup'
 
 
 const StyledCreate = styled.div`
@@ -26,7 +27,8 @@ interface IGlobalStore {
     addrs: AddressContainer,
     txs: Container<Transaction>,
     creator: Creator,
-    modals: IModals
+    modals: IModals,
+    popup: Popup
 }
 
 export const GlobalStore = createContext<IGlobalStore>({
@@ -36,18 +38,22 @@ export const GlobalStore = createContext<IGlobalStore>({
     modals: {
         newaddr: new NewAddressModal(),
         newout: new NewOutputModal()
-    }
+    },
+    popup: new Popup(10)
 })
 
 export const CreateView = () => {
+    const store = useContext(GlobalStore)
+    ;(window as any).store = store
     return (
-        <GlobalStore.Provider value={useContext(GlobalStore)}>
+        <GlobalStore.Provider value={store}>
             <StyledCreate>
                 <AddressesView />
                 <TransactionsView />
                 <CreatorView />
                 <NewAddressModalView />
                 <NewOutputModalView />
+                <PopupView popup={store.popup}/>
             </StyledCreate>
         </GlobalStore.Provider>
     );

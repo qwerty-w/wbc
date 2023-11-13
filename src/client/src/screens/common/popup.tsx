@@ -166,7 +166,7 @@ export class Item {
         })
     }
     get icoUrl() {
-        return `/icons/popup/${Item.icons[this.type]}`
+        return `/icons/${Item.icons[this.type]}`
     }
     get icoAlt() {
         return Item.iconsAlt[this.type]
