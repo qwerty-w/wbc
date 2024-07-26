@@ -17,6 +17,6 @@ class User(BaseModel, CreatedMixin):
     __tablename__ = 'user'
 
     id: Mapped[intpk]
-    username: Mapped[str] = mapped_column(types.String(32))
+    username: Mapped[str] = mapped_column(types.String(32), unique=True)
     pwd: Mapped[str]
     aeskey_encrypted: Mapped[bytes]

@@ -1,8 +1,8 @@
 """Initial commit
 
-Revision ID: 65c55dd4494c
+Revision ID: 7fef32977aad
 Revises: 
-Create Date: 2024-07-23 13:46:07.754858
+Create Date: 2024-07-24 22:51:09.111243
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = '65c55dd4494c'
+revision: str = '7fef32977aad'
 down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -71,7 +71,7 @@ def upgrade() -> None:
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('userid', sa.Integer(), nullable=False),
     sa.Column('encrypted', sa.LargeBinary(), nullable=False),
-    sa.Column('dsha256_digest', sa.LargeBinary(), nullable=False),
+    sa.Column('dsha256_digest', sa.LargeBinary(length=32), nullable=False),
     sa.Column('pubkey_xb', sa.LargeBinary(length=32), nullable=False),
     sa.Column('pubkey_yb', sa.LargeBinary(length=32), nullable=False),
     sa.Column('created_at', sa.DateTime(), server_default=sa.text('CURRENT_TIMESTAMP'), nullable=False),
@@ -91,7 +91,7 @@ def upgrade() -> None:
     sa.Column('userid', sa.Integer(), nullable=False),
     sa.Column('string', sa.String(), nullable=False),
     sa.Column('type', sa.Enum('P2PKH', 'P2SH_P2WPKH', 'P2WPKH', 'P2WSH', 'P2TR', name='addresstype'), nullable=False),
-    sa.Column('network', sa.Enum('MAIN', 'TEST', name='networktype'), nullable=False),
+    sa.Column('network', sa.Enum('mainnet', 'testnet', name='networktype'), nullable=False),
     sa.Column('is_pubkey_compressed', sa.Boolean(), nullable=False),
     sa.Column('keyid', sa.Integer(), nullable=False),
     sa.Column('shortname', sa.String(length=64), nullable=False),
