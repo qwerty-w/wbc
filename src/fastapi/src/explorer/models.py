@@ -45,11 +45,11 @@ class Unspent(BaseModel):
 
     outxid: Mapped[bytes] = mapped_column()
     outvout: Mapped[int] = mapped_column()
-    addresstr: Mapped[str] = mapped_column(unique=True)
+    addresstr: Mapped[str] = mapped_column()
 
     __table_args__ = (
         PrimaryKeyConstraint(outxid, outvout),
-        ForeignKeyConstraint([outxid, outvout], [Output.txid, Output.vout]),
+        ForeignKeyConstraint([outxid, outvout], [Output.txid, Output.vout])
     )
 
 
