@@ -5,7 +5,7 @@ class Settings(BaseSettings):
     # postgres envs
     PG_USER: str
     PG_PWD: str
-    PG_URL: str
+    PG_HOSTNAME: str
     PG_PORT: int = 5432
     PG_DBNAME: str
 
