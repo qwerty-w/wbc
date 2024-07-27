@@ -1,0 +1,24 @@
+services:
+  db:
+    image: postgres:latest
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: testpassword
+    networks:
+      default:
+        aliases:
+          - 'postgresql' 
+
+  pgadmin:
+    image: dpage/pgadmin4
+    ports:
+      - "8080:80"
+    environment:
+      PGADMIN_DEFAULT_EMAIL: "mail@example.com"
+      PGADMIN_DEFAULT_PASSWORD: "testpassword"
+
+networks:
+  default:
+    driver: bridge
