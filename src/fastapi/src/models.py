@@ -20,3 +20,4 @@ class User(BaseModel, CreatedMixin):
     username: Mapped[str] = mapped_column(types.String(32), unique=True)
     pwd: Mapped[str]
     aeskey_encrypted: Mapped[bytes]
+    aeskey_sha256digest: Mapped[bytes] = mapped_column(types.LargeBinary(32))

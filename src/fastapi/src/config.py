@@ -12,6 +12,9 @@ class Settings(BaseSettings):
     DEBUG: bool = True
     OPEN_API_URL: str = '/openapi.json'
 
+    USER_TOKEN_LENGTH: int = 32
+    USER_SESSION_EXPIRATION_DAYS: int = 14
+
     model_config = SettingsConfigDict(env_file='.env')
 
 settings = Settings()  # type: ignore
