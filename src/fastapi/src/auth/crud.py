@@ -1,18 +1,14 @@
 import os
 import secrets
 import datetime
-from hashlib import sha256
 from sqlalchemy import select
 from sqlalchemy.orm import joinedload
-from passlib.context import CryptContext
 
 from ..config import settings
 from ..database import SessionLocal
 from ..models import User
+from . import cryptoutils as cu
 from .models import UserSession
-
-
-pwdcontext = CryptContext(schemes=['argon2'], deprecated='auto')
 
 
 async def get_user_by_username(username: str) -> User | None:
@@ -21,15 +17,15 @@ async def get_user_by_username(username: str) -> User | None:
 
 
 async def add_user(username: str, password: str) -> User:
-    pwdhash = pwdcontext.hash(password)
-    aeskey = os.urandom(32)
+    pwdhash = cu.context.hash(password)
+    ck = cu.generatekey()
+    encrypted = cu.kdfencrypt(password, ck)
 
     async with SessionLocal() as session, session.begin():
         session.add(u := User(
             username=username,
             password=pwdhash,
-            aeskey_encrypted=b'',  # todo: encrypt
-            aeskey_sha256digest=sha256(b'').digest()
+            aesckey=encrypted
         ))
         return u
 
