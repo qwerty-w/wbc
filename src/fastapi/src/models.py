@@ -19,5 +19,6 @@ class User(BaseModel, CreatedMixin):
     id: Mapped[intpk]
     username: Mapped[str] = mapped_column(types.String(32), unique=True)
     pwd: Mapped[str]
-    aeskey_encrypted: Mapped[bytes]
-    aeskey_sha256digest: Mapped[bytes] = mapped_column(types.LargeBinary(32))
+    kdf_options: Mapped[str]
+    kdf_digest: Mapped[bytes] = mapped_column(types.LargeBinary(32))  # kdf(argon2) dsha256 digest
+    ckey_encrypted: Mapped[bytes]  # aes common key encrypted (argon2-metadata$encrypted)
