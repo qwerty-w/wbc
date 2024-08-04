@@ -18,7 +18,7 @@ async def create_address(user: User,
                          network: NetworkType,
                          shortname: str,
                          emojid: str,
-                         pubkey_compressed: bool = True,
+                         pubkey_compressed: bool,
                          p: PrivateKey | None = None) -> UserBitcoinAddress:
 
     p = p or PrivateKey(pubkey_network=network, pubkey_compressed=pubkey_compressed)
