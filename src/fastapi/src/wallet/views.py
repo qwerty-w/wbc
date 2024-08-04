@@ -1,28 +1,33 @@
-from typing import Annotated, Generator
-from fastapi import APIRouter, Depends
-from sqlalchemy import select
+from typing import Annotated
+from fastapi import APIRouter, Depends, HTTPException
 
-from . import schema, models, crud
 from ..models import User
+from ..auth import currentuser
+from ..auth.exceptions import InvalidPasswordError
+from . import schema, crud
 
 
-router = APIRouter(prefix='/address')
+router = APIRouter(prefix='/wallet')
 
 
-def userid(userid: int):
-    return userid
+@router.get('/address/list', response_model=list[schema.AddressOut])
+async def addresses(user: Annotated[User, Depends(currentuser)]):
+    return await crud.get_addresses(user.id)
 
 
-@router.get('/', response_model=list[schema.Address])
-async def addresses(userid: Annotated[int, Depends(userid)]):
-    return await crud.get_addresses(userid)
+@router.post('/address/create', response_model=schema.AddressOut)
+async def create_address(user: Annotated[User, Depends(currentuser)], a: schema.CreateAddressIn):
+    try:
+        return await crud.create_address(user, a.userpassword,a.type, a.network, a.shortname, a.emojid)
+    except ValueError:
+        raise InvalidPasswordError
 
 
-@router.post('/create')
-def create_address():
+@router.post('/address/import')
+def import_address():
     pass
 
 
-@router.post('/import')
-def import_address():
+@router.post('/address/obtain')
+def obtain_address():
     pass
