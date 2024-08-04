@@ -5,7 +5,9 @@ from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from fastapi.exceptions import RequestValidationError
 
 from ..models import User
-from . import crud, currentuser, schema, models, cryptoutils as cu
+from ..crud import getuser_by_username
+from ..wallet import cryptoutils as cu
+from . import crud, currentuser, schema, models, exceptions
 
 
 router = APIRouter(prefix='/auth')
@@ -27,7 +29,7 @@ async def signup(
     except schema.ValidationError as e:
         raise RequestValidationError(e.errors())
 
-    if await crud.get_user_by_username(m.username):
+    if await getuser_by_username(m.username):
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail='username already exists')
 
     u = await crud.add_user(m.username, m.password)
@@ -37,11 +39,12 @@ async def signup(
 
 @router.post('/signin', response_model=schema.UserSession)
 async def signin(formdata: Annotated[OAuth2PasswordRequestForm, Depends()], request: Request):
-    u = await crud.get_user_by_username(formdata.username)
+    u = await getuser_by_username(formdata.username)
     if not u:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='user not found')
+        raise exceptions.UserNotFoundError
     if not cu.context.verify(formdata.password, u.pwd):
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail='wrong password')
+        raise exceptions.InvalidPasswordError
+
     session = await add_usersession(u, request)
     return schema.UserSession(username=u.username, access_token=session.token, expire=session.expire)
 

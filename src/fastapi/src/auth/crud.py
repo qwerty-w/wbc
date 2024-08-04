@@ -1,4 +1,3 @@
-import os
 import secrets
 import datetime
 from sqlalchemy import select
@@ -7,13 +6,8 @@ from sqlalchemy.orm import joinedload
 from ..config import settings
 from ..database import SessionLocal
 from ..models import User
-from . import cryptoutils as cu
+from ..wallet import cryptoutils as cu
 from .models import UserSession
-
-
-async def get_user_by_username(username: str) -> User | None:
-    async with SessionLocal() as session:
-        return await session.scalar(select(User).where(User.username == username))
 
 
 async def add_user(username: str, password: str) -> User:
