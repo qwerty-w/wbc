@@ -15,7 +15,7 @@ async def catch_unique[T](f: Coroutine[Any, Any, T]) -> bool:
         await f
         return False
     except IntegrityError as e:
-        asyncpgerr = getattr(getattr(e, 'orig'), '__cause__')
+        asyncpgerr = getattr(getattr(e, 'orig', None), '__cause__', None)
         if not isinstance(asyncpgerr, UniqueViolationError):
             raise e
         return True
