@@ -1,5 +1,5 @@
 from typing import cast, Iterable
-from sqlalchemy import select
+from sqlalchemy import select, update
 from btclib import PrivateKey, NetworkType, AddressType
 
 from ..database import SessionLocal
@@ -95,5 +95,20 @@ async def create_address(user: User,
             shortname=shortname,
             emojid=emojid
         ))
-        assert not await catch_unique(session.commit()), f'address "{address.string}" already exists'
+        assert not await catch_unique(session.commit()), f"address '{address.string}' already exists"
         return address_bd
+
+
+async def update_address(userid: int, address: str, shortname: str, emojid: str):
+    async with SessionLocal() as session, session.begin():
+        await session.execute(
+            update(UserBitcoinAddress)
+            .where(
+                UserBitcoinAddress.userid == userid,
+                UserBitcoinAddress.string == address
+            )
+            .values(
+                shortname=shortname,
+                emojid=emojid
+            )
+        )
