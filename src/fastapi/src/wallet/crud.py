@@ -1,3 +1,4 @@
+from typing import Iterable
 from sqlalchemy import select
 from btclib import PrivateKey, NetworkType, AddressType
 
@@ -7,9 +8,14 @@ from . import cryptoutils as cu
 from .models import UserBitcoinKey, UserBitcoinAddress
 
 
-async def get_addresses(userid: int):
+async def get_addresses(userid: int) -> Iterable[UserBitcoinAddress]:
     async with SessionLocal() as session:
         return await session.scalars(select(UserBitcoinAddress).where(UserBitcoinAddress.userid == userid))
+
+
+async def get_address_by_shortname(userid: int, shortname: str) -> UserBitcoinAddress | None:
+    async with SessionLocal() as session:
+        return await session.scalar(select(UserBitcoinAddress).where(UserBitcoinAddress.userid == userid, UserBitcoinAddress.shortname == shortname))
 
 
 async def create_address(user: User,
