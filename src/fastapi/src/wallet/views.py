@@ -1,8 +1,6 @@
 import base64
 from typing import Annotated, overload, Literal
-from asyncpg.exceptions import UniqueViolationError
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.exc import IntegrityError
 
 from btclib import PrivateKey, BaseAddress
 from ..models import User
@@ -12,6 +10,24 @@ from . import schema, crud
 
 
 router = APIRouter(prefix='/wallet')
+
+
+@router.get(
+    '/address/list',
+    response_model=list[schema.UserAddressOut]
+)
+async def get_addresses(user: Annotated[User, Depends(currentuser)]):
+    return await crud.get_addresses(user.id)
+
+
+@router.get(
+    '/address/{addresstr}',
+    response_model=schema.UserAddressOut
+)
+async def get_address(user: Annotated[User, Depends(currentuser)], addresstr: str):
+    if not (address := await crud.get_address(userid=user.id, string=addresstr)):
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, 'address not found')
+    return address
 
 
 @overload
@@ -40,10 +56,28 @@ def pvfrom(a: schema.ObtainedAddressIn, *, withaddress: bool = True) -> tuple[Pr
     return p, withaddress and p.public.get_address(a.type) or None
 
 
+@router.post(
+    '/address/obtain',
+    response_model=schema.ObtainedAddressOut,
+    description='Get address from private key'
+)
+async def obtain_address(pa: Annotated[tuple[PrivateKey, BaseAddress], Depends(pvfrom)]):
+    p, address = pa
+    return {
+        'type': address.type,
+        'network': address.network,
+        'pubkey_compressed': p.public.compressed,
+        'string': address.string
+    }
+
+
 async def newaddr(user: User, a: schema.CreateAddressIn, p: PrivateKey | None = None):
     if await crud.get_address_by_shortname(user.id, a.shortname):
         # shortname already exists
-        raise HTTPException(status.HTTP_400_BAD_REQUEST, f"address with shortname '{a.shortname}' already exists")
+        raise HTTPException(
+            status.HTTP_400_BAD_REQUEST,
+            f"address with shortname '{a.shortname}' already exists"
+        )
     try:
         return await crud.create_address(
             user,
@@ -60,15 +94,7 @@ async def newaddr(user: User, a: schema.CreateAddressIn, p: PrivateKey | None = 
 
     except AssertionError as e:
         # address already exists
-        raise HTTPException(status.HTTP_409_CONFLICT, str(e))
-
-
-@router.get(
-    '/address/list',
-    response_model=list[schema.UserAddressOut]
-)
-async def addresses(user: Annotated[User, Depends(currentuser)]):
-    return await crud.get_addresses(user.id)
+        raise HTTPException(status.HTTP_403_FORBIDDEN, str(e))
 
 
 @router.post(
@@ -92,22 +118,4 @@ async def import_address(
     a: schema.ImportAddressIn
 ):
     p, _ = pvfrom(a, withaddress=False)
-    try:
-        return await newaddr(user, a, p)
-    except UniqueViolationError:
-        raise HTTPException(status.HTTP_400_BAD_REQUEST, 'address already exists')
-
-
-@router.post(
-    '/address/obtain',
-    response_model=schema.ObtainedAddressOut,
-    description='Get address from private key WIF'
-)
-async def obtain_address(pa: Annotated[tuple[PrivateKey, BaseAddress], Depends(pvfrom)]):
-    p, address = pa
-    return {
-        'type': address.type,
-        'network': address.network,
-        'pubkey_compressed': p.public.compressed,
-        'string': address.string
-    }
+    return await newaddr(user, a, p)
