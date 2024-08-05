@@ -1,12 +1,12 @@
 import base64
 from typing import Annotated, overload, Literal
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import Body, status, APIRouter, Depends, Path, HTTPException
 
 from btclib import PrivateKey, BaseAddress
 from ..models import User
 from ..auth import currentuser
 from ..auth.exceptions import InvalidPasswordError
-from . import schema, crud
+from . import schema, crud, models
 
 
 router = APIRouter(prefix='/wallet')
@@ -20,13 +20,36 @@ async def get_addresses(user: Annotated[User, Depends(currentuser)]):
     return await crud.get_addresses(user.id)
 
 
+async def currentaddress(
+    user: Annotated[User, Depends(currentuser)],
+    addresstr: Annotated[str, Path(description='Address string')]
+) -> models.UserBitcoinAddress:
+    if not (address := await crud.get_address(userid=user.id, string=addresstr)):
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, 'address not found')
+    return address
+
+
 @router.get(
     '/address/{addresstr}',
     response_model=schema.UserAddressOut
 )
-async def get_address(user: Annotated[User, Depends(currentuser)], addresstr: str):
-    if not (address := await crud.get_address(userid=user.id, string=addresstr)):
-        raise HTTPException(status.HTTP_400_BAD_REQUEST, 'address not found')
+async def get_address(address: Annotated[models.UserBitcoinAddress, Depends(currentaddress)]):
+    return address
+
+
+@router.put(
+    '/address/{addresstr}',
+    response_model=schema.UserAddressOut,
+    description='Update address params'
+)
+async def put_address(
+    user: Annotated[User, Depends(currentuser)],
+    address: Annotated[models.UserBitcoinAddress, Depends(currentaddress)],
+    params: schema.MutableUserAddressParams
+):
+    if params.shortname != address.shortname or params.emojid != address.emojid:
+        await crud.update_address(user.id, address.string, params.shortname, params.emojid)
+        address = await currentaddress(user, address.string)
     return address
 
 
@@ -73,6 +96,7 @@ async def obtain_address(pa: Annotated[tuple[PrivateKey, BaseAddress], Depends(p
 
 async def newaddr(user: User, a: schema.CreateAddressIn, p: PrivateKey | None = None):
     if await crud.get_address_by_shortname(user.id, a.shortname):
+        # todo: maybe move in separate dependency
         # shortname already exists
         raise HTTPException(
             status.HTTP_400_BAD_REQUEST,

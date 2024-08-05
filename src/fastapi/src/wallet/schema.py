@@ -43,9 +43,13 @@ class ObtainedAddressOut(BaseAddress):
     string: str
 
 
-class UserAddress(BaseAddress):
+class MutableUserAddressParams(BaseModel):
     shortname: str = Field(max_length=UserBitcoinAddress.shortname.type.length)
     emojid: str
+
+
+class UserAddress(BaseAddress, MutableUserAddressParams):
+    ...
 
 
 class UserAddressOut(UserAddress):
@@ -59,4 +63,4 @@ class CreateAddressIn(UserAddress):
 
 
 class ImportAddressIn(CreateAddressIn, ObtainedAddressIn):
-    pass
+    ...
