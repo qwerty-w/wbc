@@ -1,9 +1,8 @@
 import re
 from enum import StrEnum
 from typing import ClassVar
-from dataclasses import dataclass
 from pydantic import BaseModel, ConfigDict, Field, field_validator, ValidationInfo
-from btclib import PrivateKey, BaseAddress as BaseBitcoinAddress, NetworkType, AddressType
+from btclib import NetworkType, AddressType
 
 from .models import UserBitcoinAddress
 
@@ -12,12 +11,6 @@ class InputKeyType(StrEnum):
     wif = 'wif'
     hex = 'hex'
     base64 = 'base64'
-
-
-@dataclass
-class AddressInfo:
-    p: PrivateKey
-    address: BaseBitcoinAddress
 
 
 class BaseAddress(BaseModel):
