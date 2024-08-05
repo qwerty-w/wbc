@@ -1,6 +1,6 @@
 import base64
 from typing import Annotated, overload, Literal
-from fastapi import Body, status, APIRouter, Depends, Path, HTTPException
+from fastapi import Request, status, APIRouter, Depends, Path, HTTPException
 
 from btclib import PrivateKey, BaseAddress
 from ..models import User
@@ -37,6 +37,26 @@ async def get_address(address: Annotated[models.UserBitcoinAddress, Depends(curr
     return address
 
 
+async def check_shortname_exists(
+    user: Annotated[User, Depends(currentuser)],
+    request: Request = None,  # type: ignore
+    *,
+    shortname: str | None = None
+):
+    if not shortname:
+        d = await request.json()
+        shortname = d.get('shortname')
+
+        if not isinstance(shortname, str):
+            raise TypeError('check_shortname_exists expects shortname as a JSON key')
+
+    if await crud.get_address_by_shortname(user.id, shortname):
+        raise HTTPException(
+            status.HTTP_400_BAD_REQUEST,
+            f"address with shortname '{shortname}' already exists"
+        )
+
+
 @router.put(
     '/address/{addresstr}',
     response_model=schema.UserAddressOut,
@@ -47,8 +67,9 @@ async def put_address(
     address: Annotated[models.UserBitcoinAddress, Depends(currentaddress)],
     params: schema.MutableUserAddressParams
 ):
-    if params.shortname != address.shortname or params.emojid != address.emojid:
-        await crud.update_address(user.id, address.string, params.shortname, params.emojid)
+    if any(v != getattr(address, n) for n, v in params):
+        await check_shortname_exists(user, shortname=params.shortname)
+        await crud.update_address(user.id, address.string, **params.model_dump())
         address = await currentaddress(user, address.string)
     return address
 
@@ -95,13 +116,6 @@ async def obtain_address(pa: Annotated[tuple[PrivateKey, BaseAddress], Depends(p
 
 
 async def newaddr(user: User, a: schema.CreateAddressIn, p: PrivateKey | None = None):
-    if await crud.get_address_by_shortname(user.id, a.shortname):
-        # todo: maybe move in separate dependency
-        # shortname already exists
-        raise HTTPException(
-            status.HTTP_400_BAD_REQUEST,
-            f"address with shortname '{a.shortname}' already exists"
-        )
     try:
         return await crud.create_address(
             user,
@@ -124,6 +138,7 @@ async def newaddr(user: User, a: schema.CreateAddressIn, p: PrivateKey | None = 
 @router.post(
     '/address/create',
     response_model=schema.UserAddressOut,
+    dependencies=[Depends(check_shortname_exists)],
     description='Generate private key, get address and save it'
 )
 async def create_address(
@@ -135,6 +150,7 @@ async def create_address(
 
 @router.post(
     '/address/import',
+    dependencies=[Depends(check_shortname_exists)],
     response_model=schema.UserAddressOut
 )
 async def import_address(
