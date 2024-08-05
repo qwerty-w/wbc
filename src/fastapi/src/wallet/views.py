@@ -42,6 +42,7 @@ def pvfrom(a: schema.ObtainedAddressIn, *, withaddress: bool = True) -> tuple[Pr
 
 async def newaddr(user: User, a: schema.CreateAddressIn, p: PrivateKey | None = None):
     if await crud.get_address_by_shortname(user.id, a.shortname):
+        # shortname already exists
         raise HTTPException(status.HTTP_400_BAD_REQUEST, f"address with shortname '{a.shortname}' already exists")
     try:
         return await crud.create_address(
@@ -56,10 +57,10 @@ async def newaddr(user: User, a: schema.CreateAddressIn, p: PrivateKey | None = 
         )
     except ValueError:
         raise InvalidPasswordError
-    except IntegrityError as e:
-        if not isinstance(getattr(e.orig, '__cause__'), UniqueViolationError):
-            raise e
-        raise HTTPException(status.HTTP_400_BAD_REQUEST, 'address already exists')
+
+    except AssertionError as e:
+        # address already exists
+        raise HTTPException(status.HTTP_409_CONFLICT, str(e))
 
 
 @router.get(
