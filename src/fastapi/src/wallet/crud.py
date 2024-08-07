@@ -11,13 +11,13 @@ from .models import UserBitcoinKey, UserBitcoinAddress
 
 async def get_address(userid: int, string: str) -> UserBitcoinAddress | None:
     async with SessionLocal() as session:
-        return await session.scalar(
+        return (await session.scalars(
             select(UserBitcoinAddress)
             .where(
                 UserBitcoinAddress.userid == userid,
                 UserBitcoinAddress.string == string
             )
-        )
+        )).one()
 
 
 async def get_addresses(userid: int) -> Iterable[UserBitcoinAddress]:
@@ -46,13 +46,13 @@ async def add_or_get_pkey(user: User, userpassword: str, p: PrivateKey):
     pdigest = cu.dsha256(rawp)
 
     async with SessionLocal() as session:
-        pk = cast(UserBitcoinKey, await session.scalar(
+        pk = cast(UserBitcoinKey, (await session.scalars(
             select(UserBitcoinKey)
             .where(
                 UserBitcoinKey.userid == user.id,
                 UserBitcoinKey.dsha256_digest == pdigest
             )
-        ))
+        )).one())
         if pk:
             return pk
 
