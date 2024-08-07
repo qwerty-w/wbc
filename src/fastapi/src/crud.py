@@ -38,4 +38,7 @@ async def fetchuser(id: int) -> User:
 
 async def getuser_by_username(username: str) -> User | None:
     async with SessionLocal() as session:
-        return await session.scalar(select(User).where(User.username == username))
+        return (await session.scalars(
+            select(User)
+            .where(User.username == username)
+        )).one()
