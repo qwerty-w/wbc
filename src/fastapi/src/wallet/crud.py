@@ -1,5 +1,5 @@
 from typing import cast, Iterable
-from sqlalchemy import select, update
+from sqlalchemy import select, update, delete
 from btclib import PrivateKey, NetworkType, AddressType
 
 from ..database import SessionLocal
@@ -112,3 +112,21 @@ async def update_address(userid: int, address: str, shortname: str, emojid: str)
                 emojid=emojid
             )
         )
+
+
+async def delete_address(address: UserBitcoinAddress):
+    async with SessionLocal() as session:
+        await session.delete(address)
+
+        anyaddress = await session.scalar(
+            select(UserBitcoinAddress)
+            .where(UserBitcoinAddress.keyid == address.keyid)
+            .limit(1)
+        )
+        if not anyaddress:
+            await session.execute(
+                delete(UserBitcoinKey)
+                .where(UserBitcoinKey.id == address.keyid)
+            )
+
+        await session.commit()

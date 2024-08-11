@@ -162,3 +162,13 @@ async def put_address(
         await crud.update_address(user.id, address.string, **params.model_dump())
         address = await currentaddress(user, address.string)
     return address
+
+
+@router.delete(
+    'address/{addresstr}',
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+async def delete_address(
+    address: Annotated[models.UserBitcoinAddress, Depends(currentaddress)]
+):
+    await crud.delete_address(address)
