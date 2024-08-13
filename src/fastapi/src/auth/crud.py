@@ -45,11 +45,11 @@ async def add_usersession(userid: int, ip: str | None, user_agent: str | None) -
 
 async def verify_session(token: str) -> UserSession | None:
     async with SessionLocal() as s:
-        session = (await s.scalars(
+        session = await s.scalar(
             select(UserSession)
             .where(UserSession.token == token)
             .options(joinedload(UserSession.user))
-        )).one()
+        )
 
         if not session:
             return

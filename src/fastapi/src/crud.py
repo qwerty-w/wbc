@@ -41,4 +41,4 @@ async def getuser_by_username(username: str) -> User | None:
         return (await session.scalars(
             select(User)
             .where(User.username == username)
-        )).one()
+        )).one_or_none()

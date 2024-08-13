@@ -17,7 +17,7 @@ async def get_address(userid: int, string: str) -> UserBitcoinAddress | None:
                 UserBitcoinAddress.userid == userid,
                 UserBitcoinAddress.string == string
             )
-        )).one()
+        )).one_or_none()
 
 
 async def get_addresses(userid: int) -> Iterable[UserBitcoinAddress]:
@@ -41,7 +41,7 @@ async def get_address_by_shortname(userid: int, shortname: str) -> UserBitcoinAd
         )
 
 
-async def add_or_get_pkey(user: User, userpassword: str, p: PrivateKey):
+async def add_or_get_pkey(user: User, userpassword: str, p: PrivateKey) -> UserBitcoinKey:
     rawp = p.to_bytes()
     pdigest = cu.dsha256(rawp)
 
@@ -52,7 +52,7 @@ async def add_or_get_pkey(user: User, userpassword: str, p: PrivateKey):
                 UserBitcoinKey.userid == user.id,
                 UserBitcoinKey.dsha256_digest == pdigest
             )
-        )).one())
+        )).one_or_none())
         if pk:
             return pk
 
