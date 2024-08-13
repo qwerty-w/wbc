@@ -13,6 +13,10 @@ class CreatedMixin:
     created_at: Mapped[datetime.datetime] = mapped_column(server_default=func.current_timestamp())
 
 
+class LastAccessedMixin:
+    last_accessed_at: Mapped[datetime.datetime] = mapped_column(server_default=func.current_timestamp())
+
+
 class User(BaseModel, CreatedMixin):
     __tablename__ = 'user'
 
