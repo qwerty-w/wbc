@@ -158,7 +158,8 @@ async def put_address(
     params: schema.MutableUserAddressParams
 ):
     if any(v != getattr(address, n) for n, v in params):
-        await check_shortname_exists(user, shortname=params.shortname)
+        if address.shortname != params.shortname:
+            await check_shortname_exists(user, shortname=params.shortname)
         await crud.update_address(user.id, address.string, **params.model_dump())
         address = await currentaddress(user, address.string)
     return address
