@@ -118,7 +118,7 @@ async def newaddr(
 
     except AssertionError as e:
         # address already exists
-        raise HTTPException(status.HTTP_403_FORBIDDEN, str(e))
+        raise HTTPException(status.HTTP_409_CONFLICT, str(e))
 
 
 @router.post(
