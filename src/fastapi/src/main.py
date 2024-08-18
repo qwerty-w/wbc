@@ -2,8 +2,9 @@ import fastapi
 from .config import settings
 from .database import engine, BaseModel
 
-from .wallet.views import router as wallet_router
 from .auth.views import router as auth_router
+from .wallet.views import router as wallet_router
+from .explorer.views import router as explorer_router
 
 
 app = fastapi.FastAPI(
@@ -13,3 +14,4 @@ app = fastapi.FastAPI(
 )
 app.include_router(wallet_router)
 app.include_router(auth_router)
+app.include_router(explorer_router)
