@@ -1,12 +1,17 @@
 from typing import Annotated
 from anyio import to_thread
-from fastapi import status, APIRouter, HTTPException, Query, Path
+from fastapi import status, APIRouter, HTTPException, Query, Path, Depends
 from btclib import address, service, NetworkType, BroadcastedTransaction
 
 from . import crud, schema
+from ..auth import currentuser
+from ..config import settings
 
 
-router = APIRouter(prefix='/explorer')
+router = APIRouter(
+    prefix='/explorer',
+    dependencies=[Depends(currentuser)] if settings.EXPLORER_FOR_LOGINED_ONLY else []
+)
 
 
 @router.get('/head')
