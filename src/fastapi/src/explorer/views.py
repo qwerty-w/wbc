@@ -24,7 +24,10 @@ async def get_address_unspent(addresstr: str):
     pass
 
 
-async def fetch_transaction_from_api(txid: str, network: NetworkType) -> BroadcastedTransaction:
+async def fetch_transaction_from_api(txid: str, network: NetworkType) -> tuple[BroadcastedTransaction, str]:
+    """
+    :param return: Tuple of transaction, explorer name
+    """
     api = service.Service(network)
     try:
         tx = await to_thread.run_sync(api.get_transaction, txid)
@@ -32,7 +35,7 @@ async def fetch_transaction_from_api(txid: str, network: NetworkType) -> Broadca
         raise HTTPException(status.HTTP_404_NOT_FOUND, 'transaction not found')
     except service.ServiceError:
         raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, 'explorers not available now')
-    return tx
+    return tx, getattr(api.previous_explorer, '__name__', '')
 
 
 @router.get(
@@ -64,25 +67,25 @@ async def get_transaction(
     tx = await crud.get_transaction(idb, with_io=detail)
 
     if not tx or tx.blockheight == -1 and not cached:
-        fetched = await fetch_transaction_from_api(txid, network)
+        fetched, explorer_name = await fetch_transaction_from_api(txid, network)
         if tx:
             if tx.blockheight != fetched.block:
                 await crud.update_transaction_blockheight(idb, fetched.block)
                 tx.blockheight = fetched.block
 
         else:
-            tx = await crud.add_transaction(fetched, apiservice='')  # todo: apiservice
-    
+            tx = await crud.add_transaction(fetched, apiservice=explorer_name)
+
     if not detail:
         return schema.Transaction.model_validate(tx)
-    
+
     ous = []
     for o in tx.outputs:
         try:
             astring = address.from_pkscript(o.pkscript).string
         except ValueError:
             astring = None
-        
+
         ous.append(schema.Output(
             pkscript=o.pkscript,  # type: ignore
             amount=o.amount,
