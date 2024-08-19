@@ -15,6 +15,9 @@ class Settings(BaseSettings):
     USER_TOKEN_LENGTH: int = 32
     USER_SESSION_EXPIRATION_DAYS: int = 14
 
+    EXPLORER_FOR_LOGINED_ONLY: bool = False
+
     model_config = SettingsConfigDict(env_file='.env')
+
 
 settings = Settings()  # type: ignore
