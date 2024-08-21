@@ -1,9 +1,8 @@
 from typing import Annotated
-from fastapi import status, APIRouter, HTTPException, Query, Path, Depends
-from btclib import address, NetworkType
+from fastapi import APIRouter, Query, Path, Depends
+from btclib import NetworkType
 
-from . import crud, schema
-from .service import Service
+from . import schema, service
 from ..auth import currentuser
 from ..config import settings
 
@@ -39,6 +38,7 @@ async def get_transaction(
         str,
         Path(pattern=r'\A[a-fA-F0-9]{64}\z')
     ],
+    network: NetworkType = NetworkType.MAIN,
     cached: Annotated[
         bool,
         Query(
@@ -51,71 +51,9 @@ async def get_transaction(
         Query(
             description='Return with inputs and outputs data'
         )
-    ] = False,
-    network: NetworkType = NetworkType.MAIN
+    ] = False
 ):
-    idb = bytes.fromhex(txid)
-    tx = await crud.get_transaction(idb, with_io=detail)
-
-    if not tx or tx.blockheight == -1 and not cached:
-        service = Service(network)
-        broadcasted = await service.get_transaction(txid)
-        if tx:
-            if tx.blockheight != broadcasted.block:
-                await crud.update_transaction_blockheight(idb, broadcasted.block)
-                tx.blockheight = broadcasted.block
-
-        else:
-            tx = await crud.add_transaction(
-                broadcasted,
-                apiservice=getattr(service.api.previous_explorer, '__name__', '')
-            )
-
-    if not detail:
-        return schema.Transaction.model_validate(tx)
-
-    ous = []
-    for o in tx.outputs:
-        try:
-            astring = address.from_pkscript(o.pkscript).string
-        except ValueError:
-            astring = None
-
-        ous.append(schema.Output(
-            pkscript=o.pkscript,  # type: ignore
-            amount=o.amount,
-            address=astring)
-        )
-
-    return schema.TransactionDetail(
-        id=tx.id,  # type: ignore
-        inamount=tx.inamount,
-        outamount=tx.outamount,
-        incount=tx.incount,
-        outcount=tx.outcount,
-        version=tx.version,
-        locktime=tx.locktime,
-        size=tx.size,
-        vsize=tx.vsize,
-        weight=tx.weight,
-        is_segwit=tx.is_segwit,
-        is_coinbase=tx.is_coinbase,
-        fee=tx.fee,
-        blockheight=tx.blockheight,
-        inputs=[
-            schema.Input(
-                txid=i.outxid,  # type: ignore
-                vout=i.outvout,
-                amount=i.amount,
-                is_segwit=i.is_segwit,
-                is_coinbase=i.is_coinbase,
-                script=i.script,  # type: ignore
-                witness=i.witness  # type: ignore
-            )
-            for i in tx.inputs
-        ],
-        outputs=ous
-    )
+    return await service.get_or_add_transaction(txid, network, cached, detail)
 
 
 @router.post('/transaction')
