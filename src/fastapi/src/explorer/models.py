@@ -43,7 +43,7 @@ class Output(BaseModel):
     tx: Mapped['BroadcastedTransaction'] = relationship(back_populates='outputs')
 
     __table_args__ = (
-        PrimaryKeyConstraint(txid, vout)
+        PrimaryKeyConstraint(txid, vout),
     )
 
 
