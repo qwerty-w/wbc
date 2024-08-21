@@ -1,4 +1,5 @@
 from typing import Annotated
+from btclib import address
 from pydantic import BaseModel, BeforeValidator, ConfigDict
 from pydantic.functional_validators import BeforeValidator
 
@@ -48,7 +49,55 @@ class Transaction(Base):
     fee: int
     blockheight: int
 
+    @classmethod
+    def from_model(cls, model: models.BroadcastedTransaction) -> 'Transaction':
+        return cls.model_validate(model)
+
 
 class TransactionDetail(Transaction):
     inputs: list[Input]
     outputs: list[Output]
+
+    @classmethod
+    def from_model(cls, model: models.BroadcastedTransaction) -> 'Transaction':
+        ous = []
+        for o in model.outputs:
+            try:
+                astring = address.from_pkscript(o.pkscript).string
+            except ValueError:
+                astring = None
+
+            ous.append(Output(
+                pkscript=o.pkscript,  # type: ignore
+                amount=o.amount,
+                address=astring)
+            )
+        return cls(
+            id=model.id,  # type: ignore
+            inamount=model.inamount,
+            outamount=model.outamount,
+            incount=model.incount,
+            outcount=model.outcount,
+            version=model.version,
+            locktime=model.locktime,
+            size=model.size,
+            vsize=model.vsize,
+            weight=model.weight,
+            is_segwit=model.is_segwit,
+            is_coinbase=model.is_coinbase,
+            fee=model.fee,
+            blockheight=model.blockheight,
+            inputs=[
+                Input(
+                    txid=i.outxid,  # type: ignore
+                    vout=i.outvout,
+                    amount=i.amount,
+                    is_segwit=i.is_segwit,
+                    is_coinbase=i.is_coinbase,
+                    script=i.script,  # type: ignore
+                    witness=i.witness  # type: ignore
+                )
+                for i in model.inputs
+            ],
+            outputs=ous
+        )
