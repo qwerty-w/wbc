@@ -21,19 +21,9 @@ async def catch_unique[T](f: Coroutine[Any, Any, T]) -> bool:
         return True
 
 
-def _freturn[T](o: T | None) -> T:
-    if o is None:
-        raise NoResultError
-    return o
-
-
 async def getuser(id: int) -> User | None:
     async with SessionLocal() as session:
         return await session.get(User, id)
-
-
-async def fetchuser(id: int) -> User:
-    return _freturn(await getuser(id))
 
 
 async def getuser_by_username(username: str) -> User | None:
