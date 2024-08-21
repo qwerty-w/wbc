@@ -1,84 +1,122 @@
-from typing import Any, Callable, Optional
+import typing
+import httpx
 from anyio import to_thread
-from fastapi import status, HTTPException
-from httpx import Client, TimeoutException
-from btclib import service, NetworkType, Unspent
+from btclib import NetworkType, Unspent, Service as API
 from btclib.service import AddressInfo, NotFoundError, ServiceError, ExcessiveAddress, AddressOverflowError
 from btclib.transaction import BroadcastedTransaction
 
-
-def notfounderror(n: str = '', v: str | list[str] = ''):
-    msg = 'not found'
-    if n and v:
-        if isinstance(v, list):
-            v = '[' + ', '.join(f'"{e}"' for e in v) + ']'
-        else:
-            v = f'"{v}"'
-        msg = f'{n} {v} ' + msg
-    return HTTPException(status.HTTP_404_NOT_FOUND, msg)
+from . import crud, schema, exceptions as exc
 
 
 class Service:
-    CLIENT = Client(follow_redirects=True)
+    httpx_client = httpx.Client(follow_redirects=True)
 
     def __init__(self, network: NetworkType):
-        self.api = service.Service(network=network, client=self.CLIENT)
+        self.api = API(network=network, client=self.httpx_client)
 
     async def send[T](
         self,
-        f: Callable[..., T],
+        f: typing.Callable[..., T],
         *args,
-        notfounderr: Optional[HTTPException] = None,
-        kwargs: dict[str, Any] = {}
+        notfounderr: exc.NotFoundError | None = None,
+        kwargs: dict[str, typing.Any] = {}
     ) -> T:
         try:
             r = await to_thread.run_sync(f, self.api, *args, **kwargs)
 
         except (ExcessiveAddress, AddressOverflowError):
-            raise HTTPException(status.HTTP_400_BAD_REQUEST, 'address is too excessive')
+            raise exc.ExcessiveAddressError
 
         except NotFoundError:
-            raise notfounderr or notfounderror()
+            raise notfounderr or exc.NotFoundError()
 
-        except (ServiceError, TimeoutException, ConnectionError):
-            raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, 'explorers not available now')
+        except (ServiceError, httpx.TimeoutException, ConnectionError):
+            raise exc.ServiceUnavailableError
 
         return r
 
     async def get_head_blockheight(self) -> int:
-        return await self.send(service.Service.head)
+        return await self.send(API.head)
 
     async def get_address(self, address: str) -> AddressInfo:
         return await self.send(
-            service.Service.get_address,
+            API.get_address,
             address,
-            notfounderr=notfounderror('address', address)
+            notfounderr=exc.AddressNotFoundError(address)
         )
 
     async def get_address_transactions(self, address: str) -> list[BroadcastedTransaction]:
         return await self.send(
-            service.Service.get_address_transactions,
+            API.get_address_transactions,
             address,
-            notfounderr=notfounderror('address', address)
+            notfounderr=exc.AddressNotFoundError(address)
         )
 
     async def get_transactions(self, txids: list[str]) -> list[BroadcastedTransaction]:
         return await self.send(
-            service.Service.get_transactions,
+            API.get_transactions,
             txids,
-            notfounderr=notfounderror('transactions', txids)
+            notfounderr=exc.TransactionsNotFoundError(txids)
         )
 
     async def get_transaction(self, txid: str) -> BroadcastedTransaction:
         return await self.send(
-            service.Service.get_transaction,
+            API.get_transaction,
             txid,
-            notfounderr=notfounderror('transaction', txid)
+            notfounderr=exc.TransactionNotFoundError(txid)
         )
 
     async def get_unspent(self, address: str) -> list[Unspent]:
         return await self.send(
-            service.Service.get_unspent,
+            API.get_unspent,
             address,
-            notfounderr=notfounderror('address', address)
+            notfounderr=exc.AddressNotFoundError(address)
         )
+
+
+async def get_or_add_transaction(
+    txid: str,
+    network: NetworkType,
+    cached: bool,
+    detail: bool
+) -> schema.Transaction | schema.TransactionDetail:
+    id = bytes.fromhex(txid)
+    tx = await crud.get_transaction(id, load_inout=detail)
+
+    if not tx or tx.blockheight == -1 and not cached:
+        service = Service(network)
+        broadcasted = await service.get_transaction(txid)
+        if tx:
+            if tx.blockheight != broadcasted.block:
+                await crud.update_transaction_blockheight(id, broadcasted.block)
+                tx.blockheight = broadcasted.block
+
+        else:
+            tx = await crud.add_transaction(
+                broadcasted,
+                apiservice=getattr(service.api.previous_explorer, '__name__', '')
+            )
+
+    cls = schema.TransactionDetail if detail else schema.Transaction
+    return cls.from_model(tx)
+
+
+async def get_or_add_transactions(
+    txids: list[str],
+    network: NetworkType,
+    cached: bool,
+    detail: bool
+) -> list[schema.Transaction] | list[schema.TransactionDetail]:
+    return [
+        await get_or_add_transaction(
+            txid,
+            network,
+            cached,
+            detail
+        )
+        for txid in txids
+    ]
+
+
+async def get_or_add_unspent():
+    pass
