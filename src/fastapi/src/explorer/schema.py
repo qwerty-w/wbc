@@ -1,5 +1,4 @@
 from typing import Annotated
-from btclib import address
 from pydantic import BaseModel, BeforeValidator, ConfigDict
 from pydantic.functional_validators import BeforeValidator
 
@@ -59,19 +58,7 @@ class TransactionDetail(Transaction):
     outputs: list[Output]
 
     @classmethod
-    def from_model(cls, model: models.BroadcastedTransaction) -> 'Transaction':
-        ous = []
-        for o in model.outputs:
-            try:
-                astring = address.from_pkscript(o.pkscript).string
-            except ValueError:
-                astring = None
-
-            ous.append(Output(
-                pkscript=o.pkscript,  # type: ignore
-                amount=o.amount,
-                address=astring)
-            )
+    def from_model(cls, model: models.BroadcastedTransaction) -> 'TransactionDetail':
         return cls(
             id=model.id,  # type: ignore
             inamount=model.inamount,
@@ -99,5 +86,24 @@ class TransactionDetail(Transaction):
                 )
                 for i in model.inputs
             ],
-            outputs=ous
+            outputs=[Output.model_validate(o) for o in model.outputs]
+        )
+
+
+class Unspent(Base):
+    vout: int
+    address: str
+
+    tx: TransactionDetail
+
+    @classmethod
+    def from_model(
+        cls,
+        unspent: models.Unspent,
+        tx: models.BroadcastedTransaction
+    ) -> 'Unspent':
+        return cls(
+            vout=unspent.outvout,
+            address=unspent.addresstr,
+            tx=TransactionDetail.from_model(tx)
         )
