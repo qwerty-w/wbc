@@ -38,26 +38,12 @@ class Output(BaseModel):
     vout: Mapped[int] = mapped_column()
     pkscript: Mapped[bytes]
     amount: Mapped[int]
+    address: Mapped[str | None]
 
     tx: Mapped['BroadcastedTransaction'] = relationship(back_populates='outputs')
 
     __table_args__ = (
-        PrimaryKeyConstraint(txid, vout),
-    )
-
-
-class Unspent(BaseModel):
-    __tablename__ = 'blockchain_unspent'
-
-    outxid: Mapped[bytes] = mapped_column()
-    outvout: Mapped[int] = mapped_column()
-    addresstr: Mapped[str] = mapped_column()
-
-    output: Mapped[Output] = relationship()
-
-    __table_args__ = (
-        PrimaryKeyConstraint(outxid, outvout),
-        ForeignKeyConstraint([outxid, outvout], [Output.txid, Output.vout])
+        PrimaryKeyConstraint(txid, vout)
     )
 
 
@@ -83,3 +69,18 @@ class BroadcastedTransaction(BaseModel, CreatedMixin):
 
     inputs: Mapped[list[Input]] = relationship(back_populates='tx')
     outputs: Mapped[list[Output]] = relationship(back_populates='tx')
+
+
+class Unspent(BaseModel):
+    __tablename__ = 'blockchain_unspent'
+
+    outxid: Mapped[bytes] = mapped_column()
+    outvout: Mapped[int] = mapped_column()
+    addresstr: Mapped[str] = mapped_column()
+
+    output: Mapped[Output] = relationship()
+
+    __table_args__ = (
+        PrimaryKeyConstraint(outxid, outvout),
+        ForeignKeyConstraint([outxid, outvout], [Output.txid, Output.vout])
+    )
