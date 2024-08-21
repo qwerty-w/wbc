@@ -1,6 +1,7 @@
 from sqlalchemy import select, update
 from sqlalchemy.orm import joinedload
 from btclib import BroadcastedTransaction
+from btclib.address import from_pkscript
 
 from ..database import SessionLocal
 from . import models
@@ -25,10 +26,10 @@ async def add_unspent(outxid: bytes, outvout: int, addresstr: str) -> models.Uns
         return u
 
 
-async def get_transaction(txid: bytes, with_io: bool = False) -> models.BroadcastedTransaction | None:
+async def get_transaction(txid: bytes, load_inout: bool = False) -> models.BroadcastedTransaction | None:
     q = (select(models.BroadcastedTransaction)
         .where(models.BroadcastedTransaction.id == txid))
-    if with_io:
+    if load_inout:
         q = q.options(
             joinedload(models.BroadcastedTransaction.inputs),
             joinedload(models.BroadcastedTransaction.outputs)
@@ -71,17 +72,22 @@ async def add_transaction(tx: BroadcastedTransaction, apiservice: str) -> models
             )
             for index, inp in enumerate(tx.inputs)
         )
-        dtx.outputs.extend(
-            models.Output(
-                txid=dtx.id,
-                vout=index,
-                pkscript=out.pkscript.serialize(),
-                amount=out.amount
-            )
-            for index, out in enumerate(tx.outputs)
-        )
-        session.add(dtx)
+        for index, out in enumerate(tx.outputs):
+            try:
+                address = from_pkscript(out.pkscript).string
+            except ValueError:
+                address = None
 
+            dtx.outputs.append(
+                models.Output(
+                    txid=dtx.id,
+                    vout=index,
+                    pkscript=out.pkscript.serialize(),
+                    amount=out.amount,
+                    address=address
+                )
+            )
+        session.add(dtx)
     return dtx
 
 
