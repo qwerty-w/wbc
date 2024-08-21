@@ -1,9 +1,9 @@
 from typing import Annotated
-from anyio import to_thread
 from fastapi import status, APIRouter, HTTPException, Query, Path, Depends
-from btclib import address, service, NetworkType, BroadcastedTransaction
+from btclib import address, NetworkType
 
 from . import crud, schema
+from .service import Service
 from ..auth import currentuser
 from ..config import settings
 
@@ -15,7 +15,7 @@ router = APIRouter(
 
 
 @router.get('/head')
-def get_head_block():
+def get_head_block():  # todo: add cache
     pass
 
 
@@ -27,20 +27,6 @@ async def get_address(addresstr: str, cached: bool):
 @router.get('/address/{addresstr}/unspent')
 async def get_address_unspent(addresstr: str):
     pass
-
-
-async def fetch_transaction_from_api(txid: str, network: NetworkType) -> tuple[BroadcastedTransaction, str]:
-    """
-    :param return: Tuple of transaction, explorer name
-    """
-    api = service.Service(network)
-    try:
-        tx = await to_thread.run_sync(api.get_transaction, txid)
-    except service.NotFoundError:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, 'transaction not found')
-    except service.ServiceError:
-        raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, 'explorers not available now')
-    return tx, getattr(api.previous_explorer, '__name__', '')
 
 
 @router.get(
@@ -72,14 +58,18 @@ async def get_transaction(
     tx = await crud.get_transaction(idb, with_io=detail)
 
     if not tx or tx.blockheight == -1 and not cached:
-        fetched, explorer_name = await fetch_transaction_from_api(txid, network)
+        service = Service(network)
+        broadcasted = await service.get_transaction(txid)
         if tx:
-            if tx.blockheight != fetched.block:
-                await crud.update_transaction_blockheight(idb, fetched.block)
-                tx.blockheight = fetched.block
+            if tx.blockheight != broadcasted.block:
+                await crud.update_transaction_blockheight(idb, broadcasted.block)
+                tx.blockheight = broadcasted.block
 
         else:
-            tx = await crud.add_transaction(fetched, apiservice=explorer_name)
+            tx = await crud.add_transaction(
+                broadcasted,
+                apiservice=getattr(service.api.previous_explorer, '__name__', '')
+            )
 
     if not detail:
         return schema.Transaction.model_validate(tx)
