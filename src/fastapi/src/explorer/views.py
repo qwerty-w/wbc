@@ -23,9 +23,9 @@ async def get_address(addresstr: str, cached: bool):
     pass
 
 
-@router.get('/address/{addresstr}/unspent')
-async def get_address_unspent(addresstr: str):
-    pass
+@router.get('/address/{addresstr}/unspent', response_model=list[schema.Unspent])
+async def get_address_unspent(addresstr: str, network: NetworkType = NetworkType.MAIN):
+    return await service.fetch_unspent(addresstr, network)
 
 
 @router.get(

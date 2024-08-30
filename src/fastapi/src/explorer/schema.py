@@ -1,5 +1,5 @@
-from typing import Annotated
-from pydantic import BaseModel, BeforeValidator, ConfigDict
+from typing import Annotated, Self
+from pydantic import BaseModel, Field, BeforeValidator, ConfigDict
 from pydantic.functional_validators import BeforeValidator
 
 from . import models
@@ -49,7 +49,7 @@ class Transaction(Base):
     blockheight: int
 
     @classmethod
-    def from_model(cls, model: models.BroadcastedTransaction) -> 'Transaction':
+    def from_model(cls, model: models.BroadcastedTransaction) -> Self:
         return cls.model_validate(model)
 
 
@@ -58,7 +58,7 @@ class TransactionDetail(Transaction):
     outputs: list[Output]
 
     @classmethod
-    def from_model(cls, model: models.BroadcastedTransaction) -> 'TransactionDetail':
+    def from_model(cls, model: models.BroadcastedTransaction) -> Self:
         return cls(
             id=model.id,  # type: ignore
             inamount=model.inamount,
@@ -77,7 +77,7 @@ class TransactionDetail(Transaction):
             inputs=[
                 Input(
                     txid=i.outxid,  # type: ignore
-                    vout=i.outvout,
+                    vout=i.vout,
                     amount=i.amount,
                     is_segwit=i.is_segwit,
                     is_coinbase=i.is_coinbase,
@@ -90,20 +90,29 @@ class TransactionDetail(Transaction):
         )
 
 
-class Unspent(Base):
+class SingleUnspent(Base):
+    txid: strhex
     vout: int
-    address: str
-
-    tx: TransactionDetail
+    amount: int | None  # fixme: remove None
+    address: str | None = Field(
+        description='Address string. Not present (NotRequired) if '
+                    'failed to get the address from pkscript'
+    )
 
     @classmethod
-    def from_model(
-        cls,
-        unspent: models.Unspent,
-        tx: models.BroadcastedTransaction
-    ) -> 'Unspent':
+    def from_model(cls, unspent: models.Unspent) -> Self:
         return cls(
-            vout=unspent.outvout,
-            address=unspent.addresstr,
-            tx=TransactionDetail.from_model(tx)
+            txid=unspent.txid,  # type: ignore
+            vout=unspent.vout,
+            amount=unspent.amount,
+            address=unspent.address
         )
+
+    def model_dump(self, *args, **kwargs):
+        exclude_none: bool = kwargs.pop('exclude_none', True)
+        return super().model_dump(*args, **kwargs, exclude_none=exclude_none)
+
+
+class Unspent(BaseModel):
+    transaction: TransactionDetail
+    unspent: list[SingleUnspent]
