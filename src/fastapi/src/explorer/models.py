@@ -145,7 +145,7 @@ class Unspent(BaseModel):
         secondary='blockchain_output',
         primaryjoin='and_(Unspent.txid == Output.txid, Unspent.vout == Output.vout)',
         secondaryjoin='Output.txid == BroadcastedTransaction.id',
-        viewonly=True  # todo: fixme
+        viewonly=True
     )
     output: Mapped[Output] = relationship()
 
