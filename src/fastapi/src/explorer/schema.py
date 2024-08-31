@@ -49,7 +49,7 @@ class Transaction(Base):
     blockheight: int
 
     @classmethod
-    def from_model(cls, model: models.BroadcastedTransaction) -> Self:
+    def from_model(cls, model: models.Transaction) -> Self:
         return cls.model_validate(model)
 
 
@@ -58,7 +58,7 @@ class TransactionDetail(Transaction):
     outputs: list[Output]
 
     @classmethod
-    def from_model(cls, model: models.BroadcastedTransaction) -> Self:
+    def from_model(cls, model: models.Transaction) -> Self:
         return cls(
             id=model.id,  # type: ignore
             inamount=model.inamount,
