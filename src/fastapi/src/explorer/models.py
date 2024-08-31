@@ -26,7 +26,7 @@ class Input(BaseModel):
     script: Mapped[bytes]
     witness: Mapped[bytes]
 
-    tx: Mapped['BroadcastedTransaction'] = relationship(back_populates='inputs')
+    tx: Mapped['Transaction'] = relationship(back_populates='inputs')
 
     __table_args__ = (
         PrimaryKeyConstraint(txid, index),
@@ -43,14 +43,14 @@ class Output(BaseModel):
     amount: Mapped[int]
     address: Mapped[str | None]
 
-    tx: Mapped['BroadcastedTransaction'] = relationship(back_populates='outputs')
+    tx: Mapped['Transaction'] = relationship(back_populates='outputs')
 
     __table_args__ = (
         PrimaryKeyConstraint(txid, vout),
     )
 
 
-class BroadcastedTransaction(BaseModel, CreatedMixin):  # todo: rename to Transaction
+class Transaction(BaseModel, CreatedMixin):
     __tablename__ = 'blockchain_transaction'
 
     id: Mapped[bytes] = mapped_column(types.LargeBinary(32), primary_key=True)
@@ -75,7 +75,7 @@ class BroadcastedTransaction(BaseModel, CreatedMixin):  # todo: rename to Transa
     outputs: Mapped[list[Output]] = relationship(back_populates='tx')
     unspent: Mapped[list['Unspent']] = relationship(
         secondary='blockchain_output',
-        primaryjoin='BroadcastedTransaction.id == Output.txid',
+        primaryjoin='Transaction.id == Output.txid',
         secondaryjoin='and_(Output.txid == Unspent.txid, Output.vout == Unspent.vout)',
         back_populates='tx',
         viewonly=True
@@ -141,10 +141,10 @@ class Unspent(BaseModel):
     amount: Mapped[int] = mapped_column()
     address: Mapped[str | None] = mapped_column()
 
-    tx: Mapped[BroadcastedTransaction] = relationship(
+    tx: Mapped[Transaction] = relationship(
         secondary='blockchain_output',
         primaryjoin='and_(Unspent.txid == Output.txid, Unspent.vout == Output.vout)',
-        secondaryjoin='Output.txid == BroadcastedTransaction.id',
+        secondaryjoin='Output.txid == Transaction.id',
         viewonly=True
     )
     output: Mapped[Output] = relationship()

@@ -11,16 +11,16 @@ def select_transaction_query(
     *,
     load_inout: bool = True,
     load_unspent: bool = True
-) -> Select[tuple[models.BroadcastedTransaction]]:
-    q = select(models.BroadcastedTransaction)
+) -> Select[tuple[models.Transaction]]:
+    q = select(models.Transaction)
     if load_inout:
         q = q.options(
-            joinedload(models.BroadcastedTransaction.inputs),
-            joinedload(models.BroadcastedTransaction.outputs)
+            joinedload(models.Transaction.inputs),
+            joinedload(models.Transaction.outputs)
         )
     if load_unspent:
         q = q.options(
-            joinedload(models.BroadcastedTransaction.unspent)
+            joinedload(models.Transaction.unspent)
         )
     return q
 
@@ -29,9 +29,9 @@ async def get_transaction(
     txid: bytes,
     load_inout: bool = True,
     load_unspent: bool = True
-) -> models.BroadcastedTransaction | None:
+) -> models.Transaction | None:
     q = select_transaction_query(load_inout=load_inout, load_unspent=load_unspent).where(
-        models.BroadcastedTransaction.id == txid
+        models.Transaction.id == txid
     )
     async with SessionLocal() as session:
         return (await session.scalars(q)).one_or_none()
@@ -41,20 +41,20 @@ async def find_transactions(
     txids: Iterable[bytes],
     load_inout: bool = True,
     load_unspent: bool = True
-) -> Sequence[models.BroadcastedTransaction]:
+) -> Sequence[models.Transaction]:
     """
     Get cached transactions and pass those that don't exist
     """
     q = select_transaction_query(load_inout=load_inout, load_unspent=load_unspent).where(
-        models.BroadcastedTransaction.id.in_(txids)
+        models.Transaction.id.in_(txids)
     )
     async with SessionLocal() as session:
         return (await session.scalars(q)).unique().all()
 
 
-async def add_transaction(tx: BroadcastedTransaction, apiservice: str) -> models.BroadcastedTransaction:
+async def add_transaction(tx: BroadcastedTransaction, apiservice: str) -> models.Transaction:
     async with SessionLocal() as session, session.begin():
-        txmodel = models.BroadcastedTransaction.from_instance(tx, apiservice)
+        txmodel = models.Transaction.from_instance(tx, apiservice)
         session.add(txmodel)
     return txmodel
 
@@ -83,12 +83,12 @@ async def add_transactions(
     transactions: list[BroadcastedTransaction],
     apiservice: str,
     with_unspent: dict[bytes, list[Unspent]] | None = None,
-) -> list[models.BroadcastedTransaction]:
+) -> list[models.Transaction]:
 
-    r: list[models.BroadcastedTransaction] = []
+    r: list[models.Transaction] = []
     async with SessionLocal() as session, session.begin():
         for tx in transactions:
-            txmodel = models.BroadcastedTransaction.from_instance(tx, apiservice)
+            txmodel = models.Transaction.from_instance(tx, apiservice)
 
             if with_unspent and (uns := with_unspent.get(tx.id)):
                 for u in uns:
@@ -104,11 +104,11 @@ async def add_transactions(
 async def update_transactions_blockheight(heights: dict[bytes, int]):
     async with SessionLocal() as session, session.begin():
         await session.execute(
-            update(models.BroadcastedTransaction)
-            .where(models.BroadcastedTransaction.id.in_(heights.keys()))
+            update(models.Transaction)
+            .where(models.Transaction.id.in_(heights.keys()))
             .values(blockheight=case(
                 heights,
-                value=models.BroadcastedTransaction.id,
-                else_=models.BroadcastedTransaction.id
+                value=models.Transaction.id,
+                else_=models.Transaction.id
             ))
         )

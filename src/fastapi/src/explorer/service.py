@@ -127,7 +127,7 @@ async def get_or_add_transactions(
 async def fetch_unspent(address: str, network: NetworkType) -> list[schema.Unspent]:
     service = Service(network)
 
-    transactions: dict[bytes, models.BroadcastedTransaction | None] = {}
+    transactions: dict[bytes, models.Transaction | None] = {}
     unspent: dict[bytes, list[Unspent]] = {}
 
     for u in await service.get_unspent(address_from_string(address)):
