@@ -79,23 +79,6 @@ async def add_unspent(txid: bytes, vout: int, amount: int, addresstr: str) -> mo
         return u
 
 
-# @overload
-# async def add_transactions(
-#     transactions: list[BroadcastedTransaction],
-#     apiservice: str,
-#     with_unspent: None = None,
-# ) -> list[models.BroadcastedTransaction]:
-#     ...
-# @overload
-# async def add_transactions(
-#     transactions: list[BroadcastedTransaction],
-#     apiservice: str,
-#     with_unspent: dict[bytes, list[Unspent]],
-# ) -> tuple[
-#     list[models.BroadcastedTransaction],
-#     dict[bytes, list[models.Unspent]]
-# ]:
-#     ...
 async def add_transactions(
     transactions: list[BroadcastedTransaction],
     apiservice: str,
@@ -110,7 +93,8 @@ async def add_transactions(
             if with_unspent and (uns := with_unspent.get(tx.id)):
                 for u in uns:
                     umodel = models.Unspent.from_instance(u)
-                    txmodel.unspent.append(umodel)  # fixme: doesnt append cuz viewonly=True
+                    txmodel.unspent.append(umodel)
+                session.add_all(txmodel.unspent)
 
             r.append(txmodel)
             session.add(txmodel)
