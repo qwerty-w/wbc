@@ -27,7 +27,7 @@ class UserBitcoinAddress(models.BaseModel, models.CreatedMixin):
     userid: Mapped[models.userid] = mapped_column()
     string: Mapped[str] = mapped_column()
     type: Mapped[btclib.AddressType]
-    network: Mapped[btclib.NetworkType] = mapped_column(Enum(btclib.NetworkType, values_callable=lambda n: [e.value for e in n]))
+    network: Mapped[models.networkenum]
     is_pubkey_compressed: Mapped[bool]
     keyid: Mapped[int] = mapped_column(ForeignKey(UserBitcoinKey.id))
     shortname: Mapped[str] = mapped_column(types.String(64))

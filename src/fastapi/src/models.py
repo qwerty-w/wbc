@@ -1,12 +1,14 @@
 import datetime
 from typing import Annotated
-from sqlalchemy import types, func, ForeignKey
+from btclib import NetworkType
+from sqlalchemy import types, func, ForeignKey, Enum
 from sqlalchemy.orm import Mapped, mapped_column
 from .database import BaseModel
 
 
 type intpk = Annotated[int, mapped_column(primary_key=True)]
 type userid = Annotated[int, mapped_column(ForeignKey('user.id'))]
+type networkenum = Annotated[NetworkType, mapped_column(Enum(NetworkType, values_callable=lambda n: [e.value for e in n]))]
 
 
 class CreatedMixin:

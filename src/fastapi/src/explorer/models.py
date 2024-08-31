@@ -7,7 +7,7 @@ from sqlalchemy import ForeignKeyConstraint, PrimaryKeyConstraint, \
 import btclib
 from btclib.address import from_pkscript
 
-from ..models import BaseModel, CreatedMixin
+from ..models import BaseModel, CreatedMixin, networkenum
 
 
 type txidFK = Annotated[bytes, mapped_column(ForeignKey('blockchain_transaction.id', ondelete='CASCADE'))]
@@ -68,7 +68,7 @@ class Transaction(BaseModel, CreatedMixin):
     fee: Mapped[int]
     blockheight: Mapped[int]
     serialized: Mapped[bytes]
-    # network: Mapped[btclib.NetworkType]  # todo: add me
+    network: Mapped[networkenum]
     apiservice: Mapped[str]
 
     inputs: Mapped[list[Input]] = relationship(back_populates='tx')
@@ -99,6 +99,7 @@ class Transaction(BaseModel, CreatedMixin):
             fee=tx.fee,
             blockheight=tx.block,
             serialized=tx.serialize(),
+            network=tx.network,
             apiservice=apiservice,
 
             inputs=[
