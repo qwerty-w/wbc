@@ -35,7 +35,7 @@ async def get_transaction(
         models.Transaction.id == txid
     )
     async with SessionLocal() as session:
-        return (await session.scalars(q)).one_or_none()
+        return (await session.scalars(q)).unique().one_or_none()
 
 
 async def find_transactions(
@@ -50,7 +50,7 @@ async def find_transactions(
         models.Transaction.id.in_(txids)
     )
     async with SessionLocal() as session:
-        return (await session.scalars(q)).unique().all()
+        return (await session.scalars(q)).unique().all()  # fixme: session.scalars() is too slow
 
 
 async def add_transaction(tx: BroadcastedTransaction, apiservice: str) -> models.Transaction:
