@@ -24,9 +24,17 @@ async def get_address(addresstr: str, cached: bool):
 
 
 @router.get('/address/{addresstr}/unspent', response_model=list[schema.TransactionUnspent] | list[schema.Unspent])
-async def get_address_unspent(addresstr: str, network: NetworkType = NetworkType.MAIN):
+async def get_address_unspent(
+    addresstr: str,
+    network: NetworkType = NetworkType.MAIN,
+    include_transaction: bool = True
+):
     # todo: add check address.network == network in schema (dependency)
-    return await service.fetch_unspent(addresstr, network)
+    return await service.fetch_unspent(
+        addresstr,
+        network,
+        include_transaction  # type: ignore
+    )
 
 
 @router.get(

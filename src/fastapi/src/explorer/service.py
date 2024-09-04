@@ -108,23 +108,6 @@ async def get_or_add_transaction(
     return cls.from_model(tx)
 
 
-async def get_or_add_transactions(
-    txids: list[str],
-    network: NetworkType,
-    cached: bool,
-    detail: bool
-) -> list[schema.Transaction] | list[schema.TransactionDetail]:
-    return [
-        await get_or_add_transaction(
-            txid,
-            network,
-            cached,
-            detail
-        )
-        for txid in txids
-    ]
-
-
 @overload
 async def fetch_unspent(
     address: str,

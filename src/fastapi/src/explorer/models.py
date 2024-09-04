@@ -1,8 +1,7 @@
 from typing import Annotated, Self
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.orm import relationship
-from sqlalchemy import ForeignKeyConstraint, PrimaryKeyConstraint, \
-                       UniqueConstraint, types, ForeignKey
+from sqlalchemy import PrimaryKeyConstraint, types, ForeignKey
 
 import btclib
 from btclib.address import from_pkscript
@@ -30,7 +29,6 @@ class Input(BaseModel):
 
     __table_args__ = (
         PrimaryKeyConstraint(txid, index),
-        UniqueConstraint(outxid, vout)
     )
 
 
