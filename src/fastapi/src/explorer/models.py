@@ -137,22 +137,26 @@ class Transaction(BaseModel, CreatedMixin):
 
 class Unspent(BaseModel):
     __tablename__ = 'blockchain_unspent'
+
     txid: Mapped[bytes] = mapped_column()
     vout: Mapped[int] = mapped_column()
     amount: Mapped[int] = mapped_column()
     address: Mapped[str | None] = mapped_column()
 
-    tx: Mapped[Transaction] = relationship(
+    tx: Mapped[Transaction | None] = relationship(
         secondary='blockchain_output',
         primaryjoin='and_(Unspent.txid == Output.txid, Unspent.vout == Output.vout)',
         secondaryjoin='Output.txid == Transaction.id',
         viewonly=True
     )
-    output: Mapped[Output] = relationship()
+    output: Mapped[Output | None] = relationship(
+        'Output',
+        primaryjoin='and_(Unspent.txid == Output.txid, Unspent.vout == Output.vout)',
+        foreign_keys=[txid, vout]
+    )
 
     __table_args__ = (
         PrimaryKeyConstraint(txid, vout),
-        ForeignKeyConstraint([txid, vout], [Output.txid, Output.vout], ondelete='CASCADE')
     )
 
     @classmethod
