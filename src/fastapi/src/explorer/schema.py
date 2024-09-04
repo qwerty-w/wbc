@@ -2,6 +2,7 @@ from typing import Annotated, Self
 from pydantic import BaseModel, Field, BeforeValidator, ConfigDict
 from pydantic.functional_validators import BeforeValidator
 
+import btclib
 from . import models
 
 
@@ -90,29 +91,37 @@ class TransactionDetail(Transaction):
         )
 
 
-class SingleUnspent(Base):
+class Unspent(Base):  # todo: add blockheight
     txid: strhex
     vout: int
-    amount: int | None  # fixme: remove None
+    amount: int
     address: str | None = Field(
         description='Address string. Not present (NotRequired) if '
                     'failed to get the address from pkscript'
     )
 
     @classmethod
-    def from_model(cls, unspent: models.Unspent) -> Self:
+    def _from_object(cls, object: btclib.Unspent | models.Unspent, address: str | None):
         return cls(
-            txid=unspent.txid,  # type: ignore
-            vout=unspent.vout,
-            amount=unspent.amount,
-            address=unspent.address
+            txid=object.txid,  # type: ignore
+            vout=object.vout,
+            amount=object.amount,
+            address=address
         )
+
+    @classmethod
+    def from_instance(cls, unspent: btclib.Unspent) -> Self:
+        return cls._from_object(unspent, unspent.address.string)
+
+    @classmethod
+    def from_model(cls, unspent: models.Unspent) -> Self:
+        return cls._from_object(unspent, unspent.address)
 
     def model_dump(self, *args, **kwargs):
         exclude_none: bool = kwargs.pop('exclude_none', True)
         return super().model_dump(*args, **kwargs, exclude_none=exclude_none)
 
 
-class Unspent(BaseModel):
+class TransactionUnspent(BaseModel):
     transaction: TransactionDetail
-    unspent: list[SingleUnspent]
+    unspent: list[Unspent]

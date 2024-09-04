@@ -1,6 +1,7 @@
-from typing import Iterable, Sequence, overload
-from sqlalchemy import select, update, Select, tuple_, case
+from typing import Iterable, Sequence
+from sqlalchemy import select, update, delete, case, Select, tuple_
 from sqlalchemy.orm import joinedload
+from sqlalchemy.dialects.postgresql import insert
 from btclib import BroadcastedTransaction, Unspent
 
 from ..database import SessionLocal
@@ -79,25 +80,38 @@ async def add_unspent(txid: bytes, vout: int, amount: int, addresstr: str) -> mo
         return u
 
 
+async def put_unspent(addresstr: str, unspent: list[Unspent]) -> None:  # todo: fixme
+    async with SessionLocal() as session, session.begin():
+        await session.execute(delete(models.Unspent).where(models.Unspent.address == addresstr))
+        session.add_all(models.Unspent.from_instance(u) for u in unspent)
+
+    return
+    async with SessionLocal() as session, session.begin():
+        # delete those address unspent that are not in unspent list
+        await session.execute(
+            delete(models.Unspent)
+            .where(
+                models.Unspent.address == addresstr,
+                tuple_(models.Unspent.txid, models.Unspent.vout).not_in((u.txid, u.vout) for u in unspent)
+            )
+        )
+        # add those unspent that are not in db
+        await session.execute(
+            insert(models.Unspent)
+            .values([(u.txid, u.vout, u.amount, u.address.string) for u in unspent])
+            .on_conflict_do_nothing()
+        )
+
+
 async def add_transactions(
     transactions: list[BroadcastedTransaction],
-    apiservice: str,
-    with_unspent: dict[bytes, list[Unspent]] | None = None,
+    apiservice: str
 ) -> list[models.Transaction]:
-
     r: list[models.Transaction] = []
     async with SessionLocal() as session, session.begin():
         for tx in transactions:
-            txmodel = models.Transaction.from_instance(tx, apiservice)
-
-            if with_unspent and (uns := with_unspent.get(tx.id)):
-                for u in uns:
-                    umodel = models.Unspent.from_instance(u)
-                    txmodel.unspent.append(umodel)
-                session.add_all(txmodel.unspent)
-
+            session.add(txmodel := models.Transaction.from_instance(tx, apiservice))
             r.append(txmodel)
-            session.add(txmodel)
     return r
 
 

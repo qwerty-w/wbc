@@ -1,17 +1,18 @@
-import typing
+from typing import overload, Callable, Any, Literal
 
 import httpx
 from anyio import to_thread
 from btclib import NetworkType, Unspent, Service as API
 from btclib.address import BaseAddress, from_string as address_from_string
-from btclib.service import AddressInfo, NotFoundError, ServiceError, ExcessiveAddress, AddressOverflowError
+from btclib.service import DEFAULT_SERVICE_TIMEOUT, AddressInfo, NotFoundError,\
+                           ServiceError, ExcessiveAddress, AddressOverflowError
 from btclib.transaction import BroadcastedTransaction
 
 from . import crud, models, schema, exceptions as exc
 
 
 class Service:
-    httpx_client = httpx.Client(follow_redirects=True)
+    httpx_client = httpx.Client(follow_redirects=True, timeout=DEFAULT_SERVICE_TIMEOUT)
 
     def __init__(self, network: NetworkType):
         self.api = API(network=network, client=self.httpx_client)
@@ -22,10 +23,10 @@ class Service:
 
     async def send[T](
         self,
-        f: typing.Callable[..., T],
+        f: Callable[..., T],
         *args,
         notfounderr: exc.NotFoundError | None = None,
-        kwargs: dict[str, typing.Any] = {}
+        kwargs: dict[str, Any] = {}
     ) -> T:
         try:
             r = await to_thread.run_sync(f, self.api, *args, **kwargs)
@@ -124,47 +125,66 @@ async def get_or_add_transactions(
     ]
 
 
-async def fetch_unspent(address: str, network: NetworkType) -> list[schema.Unspent]:
+@overload
+async def fetch_unspent(
+    address: str,
+    network: NetworkType,
+    include_transaction: Literal[True] = True
+) -> list[schema.TransactionUnspent]:
+    ...
+@overload
+async def fetch_unspent(
+    address: str,
+    network: NetworkType,
+    include_transaction: Literal[False]
+) -> list[schema.Unspent]:
+    ...
+async def fetch_unspent(
+    address: str,
+    network: NetworkType,
+    include_transaction: bool = True
+) -> list[schema.TransactionUnspent] | list[schema.Unspent]:
     service = Service(network)
 
+    # update unspent
+    unspent: list[Unspent] = await service.get_unspent(address_from_string(address))
+    await crud.put_unspent(address, unspent)
+
+    if not include_transaction:
+        return [schema.Unspent.from_instance(u) for u in unspent]
+
+    # get unspent from service
     transactions: dict[bytes, models.Transaction | None] = {}
-    unspent: dict[bytes, list[Unspent]] = {}
-
-    for u in await service.get_unspent(address_from_string(address)):
+    txunspent: dict[bytes, list[Unspent]] = {}  # txid: list[unspent]
+    for u in unspent:
         transactions.setdefault(u.txid, None)
-        unspent.setdefault(u.txid, [])
-        unspent[u.txid].append(u)
+        txunspent.setdefault(u.txid, [])
+        txunspent[u.txid].append(u)
 
-    # await crud.drop_used_unspent(unspent)  # todo:
+    # get transactions and update their blockheight's (if need)
     to_update: dict[bytes, int] = {}
-
     for tx in await crud.find_transactions(transactions, load_unspent=True):
         if tx.blockheight == -1:
-            height = -1
-            for u in unspent[tx.id]:
+            for u in txunspent[tx.id]:
                 if u.block != -1:
-                    height = u.block
+                    to_update[tx.id] = tx.blockheight = u.block
                     break
-            else:
-                continue
-            to_update[tx.id] = tx.blockheight = height
         transactions[tx.id] = tx
-
     if to_update:
         await crud.update_transactions_blockheight(to_update)
 
+    # get from service and add uncached transactions
     if to_add := [txid.hex() for txid, tx in transactions.items() if not tx]:
         fetched = await service.get_transactions(to_add)
         transactions.update((tx.id, tx) for tx in await crud.add_transactions(
             fetched,
-            service.previous_apiservice,
-            with_unspent=unspent
+            service.previous_apiservice
         ))
 
     return [
-        schema.Unspent(
+        schema.TransactionUnspent(
             transaction=schema.TransactionDetail.from_model(tx),
-            unspent=[schema.SingleUnspent.from_model(u) for u in tx.unspent]
+            unspent=[schema.Unspent.from_instance(u) for u in txunspent[tx.id]]
         )
         for tx in transactions.values() if tx
     ]

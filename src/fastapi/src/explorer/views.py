@@ -2,7 +2,7 @@ from typing import Annotated
 from fastapi import APIRouter, Query, Path, Depends
 from btclib import NetworkType
 
-from . import schema, service
+from . import schema, service, crud
 from ..auth import currentuser
 from ..config import settings
 
@@ -23,8 +23,9 @@ async def get_address(addresstr: str, cached: bool):
     pass
 
 
-@router.get('/address/{addresstr}/unspent', response_model=list[schema.Unspent])
+@router.get('/address/{addresstr}/unspent', response_model=list[schema.TransactionUnspent] | list[schema.Unspent])
 async def get_address_unspent(addresstr: str, network: NetworkType = NetworkType.MAIN):
+    # todo: add check address.network == network in schema (dependency)
     return await service.fetch_unspent(addresstr, network)
 
 
