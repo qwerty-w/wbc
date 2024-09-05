@@ -131,7 +131,10 @@ async def fetch_unspent(
 
     # update unspent
     unspent: list[Unspent] = await service.get_unspent(address_from_string(address))
+    import time
+    t0 = time.time()
     await crud.put_unspent(address, unspent)
+    print(time.time() - t0)
 
     if not include_transaction:
         return [schema.Unspent.from_instance(u) for u in unspent]

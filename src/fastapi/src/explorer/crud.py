@@ -1,6 +1,6 @@
 from typing import Iterable, Sequence
 from sqlalchemy import select, update, delete, case, Select, tuple_
-from sqlalchemy.orm import joinedload
+from sqlalchemy.orm import selectinload
 from sqlalchemy.dialects.postgresql import insert
 from btclib import BroadcastedTransaction, Unspent
 
@@ -16,12 +16,12 @@ def select_transaction_query(
     q = select(models.Transaction)
     if load_inout:
         q = q.options(
-            joinedload(models.Transaction.inputs),
-            joinedload(models.Transaction.outputs)
+            selectinload(models.Transaction.inputs),
+            selectinload(models.Transaction.outputs)
         )
     if load_unspent:
         q = q.options(
-            joinedload(models.Transaction.unspent)
+            selectinload(models.Transaction.unspent)
         )
     return q
 
@@ -80,12 +80,7 @@ async def add_unspent(txid: bytes, vout: int, amount: int, addresstr: str) -> mo
         return u
 
 
-async def put_unspent(addresstr: str, unspent: list[Unspent]) -> None:  # todo: fixme
-    async with SessionLocal() as session, session.begin():
-        await session.execute(delete(models.Unspent).where(models.Unspent.address == addresstr))
-        session.add_all(models.Unspent.from_instance(u) for u in unspent)
-
-    return
+async def put_unspent(addresstr: str, unspent: list[Unspent]) -> None:
     async with SessionLocal() as session, session.begin():
         # delete those address unspent that are not in unspent list
         await session.execute(
@@ -101,6 +96,10 @@ async def put_unspent(addresstr: str, unspent: list[Unspent]) -> None:  # todo: 
             .values([(u.txid, u.vout, u.amount, u.address.string) for u in unspent])
             .on_conflict_do_nothing()
         )
+    # second way
+    # async with SessionLocal() as session, session.begin():
+    #     await session.execute(delete(models.Unspent).where(models.Unspent.address == addresstr))
+    #     session.add_all(models.Unspent.from_instance(u) for u in unspent)
 
 
 async def add_transactions(

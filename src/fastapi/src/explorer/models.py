@@ -139,7 +139,7 @@ class Unspent(BaseModel):
     txid: Mapped[bytes] = mapped_column()
     vout: Mapped[int] = mapped_column()
     amount: Mapped[int] = mapped_column()
-    address: Mapped[str | None] = mapped_column()
+    address: Mapped[str | None] = mapped_column(index=True)
 
     tx: Mapped[Transaction | None] = relationship(
         secondary='blockchain_output',
