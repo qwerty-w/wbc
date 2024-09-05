@@ -15,13 +15,12 @@ router = APIRouter(
 )
 
 
-def validateaddr(
-    addresstr: Annotated[str, Path],
-    network: NetworkType | None = None
+def currentaddr(
+    addresstr: Annotated[str, Path]
 ) -> BaseAddress:
     # validation
     try:
-        return BitcoinAddress(string=addresstr, network=network).instance
+        return BitcoinAddress(string=addresstr).instance
     except schema.ValidationError as e:
         raise RequestValidationError(e.errors())
 
@@ -32,7 +31,12 @@ async def get_head_block():  # todo: add cache
 
 
 @router.get('/address/{addresstr}')
-async def get_address(addresstr: Annotated[str, Depends(validateaddr)], cached: bool):
+async def get_address(addresstr: Annotated[BaseAddress, Depends(currentaddr)], cached: bool):
+    pass
+
+
+@router.get('/address/{addresstr}')
+async def get_address_transactions(address: Annotated[BaseAddress, Depends(currentaddr)]):
     pass
 
 
@@ -41,13 +45,12 @@ async def get_address(addresstr: Annotated[str, Depends(validateaddr)], cached: 
     response_model=list[schema.TransactionUnspent] | list[schema.Unspent]
 )
 async def get_address_unspent(
-    address: Annotated[BaseAddress, Depends(validateaddr)],
-    network: NetworkType = NetworkType.MAIN,
+    address: Annotated[BaseAddress, Depends(currentaddr)],
     include_transaction: bool = True
+    # todo: add cached
 ):
     return await service.fetch_unspent(
         address,
-        network,
         include_transaction  # type: ignore
     )
 
