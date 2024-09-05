@@ -1,5 +1,5 @@
 from typing import Self
-from pydantic import BaseModel, Field, ConfigDict
+from pydantic import BaseModel, Field, ConfigDict, ValidationError
 
 import btclib
 from ..schema import strhex

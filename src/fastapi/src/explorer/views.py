@@ -1,9 +1,11 @@
 from typing import Annotated
 from fastapi import APIRouter, Query, Path, Depends
-from btclib import NetworkType
+from fastapi.exceptions import RequestValidationError
+from btclib import NetworkType, BaseAddress
 
 from . import schema, service
 from ..auth import currentuser
+from ..schema import BitcoinAddress
 from ..config import settings
 
 
@@ -13,25 +15,38 @@ router = APIRouter(
 )
 
 
+def validateaddr(
+    addresstr: Annotated[str, Path],
+    network: NetworkType | None = None
+) -> BaseAddress:
+    # validation
+    try:
+        return BitcoinAddress(string=addresstr, network=network).instance
+    except schema.ValidationError as e:
+        raise RequestValidationError(e.errors())
+
+
 @router.get('/head')
 async def get_head_block():  # todo: add cache
     pass
 
 
 @router.get('/address/{addresstr}')
-async def get_address(addresstr: str, cached: bool):
+async def get_address(addresstr: Annotated[str, Depends(validateaddr)], cached: bool):
     pass
 
 
-@router.get('/address/{addresstr}/unspent', response_model=list[schema.TransactionUnspent] | list[schema.Unspent])
+@router.get(
+    '/address/{addresstr}/unspent',
+    response_model=list[schema.TransactionUnspent] | list[schema.Unspent]
+)
 async def get_address_unspent(
-    addresstr: str,
+    address: Annotated[BaseAddress, Depends(validateaddr)],
     network: NetworkType = NetworkType.MAIN,
     include_transaction: bool = True
 ):
-    # todo: add check address.network == network in schema (dependency)
     return await service.fetch_unspent(
-        addresstr,
+        address,
         network,
         include_transaction  # type: ignore
     )
@@ -62,7 +77,12 @@ async def get_transaction(
         )
     ] = False
 ):
-    return await service.get_or_add_transaction(txid, network, cached, detail)
+    return await service.get_or_add_transaction(
+        bytes.fromhex(txid),
+        network,
+        cached,
+        detail
+    )
 
 
 @router.post('/transaction')
