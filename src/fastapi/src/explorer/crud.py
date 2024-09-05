@@ -30,6 +30,7 @@ async def get_transaction(
     txid: bytes,
     load_inout: bool = True,
     load_unspent: bool = True
+    # todo: network
 ) -> models.Transaction | None:
     q = select_transaction_query(load_inout=load_inout, load_unspent=load_unspent).where(
         models.Transaction.id == txid
@@ -42,6 +43,7 @@ async def find_transactions(
     txids: Iterable[bytes],
     load_inout: bool = True,
     load_unspent: bool = True
+    # todo: network
 ) -> Sequence[models.Transaction]:
     """
     Get cached transactions and pass those that don't exist
@@ -91,11 +93,12 @@ async def put_unspent(addresstr: str, unspent: list[Unspent]) -> None:
             )
         )
         # add those unspent that are not in db
-        await session.execute(
-            insert(models.Unspent)
-            .values([(u.txid, u.vout, u.amount, u.address.string) for u in unspent])
-            .on_conflict_do_nothing()
-        )
+        if unspent:
+            await session.execute(
+                insert(models.Unspent)
+                .values([(u.txid, u.vout, u.amount, u.address.string) for u in unspent])
+                .on_conflict_do_nothing()
+            )
     # second way
     # async with SessionLocal() as session, session.begin():
     #     await session.execute(delete(models.Unspent).where(models.Unspent.address == addresstr))
