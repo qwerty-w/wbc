@@ -2,7 +2,7 @@ from typing import Annotated
 from fastapi import APIRouter, Query, Path, Depends
 from btclib import NetworkType
 
-from . import schema, service, crud
+from . import schema, service
 from ..auth import currentuser
 from ..config import settings
 

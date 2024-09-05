@@ -1,16 +1,9 @@
-from typing import Annotated, Self
-from pydantic import BaseModel, Field, BeforeValidator, ConfigDict
-from pydantic.functional_validators import BeforeValidator
+from typing import Self
+from pydantic import BaseModel, Field, ConfigDict
 
 import btclib
+from ..schema import strhex
 from . import models
-
-
-def tohex(i: bytes | bytearray | memoryview | str) -> str:
-    return i.hex() if isinstance(i, bytes | bytearray | memoryview) else i
-
-
-type strhex = Annotated[str, BeforeValidator(tohex)]
 
 
 class Base(BaseModel):
