@@ -3,9 +3,9 @@ from typing import overload, Callable, Any, Literal
 import httpx
 from anyio import to_thread
 from btclib import NetworkType, Unspent, Service as API
-from btclib.address import BaseAddress, from_string as address_from_string
+from btclib.address import BaseAddress
 from btclib.service import DEFAULT_SERVICE_TIMEOUT, AddressInfo, NotFoundError,\
-                           ServiceError, ExcessiveAddress, AddressOverflowError
+                           ExplorerError, ExcessiveAddress, AddressOverflowError
 from btclib.transaction import BroadcastedTransaction
 
 from . import crud, models, schema, exceptions as exc
@@ -37,7 +37,7 @@ class Service:
         except NotFoundError:
             raise notfounderr or exc.NotFoundError()
 
-        except (ServiceError, httpx.TimeoutException, ConnectionError):
+        except (ExplorerError, httpx.TimeoutException, ConnectionError):
             raise exc.ServiceUnavailableError
 
         return r
@@ -82,20 +82,19 @@ class Service:
 
 
 async def get_or_add_transaction(
-    txid: str,
+    txid: bytes,
     network: NetworkType,
     cached: bool,
     detail: bool
 ) -> schema.Transaction | schema.TransactionDetail:
-    id = bytes.fromhex(txid)
-    tx = await crud.get_transaction(id, load_inout=detail, load_unspent=False)
+    tx = await crud.get_transaction(txid, load_inout=detail, load_unspent=False)
 
     if not tx or tx.blockheight == -1 and not cached:
         service = Service(network)
-        broadcasted = await service.get_transaction(txid)
+        broadcasted = await service.get_transaction(txid.hex())
         if tx:
             if tx.blockheight != broadcasted.block:
-                await crud.update_transactions_blockheight({id: broadcasted.block})
+                await crud.update_transactions_blockheight({txid: broadcasted.block})
                 tx.blockheight = broadcasted.block
 
         else:
@@ -110,31 +109,28 @@ async def get_or_add_transaction(
 
 @overload
 async def fetch_unspent(
-    address: str,
+    address: BaseAddress,
     network: NetworkType,
     include_transaction: Literal[True] = True
 ) -> list[schema.TransactionUnspent]:
     ...
 @overload
 async def fetch_unspent(
-    address: str,
+    address: BaseAddress,
     network: NetworkType,
     include_transaction: Literal[False]
 ) -> list[schema.Unspent]:
     ...
 async def fetch_unspent(
-    address: str,
+    address: BaseAddress,
     network: NetworkType,
     include_transaction: bool = True
 ) -> list[schema.TransactionUnspent] | list[schema.Unspent]:
     service = Service(network)
 
     # update unspent
-    unspent: list[Unspent] = await service.get_unspent(address_from_string(address))
-    import time
-    t0 = time.time()
-    await crud.put_unspent(address, unspent)
-    print(time.time() - t0)
+    unspent: list[Unspent] = await service.get_unspent(address)
+    await crud.put_unspent(address.string, unspent)
 
     if not include_transaction:
         return [schema.Unspent.from_instance(u) for u in unspent]
