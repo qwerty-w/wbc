@@ -14,7 +14,7 @@ router = APIRouter(
 
 
 @router.get('/head')
-def get_head_block():  # todo: add cache
+async def get_head_block():  # todo: add cache
     pass
 
 
