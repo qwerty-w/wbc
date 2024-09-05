@@ -68,6 +68,7 @@ class Transaction(BaseModel, CreatedMixin):
     serialized: Mapped[bytes]
     network: Mapped[networkenum]
     apiservice: Mapped[str]
+    # todo: add is_dropped for deleted blockchain transaction
 
     inputs: Mapped[list[Input]] = relationship(back_populates='tx')
     outputs: Mapped[list[Output]] = relationship(back_populates='tx')

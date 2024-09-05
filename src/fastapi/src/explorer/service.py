@@ -110,23 +110,20 @@ async def get_or_add_transaction(
 @overload
 async def fetch_unspent(
     address: BaseAddress,
-    network: NetworkType,
     include_transaction: Literal[True] = True
 ) -> list[schema.TransactionUnspent]:
     ...
 @overload
 async def fetch_unspent(
     address: BaseAddress,
-    network: NetworkType,
     include_transaction: Literal[False]
 ) -> list[schema.Unspent]:
     ...
 async def fetch_unspent(
     address: BaseAddress,
-    network: NetworkType,
     include_transaction: bool = True
 ) -> list[schema.TransactionUnspent] | list[schema.Unspent]:
-    service = Service(network)
+    service = Service(address.network)
 
     # update unspent
     unspent: list[Unspent] = await service.get_unspent(address)
