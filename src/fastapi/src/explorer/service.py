@@ -1,3 +1,4 @@
+import time
 from typing import overload, Callable, Any, Literal
 
 import httpx
@@ -9,6 +10,7 @@ from btclib.service import DEFAULT_SERVICE_TIMEOUT, AddressInfo, NotFoundError,\
 from btclib.transaction import BroadcastedTransaction
 
 from . import crud, models, schema, exceptions as exc
+from ..config import settings
 
 
 class Service:
@@ -79,6 +81,25 @@ class Service:
             address,
             notfounderr=exc.AddressNotFoundError(address)
         )
+
+
+def _getheadcache(foo):
+    cache: dict[NetworkType, tuple[float, schema.HeadBlock]] = {}
+    async def inner(network: NetworkType) -> schema.HeadBlock:
+        timestamp, head = cache.get(network, (0, None))
+        print(timestamp + settings.EXPLORER_HEAD_BLOCK_CACHE_TTL, time.time())
+        if timestamp + settings.EXPLORER_HEAD_BLOCK_CACHE_TTL < time.time() or not head:
+            print('update cache')
+            head = await foo(network)
+            cache[network] = (time.time(), head)
+        return head
+    return inner
+
+
+@_getheadcache
+async def gethead(network: NetworkType) -> schema.HeadBlock:
+    blockheight = await Service(network).get_head_blockheight()
+    return schema.HeadBlock(blockheight=blockheight)
 
 
 async def get_or_add_transaction(

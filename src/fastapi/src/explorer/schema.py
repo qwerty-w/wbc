@@ -6,6 +6,10 @@ from ..schema import strhex
 from . import models
 
 
+class HeadBlock(BaseModel):
+    blockheight: int = Field(ge=0)
+
+
 class Base(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
