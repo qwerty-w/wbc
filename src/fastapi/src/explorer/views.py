@@ -31,8 +31,8 @@ async def get_head_block(network: NetworkType = NetworkType.MAIN):
 
 
 @router.get('/address/{addresstr}')
-async def get_address(addresstr: Annotated[BaseAddress, Depends(currentaddr)], cached: bool):
-    pass
+async def get_address(address: Annotated[BaseAddress, Depends(currentaddr)]):
+    return await service.getaddrinfo(address)  # todo: maybe add cache
 
 
 @router.get('/address/{addresstr}')

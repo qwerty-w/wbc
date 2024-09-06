@@ -102,6 +102,11 @@ async def gethead(network: NetworkType) -> schema.HeadBlock:
     return schema.HeadBlock(blockheight=blockheight)
 
 
+async def getaddrinfo(address: BaseAddress) -> schema.AddressInfo:
+    inf = await Service(address.network).get_address(address)
+    return schema.AddressInfo.from_instance(inf)
+
+
 async def get_or_add_transaction(
     txid: bytes,
     network: NetworkType,
