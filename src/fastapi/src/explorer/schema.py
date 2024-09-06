@@ -1,7 +1,8 @@
 from typing import Self
-from pydantic import BaseModel, Field, ConfigDict, ValidationError
-
+from functools import cached_property
+from pydantic import computed_field,  BaseModel, Field, ConfigDict, ValidationError
 import btclib
+
 from ..schema import strhex
 from . import models
 
@@ -12,6 +13,29 @@ class HeadBlock(BaseModel):
 
 class Base(BaseModel):
     model_config = ConfigDict(from_attributes=True)
+
+
+class AddressInfo(Base):
+    address: str
+    received: int
+    spent: int
+    tx_count: int
+    network: btclib.NetworkType
+
+    @classmethod
+    def from_instance(cls, instance: btclib.service.AddressInfo) -> Self:
+        return cls(
+            address=instance.address.string,
+            received=instance.received,
+            spent=instance.spent,
+            tx_count=instance.tx_count,
+            network=instance.address.network
+        )
+
+    @computed_field
+    @cached_property
+    def balance(self) -> int:
+        return self.received - self.spent
 
 
 class Input(Base):
