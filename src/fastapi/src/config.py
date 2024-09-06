@@ -16,6 +16,7 @@ class Settings(BaseSettings):
     USER_SESSION_EXPIRATION_DAYS: int = 14
 
     EXPLORER_FOR_LOGINED_ONLY: bool = False
+    EXPLORER_HEAD_BLOCK_CACHE_TTL: int = 60  # in seconds
 
     model_config = SettingsConfigDict(env_file='.env')
 

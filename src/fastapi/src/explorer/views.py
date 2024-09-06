@@ -26,8 +26,8 @@ def currentaddr(
 
 
 @router.get('/head')
-async def get_head_block():  # todo: add cache
-    pass
+async def get_head_block(network: NetworkType = NetworkType.MAIN):
+    return await service.gethead(network)
 
 
 @router.get('/address/{addresstr}')
