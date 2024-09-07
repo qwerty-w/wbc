@@ -170,6 +170,32 @@ async def get_address_transactions(
     return map(schema.TransactionDetail.from_instance, transactions)
 
 
+async def get_unspent(
+    address: BaseAddress,
+    include_transaction: bool
+) -> list[schema.Unspent] | list[schema.TransactionUnspent]:
+    unspent: list[models.Unspent] = list(await crud.get_unspent(address.string))
+    if not include_transaction:
+        return [schema.Unspent.from_model(u) for u in unspent]
+
+    txunspent, transactions = {}, {}
+    for u in unspent:
+        transactions.setdefault(u.txid, None)
+        txunspent.setdefault(u.txid, [])
+        txunspent[u.txid].append(u)
+
+    for tx in await crud.find_transactions(transactions, load_unspent=False):
+        transactions[tx.id] = tx
+
+    return [
+        schema.TransactionUnspent(
+            transaction=schema.TransactionDetail.from_model(tx),
+            unspent=[schema.Unspent.from_model(u) for u in txunspent[txid]]
+        )
+        for txid, tx in transactions.items() if tx
+    ]
+
+
 @overload
 async def fetch_unspent(
     address: BaseAddress,
@@ -205,7 +231,7 @@ async def fetch_unspent(
 
     # get transactions and update their blockheight's (if need)
     to_update: dict[bytes, int] = {}
-    for tx in await crud.find_transactions(transactions, load_unspent=True):
+    for tx in await crud.find_transactions(transactions, load_unspent=False):
         if tx.blockheight == -1:
             for u in txunspent[tx.id]:
                 if u.block != -1:
@@ -228,10 +254,5 @@ async def fetch_unspent(
             transaction=schema.TransactionDetail.from_model(tx),
             unspent=[schema.Unspent.from_instance(u) for u in txunspent[tx.id]]
         )
-        for tx in transactions.values() if tx
+        for txid, tx in transactions.items() if tx
     ]
-
-
-# todo:
-# async def get_unspent(address: str, network: NetworkType) -> list[schema.Unspent]:
-#     service = Service(network)

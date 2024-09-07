@@ -74,13 +74,16 @@ async def get_address_transactions(
 )
 async def get_address_unspent(
     address: Annotated[BaseAddress, Depends(currentaddr)],
-    include_transaction: bool = True
-    # todo: add cache!
+    include_transaction: bool = True,
+    cached: bool = False
 ):
-    return await service.fetch_unspent(
-        address,
-        include_transaction  # type: ignore
-    )
+    if cached:
+        return await service.get_unspent(address, include_transaction)
+    else:
+        return await service.fetch_unspent(
+            address,
+            include_transaction  # type: ignore
+        )
 
 
 @router.get(
