@@ -1,9 +1,9 @@
-import re
 from enum import StrEnum
 from typing import ClassVar
 from pydantic import BaseModel, ConfigDict, Field, field_validator, ValidationInfo
 from btclib import NetworkType, AddressType
 
+from ..schema import hexstring, base64regexp
 from .models import UserBitcoinAddress
 
 
@@ -21,8 +21,8 @@ class BaseAddress(BaseModel):
 
 class ObtainedAddressIn(BaseAddress):
     _vin: ClassVar = {
-        InputKeyType.hex: re.compile(r'[a-fA-F0-9]{64}'),  # or
-        InputKeyType.base64: re.compile(r'[A-Za-z0-9+/]{40}[A-Za-z0-9+/]{3}=')
+        InputKeyType.hex: hexstring.regexp,
+        InputKeyType.base64: base64regexp
     }
 
     intype: InputKeyType
@@ -30,7 +30,7 @@ class ObtainedAddressIn(BaseAddress):
 
     @field_validator('input')
     @classmethod
-    def validate_input(cls, v: str, info: ValidationInfo):
+    def validateinput(cls, v: str, info: ValidationInfo):
         for type, regex in cls._vin.items():
             if info.data['intype'] == type:
                 if not regex.fullmatch(v):
