@@ -25,19 +25,47 @@ def currentaddr(
         raise RequestValidationError(e.errors())
 
 
-@router.get('/head')
+@router.get('/head', response_model=schema.HeadBlock)
 async def get_head_block(network: NetworkType = NetworkType.MAIN):
     return await service.gethead(network)
 
 
-@router.get('/address/{addresstr}')
+@router.get('/address/{addresstr}', response_model=schema.AddressInfo)
 async def get_address(address: Annotated[BaseAddress, Depends(currentaddr)]):
-    return await service.getaddrinfo(address)  # todo: maybe add cache
+    # todo: add cache?
+    return await service.getaddrinfo(address)
 
 
-@router.get('/address/{addresstr}')
-async def get_address_transactions(address: Annotated[BaseAddress, Depends(currentaddr)]):
-    pass
+@router.get(
+    '/address/{addresstr}/transactions',
+    description='Get address transactions. Using blockchain.com explorer '
+                'for mainnet and blockstream.info for testnet',
+    response_model=list[schema.TransactionDetail]
+)
+async def get_address_transactions(
+    address: Annotated[
+        BaseAddress,
+        Depends(currentaddr)
+    ],
+    length: int | None = None,
+    offset: int | None = None,
+    last_seen_txid: str | None = None
+):  # todo: add cache?
+    try:
+        input = schema.GetAddressTransactionsInput(
+            network=address.network,
+            length=length,
+            offset=offset,
+            last_seen_txid=last_seen_txid
+        )
+    except schema.ValidationError as e:
+        raise RequestValidationError(e.errors())
+    return await service.get_address_transactions(
+        address,
+        input.length,
+        input.offset,
+        input.last_seen_txid
+    )
 
 
 @router.get(
@@ -47,7 +75,7 @@ async def get_address_transactions(address: Annotated[BaseAddress, Depends(curre
 async def get_address_unspent(
     address: Annotated[BaseAddress, Depends(currentaddr)],
     include_transaction: bool = True
-    # todo: add cached
+    # todo: add cache!
 ):
     return await service.fetch_unspent(
         address,
@@ -89,5 +117,5 @@ async def get_transaction(
 
 
 @router.post('/transaction')
-async def create_transaction():
+async def broadcast_transaction():
     pass

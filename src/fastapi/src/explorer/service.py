@@ -1,12 +1,13 @@
 import time
-from typing import overload, Callable, Any, Literal
+from typing import Iterable, overload, Callable, Any, Literal
 
 import httpx
 from anyio import to_thread
 from btclib import NetworkType, Unspent, Service as API
 from btclib.address import BaseAddress
 from btclib.service import DEFAULT_SERVICE_TIMEOUT, AddressInfo, NotFoundError,\
-                           ExplorerError, ExcessiveAddress, AddressOverflowError
+                           ExplorerError, ExcessiveAddress, AddressOverflowError, \
+                           BlockchainAPI, BlockstreamAPI, ExplorerAPI
 from btclib.transaction import BroadcastedTransaction
 
 from . import crud, models, schema, exceptions as exc
@@ -28,10 +29,16 @@ class Service:
         f: Callable[..., T],
         *args,
         notfounderr: exc.NotFoundError | None = None,
+        serviceins: ExplorerAPI | None = None,
         kwargs: dict[str, Any] = {}
     ) -> T:
         try:
-            r = await to_thread.run_sync(f, self.api, *args, **kwargs)
+            r = await to_thread.run_sync(
+                f,
+                serviceins if serviceins else self.api,
+                *args,
+                **kwargs
+            )
 
         except (ExcessiveAddress, AddressOverflowError):
             raise exc.ExcessiveAddressError
@@ -131,6 +138,36 @@ async def get_or_add_transaction(
 
     cls = schema.TransactionDetail if detail else schema.Transaction
     return cls.from_model(tx)
+
+
+async def get_address_transactions(
+    address: BaseAddress,
+    length: int | None,
+    offset: int | None,
+    last_seen_txid: str | None
+) -> Iterable[schema.TransactionDetail]:
+    service = Service(address.network)
+    if address.network is NetworkType.MAIN:
+        r = {
+            'cls': BlockchainAPI,
+            'func': BlockchainAPI.get_address_transactions,
+            'args': [length, offset]
+        }
+    else:
+        r = {
+            'cls': BlockstreamAPI,
+            'func': BlockstreamAPI.get_address_transactions,
+            'args': [last_seen_txid]
+        }
+    transactions = await service.send(
+        r['func'],
+        address,
+        *(a for a in r['args'] if a is not None),
+        notfounderr=exc.AddressNotFoundError(address),
+        serviceins=r['cls'](address.network)
+    )
+    await crud.add_transactions(transactions, service.previous_apiservice, upsert=True)
+    return map(schema.TransactionDetail.from_instance, transactions)
 
 
 @overload

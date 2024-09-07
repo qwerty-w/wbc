@@ -30,7 +30,7 @@ class ObtainedAddressIn(BaseAddress):
 
     @field_validator('input')
     @classmethod
-    def validate_in(cls, v: str, info: ValidationInfo):
+    def validate_input(cls, v: str, info: ValidationInfo):
         for type, regex in cls._vin.items():
             if info.data['intype'] == type:
                 if not regex.fullmatch(v):

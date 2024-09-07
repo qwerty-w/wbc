@@ -1,4 +1,4 @@
-from typing import Annotated, Self
+from typing import Annotated, Self, Iterable, Sequence
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.orm import relationship
 from sqlalchemy import PrimaryKeyConstraint, types, ForeignKey
@@ -9,10 +9,27 @@ from btclib.address import from_pkscript
 from ..models import BaseModel, CreatedMixin, networkenum
 
 
-type txidFK = Annotated[bytes, mapped_column(ForeignKey('blockchain_transaction.id', ondelete='CASCADE'))]
+type txidFK = Annotated[
+    bytes,
+    mapped_column(ForeignKey(
+        'blockchain_transaction.id',
+        ondelete='CASCADE'
+    ))
+]
 
 
-class Input(BaseModel):
+class Base(BaseModel):
+    __abstract__ = True
+
+    def values(self, *, exclude: Iterable[str] | None = None):
+        noexclude = exclude is None
+        return (getattr(
+            self,
+            c.name
+        ) for c in self.__table__.columns if noexclude or c.name not in exclude)
+
+
+class Input(Base):
     __tablename__ = 'blockchain_input'
 
     txid: Mapped[txidFK] = mapped_column()
@@ -32,7 +49,7 @@ class Input(BaseModel):
     )
 
 
-class Output(BaseModel):
+class Output(Base):
     __tablename__ = 'blockchain_output'
 
     txid: Mapped[txidFK] = mapped_column()
@@ -48,7 +65,7 @@ class Output(BaseModel):
     )
 
 
-class Transaction(BaseModel, CreatedMixin):
+class Transaction(Base, CreatedMixin):
     __tablename__ = 'blockchain_transaction'
 
     id: Mapped[bytes] = mapped_column(types.LargeBinary(32), primary_key=True)
@@ -82,7 +99,7 @@ class Transaction(BaseModel, CreatedMixin):
 
     @classmethod
     def from_instance(cls, tx: btclib.BroadcastedTransaction, apiservice: str) -> Self:
-        self = cls(
+        return cls(
             id=tx.id,
             inamount=tx.inputs.amount,
             outamount=tx.outputs.amount,
@@ -109,32 +126,24 @@ class Transaction(BaseModel, CreatedMixin):
                     vout=inp.vout,
                     amount=inp.amount,
                     is_segwit=bool(inp.witness),
-                    is_coinbase=tx.is_coinbase(),
+                    is_coinbase=isinstance(inp, btclib.CoinbaseInput),
                     script=inp.script.serialize(),
                     witness=inp.witness.serialize(segwit=True)
                 )
                 for index, inp in enumerate(tx.inputs)
+            ],
+            outputs=[
+                Output(
+                    txid=tx.id,
+                    vout=index,
+                    **out.as_dict(hexadecimal=False)
+                )
+                for index, out in enumerate(tx.outputs)
             ]
         )
-        for index, out in enumerate(tx.outputs):
-            try:
-                address = from_pkscript(out.pkscript).string
-            except ValueError:
-                address = None
-
-            self.outputs.append(
-                Output(
-                    txid=self.id,
-                    vout=index,
-                    pkscript=out.pkscript.serialize(),
-                    amount=out.amount,
-                    address=address
-                )
-            )
-        return self
 
 
-class Unspent(BaseModel):
+class Unspent(Base):
     __tablename__ = 'blockchain_unspent'
 
     txid: Mapped[bytes] = mapped_column()
