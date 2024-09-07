@@ -14,10 +14,10 @@ class hexstring:
         return i.hex() if isinstance(i, bytes | bytearray | memoryview) else i
 
     @staticmethod
-    def fieldargs(length: int | None = None):
+    def fieldargs(length: int | None = None, pattern: str | None = None):
         return [
             Field(
-                pattern=hexstring.pattern,
+                pattern=pattern or hexstring.pattern,
                 **dict(
                     min_length=length,
                     max_length=length
@@ -30,7 +30,8 @@ class hexstring:
     regexp = re.compile(pattern.replace(r'\z', r'\Z'))
     validator = BeforeValidator(hexvalidator)
 
-    type any = Annotated[str, *fieldargs()]  # allows empty strings
+    type any = Annotated[str, *fieldargs()]
+    type noempty = Annotated[str, *fieldargs(pattern=pattern.replace('*', '+'))]
     type length32 = Annotated[str, *fieldargs(32)]
     type length64 = Annotated[str, *fieldargs(64)]
 

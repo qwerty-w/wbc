@@ -59,12 +59,12 @@ class Input(Base):
     amount: int
     is_segwit: bool
     is_coinbase: bool
-    script: hexstring.any  # hex
-    witness: hexstring.any  # hex
+    script: hexstring.any
+    witness: hexstring.any
 
 
 class Output(Base):
-    pkscript: hexstring.any  # hex
+    pkscript: hexstring.any
     amount: int
     address: str | None
 
@@ -198,5 +198,5 @@ class TransactionUnspent(BaseModel):
     unspent: list[Unspent]
 
 
-# class BroadcastTransactionInput(BaseModel):
-#     serialized: str
+class BroadcastTransactionInput(BaseModel):
+    serialized: hexstring.noempty
