@@ -8,22 +8,22 @@ from ..database import SessionLocal
 from . import models
 
 
-def select_transaction_query(
+def select_transaction_statement(
     *,
     load_inout: bool = True,
     load_unspent: bool = True
 ) -> Select[tuple[models.Transaction]]:
-    q = select(models.Transaction)
+    stmt = select(models.Transaction)
     if load_inout:
-        q = q.options(
+        stmt = stmt.options(
             selectinload(models.Transaction.inputs),
             selectinload(models.Transaction.outputs)
         )
     if load_unspent:
-        q = q.options(
+        stmt = stmt.options(
             selectinload(models.Transaction.unspent)
         )
-    return q
+    return stmt
 
 
 async def get_transaction(
@@ -32,7 +32,7 @@ async def get_transaction(
     load_unspent: bool = True
     # todo: network
 ) -> models.Transaction | None:
-    q = select_transaction_query(load_inout=load_inout, load_unspent=load_unspent).where(
+    q = select_transaction_statement(load_inout=load_inout, load_unspent=load_unspent).where(
         models.Transaction.id == txid
     )
     async with SessionLocal() as session:
@@ -48,7 +48,7 @@ async def find_transactions(
     """
     Get cached transactions and pass those that don't exist
     """
-    q = select_transaction_query(load_inout=load_inout, load_unspent=load_unspent).where(
+    q = select_transaction_statement(load_inout=load_inout, load_unspent=load_unspent).where(
         models.Transaction.id.in_(txids)
     )
     async with SessionLocal() as session:
@@ -60,6 +60,43 @@ async def add_transaction(tx: BroadcastedTransaction, apiservice: str) -> models
         txmodel = models.Transaction.from_instance(tx, apiservice)
         session.add(txmodel)
     return txmodel
+
+
+async def add_transactions(
+    transactions: list[BroadcastedTransaction],
+    apiservice: str,
+    *,
+    upsert: bool = False
+) -> Iterable[models.Transaction]:
+    """
+    :param upsert: if false only add new transactions, if true resolve unique/pk conflict
+                   with blockheight update
+    """
+    async with SessionLocal() as session, session.begin():
+        r = [models.Transaction.from_instance(tx, apiservice) for tx in transactions]
+        if upsert:
+            for model in r:
+                stmt = insert(models.Transaction).values([tuple(model.values(exclude=['created_at']))])
+                if model.blockheight == -1:
+                    stmt = stmt.on_conflict_do_nothing()
+                else:
+                    stmt = stmt.on_conflict_do_update(
+                        index_elements=models.Transaction.__table__.primary_key,
+                        set_={
+                            'blockheight': model.blockheight
+                        },
+                    )
+
+                await session.execute(stmt)
+                for cls, io in [(models.Input, model.inputs), (models.Output, model.outputs)]:
+                    await session.execute(
+                        insert(cls)
+                        .values([tuple(object.values()) for object in io])
+                        .on_conflict_do_nothing()
+                    )
+        else:
+            session.add_all(r)
+        return r
 
 
 async def get_unspent(address: str) -> list[models.Unspent] | None:
@@ -103,18 +140,6 @@ async def put_unspent(addresstr: str, unspent: list[Unspent]) -> None:
     # async with SessionLocal() as session, session.begin():
     #     await session.execute(delete(models.Unspent).where(models.Unspent.address == addresstr))
     #     session.add_all(models.Unspent.from_instance(u) for u in unspent)
-
-
-async def add_transactions(
-    transactions: list[BroadcastedTransaction],
-    apiservice: str
-) -> list[models.Transaction]:
-    r: list[models.Transaction] = []
-    async with SessionLocal() as session, session.begin():
-        for tx in transactions:
-            session.add(txmodel := models.Transaction.from_instance(tx, apiservice))
-            r.append(txmodel)
-    return r
 
 
 async def update_transactions_blockheight(heights: dict[bytes, int]):
