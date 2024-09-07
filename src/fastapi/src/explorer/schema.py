@@ -3,7 +3,7 @@ from functools import cached_property
 from pydantic import computed_field,  BaseModel, Field, ConfigDict, ValidationError, model_validator
 import btclib
 
-from ..schema import strhex
+from ..schema import hexstring
 from . import models
 
 
@@ -54,23 +54,23 @@ class AddressInfo(Base):
 
 
 class Input(Base):
-    txid: strhex
+    txid: hexstring.length64
     vout: int
     amount: int
     is_segwit: bool
     is_coinbase: bool
-    script: strhex  # hex
-    witness: strhex  # hex
+    script: hexstring.any  # hex
+    witness: hexstring.any  # hex
 
 
 class Output(Base):
-    pkscript: strhex  # hex
+    pkscript: hexstring.any  # hex
     amount: int
     address: str | None
 
 
 class Transaction(Base):
-    id: strhex
+    id: hexstring.length64
     inamount: int
     outamount: int
     incount: int
@@ -163,7 +163,7 @@ class TransactionDetail(Transaction):
 
 
 class Unspent(Base):  # todo: add blockheight
-    txid: strhex
+    txid: hexstring.length64
     vout: int
     amount: int
     address: str | None = Field(
@@ -196,3 +196,7 @@ class Unspent(Base):  # todo: add blockheight
 class TransactionUnspent(BaseModel):
     transaction: TransactionDetail
     unspent: list[Unspent]
+
+
+# class BroadcastTransactionInput(BaseModel):
+#     serialized: str

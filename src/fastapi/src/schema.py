@@ -1,13 +1,38 @@
+import re
 from typing import Annotated, Self
 from functools import cached_property
 from pydantic import BaseModel, BeforeValidator, Field, model_validator
 from btclib import address, BaseAddress, NetworkType, AddressType
 
 
-# hex validator
-def tohex(i: bytes | bytearray | memoryview | str) -> str:
-    return i.hex() if isinstance(i, bytes | bytearray | memoryview) else i
-type strhex = Annotated[str, BeforeValidator(tohex)]
+base64regexp = re.compile(r'[A-Za-z0-9+/]{40}[A-Za-z0-9+/]{3}=')
+
+
+class hexstring:
+    @staticmethod
+    def hexvalidator(i: bytes | bytearray | memoryview | str) -> str:
+        return i.hex() if isinstance(i, bytes | bytearray | memoryview) else i
+
+    @staticmethod
+    def fieldargs(length: int | None = None):
+        return [
+            Field(
+                pattern=hexstring.pattern,
+                **dict(
+                    min_length=length,
+                    max_length=length
+                ) if length else {}  # type: ignore
+            ),
+            hexstring.validator
+        ]
+
+    pattern = r'\A(?:[a-fA-F0-9]{2})*\z'  # rust (pydantic) pattern
+    regexp = re.compile(pattern.replace(r'\z', r'\Z'))
+    validator = BeforeValidator(hexvalidator)
+
+    type any = Annotated[str, *fieldargs()]  # allows empty strings
+    type length32 = Annotated[str, *fieldargs(32)]
+    type length64 = Annotated[str, *fieldargs(64)]
 
 
 class BitcoinAddress(BaseModel):
