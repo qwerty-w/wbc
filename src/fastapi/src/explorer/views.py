@@ -119,6 +119,6 @@ async def get_transaction(
     )
 
 
-@router.post('/transaction')
-async def broadcast_transaction():
-    pass
+@router.post('/transaction', response_model=schema.TransactionDetail)
+async def broadcast_transaction(network: NetworkType, input: schema.BroadcastTransactionInput):
+    ...  # todo:
