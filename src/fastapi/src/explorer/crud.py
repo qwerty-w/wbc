@@ -99,12 +99,12 @@ async def add_transactions(
         return r
 
 
-async def get_unspent(address: str) -> list[models.Unspent] | None:
+async def get_unspent(address: str) -> Iterable[models.Unspent]:
     async with SessionLocal() as session:
-        return list(await session.scalars(
+        return (await session.scalars(
             select(models.Unspent)
             .where(models.Unspent.address == address)
-        ))
+        )).all()
 
 
 async def add_unspent(txid: bytes, vout: int, amount: int, addresstr: str) -> models.Unspent:
