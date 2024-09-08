@@ -3,12 +3,13 @@ from typing import Iterable, overload, Callable, Any, Literal
 
 import httpx
 from anyio import to_thread
+from fastapi import status, HTTPException
 from btclib import NetworkType, Unspent, Service as API
 from btclib.address import BaseAddress
 from btclib.service import DEFAULT_SERVICE_TIMEOUT, AddressInfo, NotFoundError,\
                            ExplorerError, ExcessiveAddress, AddressOverflowError, \
                            BlockchainAPI, BlockstreamAPI, ExplorerAPI
-from btclib.transaction import BroadcastedTransaction
+from btclib.transaction import RawTransaction, BroadcastedTransaction
 
 from . import crud, models, schema, exceptions as exc
 from ..config import settings
@@ -17,8 +18,9 @@ from ..config import settings
 class Service:
     httpx_client = httpx.Client(follow_redirects=True, timeout=DEFAULT_SERVICE_TIMEOUT)
 
-    def __init__(self, network: NetworkType):
+    def __init__(self, network: NetworkType, handle_explorer_error: bool = True):
         self.api = API(network=network, client=self.httpx_client)
+        self.handle_explorer_error = handle_explorer_error
 
     @property
     def previous_apiservice(self) -> str:
@@ -46,8 +48,11 @@ class Service:
         except NotFoundError:
             raise notfounderr or exc.NotFoundError()
 
-        except (ExplorerError, httpx.TimeoutException, ConnectionError):
-            raise exc.ServiceUnavailableError
+        except (ExplorerError, httpx.TimeoutException, ConnectionError) as e:
+            if isinstance(e, ExplorerError) and not self.handle_explorer_error:
+                raise e
+            else:
+                raise exc.ServiceUnavailableError
 
         return r
 
@@ -89,6 +94,12 @@ class Service:
             notfounderr=exc.AddressNotFoundError(address)
         )
 
+    async def push(self, tx: RawTransaction) -> Literal[True]:
+        return await self.send(
+            API.push,
+            tx
+        )
+
 
 def _getheadcache(foo):
     cache: dict[NetworkType, tuple[float, schema.HeadBlock]] = {}
@@ -114,6 +125,22 @@ async def getaddrinfo(address: BaseAddress) -> schema.AddressInfo:
     return schema.AddressInfo.from_instance(inf)
 
 
+@overload
+async def get_or_add_transaction(
+    txid: bytes,
+    network: NetworkType,
+    cached: bool,
+    detail: Literal[True]
+) -> schema.TransactionDetail:
+    ...
+@overload
+async def get_or_add_transaction(
+    txid: bytes,
+    network: NetworkType,
+    cached: bool,
+    detail: Literal[False]
+) -> schema.Transaction:
+    ...
 async def get_or_add_transaction(
     txid: bytes,
     network: NetworkType,
@@ -252,7 +279,20 @@ async def fetch_unspent(
     return [
         schema.TransactionUnspent(
             transaction=schema.TransactionDetail.from_model(tx),
-            unspent=[schema.Unspent.from_instance(u) for u in txunspent[tx.id]]
+            unspent=[schema.Unspent.from_instance(u) for u in txunspent[txid]]
         )
         for txid, tx in transactions.items() if tx
     ]
+
+
+async def broadcastx(serialized: str, network: NetworkType) -> schema.TransactionDetail:
+    service = Service(network, handle_explorer_error=False)
+    try:
+        tx = RawTransaction.deserialize(bytes.fromhex(serialized))
+    except (ValueError, AssertionError):
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, 'impossible to parse serialized transaction')
+    try:
+        await service.push(tx)
+    except ExplorerError as e:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, e.response.text)
+    return await get_or_add_transaction(tx.id, network, cached=False, detail=True)

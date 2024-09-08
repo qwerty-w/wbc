@@ -199,4 +199,4 @@ class TransactionUnspent(BaseModel):
 
 
 class BroadcastTransactionInput(BaseModel):
-    serialized: hexstring.noempty
+    serialized: hexstring.notempty

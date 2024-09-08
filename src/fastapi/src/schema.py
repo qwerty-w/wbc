@@ -31,7 +31,7 @@ class hexstring:
     validator = BeforeValidator(hexvalidator)
 
     type any = Annotated[str, *fieldargs()]
-    type noempty = Annotated[str, *fieldargs(pattern=pattern.replace('*', '+'))]
+    type notempty = Annotated[str, *fieldargs(pattern=pattern.replace('*', '+'))]
     type length32 = Annotated[str, *fieldargs(32)]
     type length64 = Annotated[str, *fieldargs(64)]
 
