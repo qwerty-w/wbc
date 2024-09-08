@@ -115,10 +115,10 @@ async def get_transaction(
         bytes.fromhex(txid),
         network,
         cached,
-        detail
+        detail  # type: ignore
     )
 
 
 @router.post('/transaction', response_model=schema.TransactionDetail)
-async def broadcast_transaction(network: NetworkType, input: schema.BroadcastTransactionInput):
-    ...  # todo:
+async def broadcast_transaction(input: schema.BroadcastTransactionInput, network: NetworkType):
+    return await service.broadcastx(input.serialized, network)

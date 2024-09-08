@@ -10,7 +10,7 @@ class NotFoundError(HTTPException):
                 v = '[' + ', '.join(f'"{e}"' for e in value) + ']'
             else:
                 v = f'"{value}"'
-            msg = f'{name} {value} ' + msg
+            msg = f'{name} {v} ' + msg
 
         super().__init__(status.HTTP_404_NOT_FOUND, msg)
 
