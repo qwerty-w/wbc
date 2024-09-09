@@ -1,7 +1,7 @@
 from enum import StrEnum
 from typing import ClassVar
 from pydantic import BaseModel, ConfigDict, Field, field_validator, ValidationInfo
-from btclib import NetworkType, AddressType
+from btclib import const as btconst, NetworkType, AddressType
 
 from ..schema import hexstring, base64regexp
 from .models import UserBitcoinAddress
@@ -64,3 +64,28 @@ class CreateAddressIn(UserAddress):
 
 class ImportAddressIn(CreateAddressIn, ObtainedAddressIn):
     ...
+
+
+class CreateTransactionInput(BaseModel):
+    txid: hexstring.length64
+    vout: int
+    amount: int
+    address: str
+    sequence: int = btconst.DEFAULT_SEQUENCE
+
+
+class CreateTransactionOutput(BaseModel):
+    pkscript: hexstring.notempty
+    amount: int
+
+
+class CreateTransactionIn(BaseModel):
+    inputs: list[CreateTransactionInput]
+    outputs: list[CreateTransactionOutput]
+    version: int = btconst.DEFAULT_VERSION
+    locktime: int = btconst.DEFAULT_LOCKTIME
+    userpassword: str
+
+
+class CreateTransactionOut(BaseModel):
+    serialized: hexstring.notempty
