@@ -13,14 +13,14 @@ from .models import UserSession
 async def add_user(username: str, password: str) -> User:
     pwdhash = cu.context.hash(password)
     ck = cu.generatekey()
-    options, pk, encrypted = cu.kdfencrypt(password, ck)
+    options, kdf, encrypted = cu.kdfencrypt(password, ck)
 
     async with SessionLocal() as session, session.begin():
         session.add(u := User(
             username=username,
             pwd=pwdhash,
             kdf_options=options,
-            kdf_digest=cu.dsha256(pk),
+            kdf_digest=cu.dsha256(kdf),
             ckey_encrypted=encrypted
         ))
         return u

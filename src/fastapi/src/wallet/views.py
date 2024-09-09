@@ -2,11 +2,11 @@ import base64
 from typing import Annotated
 from fastapi import Request, status, APIRouter, Depends, Path, HTTPException
 
-from btclib import PrivateKey
+from btclib import PrivateKey, Input, Output, Transaction, Script
 from ..models import User
 from ..auth import currentuser
 from ..auth.exceptions import InvalidPasswordError
-from . import schema, crud, models
+from . import schema, crud, models, cryptoutils as cu
 
 
 router = APIRouter(prefix='/wallet')
@@ -17,7 +17,7 @@ router = APIRouter(prefix='/wallet')
     response_model=list[schema.UserAddressOut]
 )
 async def get_addresses(user: Annotated[User, Depends(currentuser)]):
-    return await crud.get_addresses(user.id)
+    return await crud.get_user_addresses(user.id)
 
 
 async def currentaddress(
@@ -173,3 +173,61 @@ async def delete_address(
     address: Annotated[models.UserBitcoinAddress, Depends(currentaddress)]
 ):
     await crud.delete_address(address)
+
+
+@router.post('/transaction')
+async def create_transaction(
+    user: Annotated[User, Depends(currentuser)],
+    input: schema.CreateTransactionIn
+) -> schema.CreateTransactionOut:
+    try:
+        ck = cu.kdfdecrypt(
+            input.userpassword,
+            user.ckey_encrypted,
+            user.kdf_options,
+            user.kdf_digest
+        )
+    except ValueError:
+        raise InvalidPasswordError
+
+    addresses = {
+        addr.string: addr
+        for addr in await crud.get_addresses(
+            user.id,
+            (bytes.fromhex(i.address) for i in input.inputs))
+        }
+
+    inputs = []
+    for i in input.inputs:
+        addressmodel = addresses.get(i.address)
+        if not addressmodel:
+            raise HTTPException(
+                status.HTTP_400_BAD_REQUEST,
+                f"address {i.address} does not belong to user (could not be found)"
+            )
+        p = PrivateKey.from_bytes(cu.decrypt(ck, addressmodel.key.encrypted))
+        addr = p.public.change_network(addressmodel.network).get_address(addressmodel.type)
+        if addressmodel.string != addr.string:
+            raise HTTPException(
+                status.HTTP_500_INTERNAL_SERVER_ERROR,
+                f"saved private key doesnt belong to address '{addressmodel.string}'"
+            )
+        inputs.append(
+            Input(
+                bytes.fromhex(i.txid),
+                i.vout,
+                i.amount,
+                p,
+                addr,
+                i.sequence
+            )
+        )
+
+    tx = Transaction(
+        inputs,
+        [Output(Script.deserialize(o.pkscript), o.amount) for o in input.outputs],
+        input.version,
+        input.locktime
+    )
+    tx.default_sign()
+    return schema.CreateTransactionOut(serialized=tx.serialize().hex())

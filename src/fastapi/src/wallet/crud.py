@@ -1,5 +1,6 @@
-from typing import cast, Iterable
+from typing import Sequence, cast, Iterable
 from sqlalchemy import select, update, delete
+from sqlalchemy.orm import selectinload
 from btclib import PrivateKey, NetworkType, AddressType
 
 from ..database import SessionLocal
@@ -20,7 +21,7 @@ async def get_address(userid: int, string: str) -> UserBitcoinAddress | None:
         )).one_or_none()
 
 
-async def get_addresses(userid: int) -> Iterable[UserBitcoinAddress]:
+async def get_user_addresses(userid: int) -> Iterable[UserBitcoinAddress]:
     async with SessionLocal() as session:
         return await session.scalars(
             select(UserBitcoinAddress)
@@ -69,6 +70,21 @@ async def add_or_get_pkey(user: User, userpassword: str, p: PrivateKey) -> UserB
             pubkey_yb=puby
         ))
         return pk
+
+
+async def get_addresses(
+    userid: int,
+    addresses: Iterable[bytes],
+    loadpk: bool = True
+) -> Sequence[UserBitcoinAddress]:
+    async with SessionLocal() as session:
+        stmt = select(UserBitcoinAddress).where(
+            UserBitcoinAddress.userid == userid,
+            UserBitcoinAddress.string.in_(addresses)
+        )
+        if loadpk:
+            stmt = stmt.options(selectinload(UserBitcoinAddress.key))
+        return (await session.scalars(stmt)).all()
 
 
 async def create_address(user: User,

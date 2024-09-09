@@ -40,6 +40,7 @@ async def signup(
 @router.post('/signin', response_model=schema.UserSession)
 async def signin(formdata: Annotated[OAuth2PasswordRequestForm, Depends()], request: Request):
     u = await getuser_by_username(formdata.username)
+    # todo: merge wrong pass/user not found and raise one error
     if not u:
         raise exceptions.UserNotFoundError
     if not cu.context.verify(formdata.password, u.pwd):
