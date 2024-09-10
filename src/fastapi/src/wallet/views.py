@@ -2,7 +2,7 @@ import base64
 from typing import Annotated
 from fastapi import Request, status, APIRouter, Depends, Path, HTTPException
 
-from btclib import PrivateKey, Input, Output, Transaction, Script
+from btclib import address, PrivateKey, Input, Output, Transaction, Script
 from ..models import User
 from ..auth import currentuser
 from ..auth.exceptions import InvalidPasswordError
@@ -194,7 +194,7 @@ async def create_transaction(
         addr.string: addr
         for addr in await crud.get_addresses(
             user.id,
-            (bytes.fromhex(i.address) for i in input.inputs))
+            (i.address for i in input.inputs))
         }
 
     inputs = []
@@ -223,11 +223,14 @@ async def create_transaction(
             )
         )
 
-    tx = Transaction(
-        inputs,
-        [Output(Script.deserialize(o.pkscript), o.amount) for o in input.outputs],
-        input.version,
-        input.locktime
-    )
+    outputs = []
+    for o in input.outputs:
+        if isinstance(o, schema.CreateTransactionOutputPkscript):
+            pkscript = Script.deserialize(o.pkscript)
+        else:
+            pkscript = o.instance.pkscript
+        outputs.append(Output(pkscript, o.amount))
+
+    tx = Transaction(inputs, outputs, input.version, input.locktime)
     tx.default_sign()
     return schema.CreateTransactionOut(serialized=tx.serialize().hex())
