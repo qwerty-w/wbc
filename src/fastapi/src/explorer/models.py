@@ -1,12 +1,10 @@
-from typing import Annotated, Self, Iterable, Sequence
+from typing import Annotated, Self, Iterable
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.orm import relationship
 from sqlalchemy import PrimaryKeyConstraint, types, ForeignKey
-
 import btclib
-from btclib.address import from_pkscript
 
-from ..models import BaseModel, CreatedMixin, networkenum
+from ..models import BaseModel, CreatedMixin, networkenum, bigint
 
 
 type txidFK = Annotated[
@@ -36,7 +34,7 @@ class Input(Base):
     index: Mapped[int] = mapped_column()
     outxid: Mapped[bytes] = mapped_column(types.LargeBinary(32))
     vout: Mapped[int] = mapped_column()
-    amount: Mapped[int]
+    amount: Mapped[bigint]
     is_segwit: Mapped[bool]
     is_coinbase: Mapped[bool]
     script: Mapped[bytes]
@@ -55,7 +53,7 @@ class Output(Base):
     txid: Mapped[txidFK] = mapped_column()
     vout: Mapped[int] = mapped_column()
     pkscript: Mapped[bytes]
-    amount: Mapped[int]
+    amount: Mapped[bigint]
     address: Mapped[str | None]
 
     tx: Mapped['Transaction'] = relationship(back_populates='outputs')
@@ -69,8 +67,8 @@ class Transaction(Base, CreatedMixin):
     __tablename__ = 'blockchain_transaction'
 
     id: Mapped[bytes] = mapped_column(types.LargeBinary(32), primary_key=True)
-    inamount: Mapped[int]
-    outamount: Mapped[int]
+    inamount: Mapped[bigint]
+    outamount: Mapped[bigint]
     incount: Mapped[int]
     outcount: Mapped[int]
     version: Mapped[int]
@@ -80,7 +78,7 @@ class Transaction(Base, CreatedMixin):
     weight: Mapped[int]
     is_segwit: Mapped[bool]
     is_coinbase: Mapped[bool]
-    fee: Mapped[int]
+    fee: Mapped[bigint]
     blockheight: Mapped[int]
     serialized: Mapped[bytes]
     network: Mapped[networkenum]
@@ -148,7 +146,7 @@ class Unspent(Base):
 
     txid: Mapped[bytes] = mapped_column()
     vout: Mapped[int] = mapped_column()
-    amount: Mapped[int] = mapped_column()
+    amount: Mapped[bigint] = mapped_column()
     address: Mapped[str | None] = mapped_column(index=True)
 
     tx: Mapped[Transaction | None] = relationship(

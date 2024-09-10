@@ -9,6 +9,7 @@ from .database import BaseModel
 type intpk = Annotated[int, mapped_column(primary_key=True)]
 type userid = Annotated[int, mapped_column(ForeignKey('user.id'))]
 type networkenum = Annotated[NetworkType, mapped_column(Enum(NetworkType, values_callable=lambda n: [e.value for e in n]))]
+type bigint = Annotated[int, mapped_column(types.BigInteger)]
 
 
 class CreatedMixin:
