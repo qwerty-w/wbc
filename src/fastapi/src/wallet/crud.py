@@ -74,7 +74,7 @@ async def add_or_get_pkey(user: User, userpassword: str, p: PrivateKey) -> UserB
 
 async def get_addresses(
     userid: int,
-    addresses: Iterable[bytes],
+    addresses: Iterable[str],
     loadpk: bool = True
 ) -> Sequence[UserBitcoinAddress]:
     async with SessionLocal() as session:

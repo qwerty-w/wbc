@@ -162,8 +162,8 @@ class TransactionDetail(Transaction):
         )
 
 
-class Unspent(Base):  # todo: add blockheight
-    txid: hexstring.length64
+class Unspent(Base):
+    txid: hexstring.length64  # todo: maybe remove this field in TransactionUnspent
     vout: int
     amount: int
     address: str | None = Field(
