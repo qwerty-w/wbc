@@ -3,12 +3,13 @@ import { observable, action, makeObservable } from 'mobx'
 import { observer } from 'mobx-react-lite'
 import styled from 'styled-components'
 
-import { toSatoshis, FiltredInput, FiltredInputView, BTCamountInputView } from '../../common/utils'
-import { StyledContinueButton } from '../../common/screen'
-import { Modal, ModalView } from '../../common/modal'
-import { GlobalStore } from '../../create-transaction'
-import { Output } from './creator'
-import * as styledModal from './styles/styled-modal'
+import { toSatoshis } from '../../core/utils/Utils'
+import { FiltredTextInput, FiltredTextInputView, BTCamountTextInputView } from '../../core/components/TextInput'
+import { StyledContinueButton } from '../../core/components/ContinueButton'
+import { Modal, ModalView } from '../../core/components/Modal'
+import { GlobalStore } from '../TransactionCreator'
+import { Output } from './Creator'
+import * as styledModal from '../styles/styled-modal'
 
 
 const StyledNewOutput = styled.div`
@@ -61,7 +62,7 @@ const StyledAmount = styled(styledModal.Item)`
 
 export class NewOutputModal extends Modal {
     continueIsDisabled: boolean = true
-    
+
     constructor() {
         super()
         makeObservable(this, {
@@ -77,9 +78,9 @@ export class NewOutputModal extends Modal {
 export const NewOutputModalView = observer(() => {
     const { creator, modals: { newout } } = useContext(GlobalStore)
     const [continueDisabled, setContinueDisabled] = useState(true)
-    
-    const [address] = useState(new FiltredInput((pos, value) => { return { pos, value } }))
-    const [amount] = useState(new FiltredInput((pos, value) => { return { pos, value } }, undefined, '0'))
+
+    const [address] = useState(new FiltredTextInput((pos, value) => { return { pos, value } }))
+    const [amount] = useState(new FiltredTextInput((pos, value) => { return { pos, value } }, undefined, '0'))
 
     useEffect(() => setContinueDisabled(address.value === ''), [address.value])
     useEffect(() => { address.setInvalid(false); amount.setInvalid(false) }, [newout.isShowed])
@@ -90,7 +91,7 @@ export const NewOutputModalView = observer(() => {
         amount.setInvalid(am <= 0 || Number.isNaN(am) || am > creator.remainder)
 
         if (address.isInvalid || amount.isInvalid) {
-            return 
+            return
         }
 
         creator.outs.add(new Output(addr, am))
@@ -101,12 +102,12 @@ export const NewOutputModalView = observer(() => {
         <ModalView modal={newout} onEnter={onContinue} >
             <StyledNewOutput>
                 <StyledAddress>
-                    <FiltredInputView inp={address} />
+                    <FiltredTextInputView inp={address} />
                     <styledModal.Label>Address</styledModal.Label>
                 </StyledAddress>
                 <StyledBottom>
                     <StyledAmount>
-                        <BTCamountInputView inp={amount} />
+                        <BTCamountTextInputView inp={amount} />
                         <styledModal.Label>Amount</styledModal.Label>
                     </StyledAmount>
                     <StyledContinueButton $width='107px' $height='40px' disabled={continueDisabled} onClick={onContinue} />

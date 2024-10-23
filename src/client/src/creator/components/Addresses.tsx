@@ -4,10 +4,11 @@ import { makeObservable, observable, action } from 'mobx'
 import { observer } from 'mobx-react-lite'
 import styled from 'styled-components'
 
-import { Container, setBuffer } from '../../common/utils'
-import { ContextMenuItem, ContextMenuDivider, ContextMenuView  } from '../../common/context-menu'
-import { GlobalStore } from '../../create-transaction'
-import { getTransactions } from './transactions'
+import { GlobalStore } from '../TransactionCreator'
+import { Container } from '../../core/utils/Container'
+import { ContextMenuItem, ContextMenuDivider, ContextMenuView  } from '../../core/components/ContextMenu'
+import { getTransactions } from './Transactions'
+import { setClipboard } from '../../core/utils/Utils'
 
 
 const StyledAddresses = styled.div`
@@ -103,15 +104,14 @@ const AddressView = observer(({ address }: { address: Address }) => {
     const { addrs, txs, modals } = useContext(GlobalStore)
     const ref = useRef<HTMLDivElement>(null)
     const navigate = useNavigate()
-
     return (
         <ContextMenuView items={
             <>
                 <ContextMenuItem name='View detail' onClick={ev => { navigate(`/address/${address.str}`) }} />
                 <ContextMenuDivider />
-                <ContextMenuItem name='Copy name' onClick={ ev => { setBuffer(address.name) } } />
-                <ContextMenuItem name='Copy address' onClick={ ev => { setBuffer(address.str) } } />
-                <ContextMenuItem name='Copy emoji' onClick={ ev => { setBuffer('🦋') } } />  {/* TODO */}
+                <ContextMenuItem name='Copy name' onClick={ ev => { setClipboard(address.name) } } />
+                <ContextMenuItem name='Copy address' onClick={ ev => { setClipboard(address.str) } } />
+                <ContextMenuItem name='Copy emoji' onClick={ ev => { setClipboard('🦋') } } />  {/* TODO */}
                 <ContextMenuDivider />
                 <ContextMenuItem name='Add new address' onClick={ ev => { modals.newaddr.show() } } />
             </>

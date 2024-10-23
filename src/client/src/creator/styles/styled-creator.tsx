@@ -1,5 +1,5 @@
 import styled from 'styled-components'
-export { StyledContinueButton as ContinueButton } from '../../../common/screen'
+export { StyledContinueButton as ContinueButton } from '../../core/components/ContinueButton'
 
 
 export const Creator = styled.div`

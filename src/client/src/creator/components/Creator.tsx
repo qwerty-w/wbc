@@ -2,10 +2,12 @@ import { useContext, useState } from 'react'
 import { observable, action, computed, makeObservable, makeAutoObservable } from 'mobx'
 import { observer } from 'mobx-react-lite'
 
-import { Container, wrapString, toBitcoins, BTCamountInputView, FiltredInput } from '../../common/utils'
-import { ContextMenuItem, ContextMenuDivider, ContextMenuView } from '../../common/context-menu'
-import { GlobalStore } from '../../create-transaction'
-import * as styled from './styles/styled-creator'
+import { Container } from '../../core/utils/Container'
+import { toBitcoins, wrapString } from '../../core/utils/Utils'
+import { FiltredTextInput, BTCamountTextInputView } from '../../core/components/TextInput'
+import { ContextMenuItem, ContextMenuDivider, ContextMenuView } from '../../core/components/ContextMenu'
+import { GlobalStore } from '../TransactionCreator'
+import * as styled from '../styles/styled-creator'
 
 
 abstract class IO {
@@ -172,12 +174,12 @@ const CreatorTop = observer(() => {
                 </styled.TopSide>
             </ContextMenuView>
         </styled.Top>
-    ) 
+    )
 })
 
 const CreatorBot = observer(() => {
     const state = useContext(GlobalStore).creator
-    const [fee] = useState(new FiltredInput((pos, value) => {return {pos, value}}, undefined, '0.0008'))
+    const [fee] = useState(new FiltredTextInput((pos, value) => {return {pos, value}}, undefined, '0.0008'))
 
     const create = () => {
         fee.setInvalid(true)
@@ -196,7 +198,7 @@ const CreatorBot = observer(() => {
                         <styled.BottomLabel>Remainder</styled.BottomLabel>
                     </styled.BottomItem>
                     <styled.BottomItem>
-                        <BTCamountInputView inp={fee} />
+                        <BTCamountTextInputView inp={fee} />
                         <styled.BottomLabel>Fee</styled.BottomLabel>
                     </styled.BottomItem>
                 </styled.BottomRow>

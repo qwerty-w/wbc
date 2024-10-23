@@ -2,9 +2,9 @@ import { useContext, useEffect, useRef } from "react";
 import { observable, action, makeObservable } from 'mobx'
 import { observer } from 'mobx-react-lite';
 
-import { Modal, ModalView } from '../../common/modal'
-import { GlobalStore } from '../../create-transaction';
-import * as styled from './styles/styled-new-address'
+import { Modal, ModalView } from '../../core/components/Modal'
+import { GlobalStore } from '../TransactionCreator';
+import * as styled from '../styles/styled-new-address'
 
 
 const TypeSelector = () => {

@@ -1,13 +1,13 @@
 import { useContext, useRef } from 'react'
 import { useNavigate } from 'react-router'
 import { observer } from 'mobx-react-lite'
-import styled, { css } from 'styled-components'
+import styled from 'styled-components'
 
-import { formateDate, setBuffer, toBitcoins, wrapString } from '../../common/utils'
-import { ContextMenuItem, ContextMenuDivider, ContextMenuView } from '../../common/context-menu'
-import { TransactionInfoView } from '../../common/screen'
-import { GlobalStore } from '../../create-transaction'
-import { Input } from './creator'
+import { formateDate, setClipboard, toBitcoins, wrapString } from '../../core/utils/Utils'
+import { ContextMenuItem, ContextMenuDivider, ContextMenuView } from '../../core/components/ContextMenu'
+import { TransactionInfoView } from '../../core/components/BaseTransaction'
+import { GlobalStore } from '../TransactionCreator'
+import { Input } from './Creator'
 
 
 const StyledTransactions = styled.div`
@@ -55,8 +55,8 @@ export class Transaction {
     get formattedFee() {
         return this.fee < 1000 ? String(this.fee) : this.feeFormatter.format(this.fee)
     }
-    get wrappedID() { 
-        return wrapString(this.id)    
+    get wrappedID() {
+        return wrapString(this.id)
     }
     get btcAmount() {
         return toBitcoins(this.amount)
@@ -98,14 +98,14 @@ const TransactionView = observer(({ tx }: PropsWithTransaction) => {
             <>
                 <ContextMenuItem name='View detail' onClick={ev => { navigate(`/transaction/${tx.id}`) }} />
                 <ContextMenuDivider/>
-                <ContextMenuItem name='Copy ID' onClick={ () => setBuffer(tx.id) } />
-                <ContextMenuItem name='Copy confirmations' onClick={ () => setBuffer(tx.confs) } />
-                <ContextMenuItem name='Copy date' onClick={ () => setBuffer(tx.formattedFee) } />
-                <ContextMenuItem name='Copy amount' onClick={ () => setBuffer(tx.btcAmount) } />
-                <ContextMenuItem name='Copy fee' onClick={ () => setBuffer(tx.btcFee) } />
+                <ContextMenuItem name='Copy ID' onClick={ () => setClipboard(tx.id) } />
+                <ContextMenuItem name='Copy confirmations' onClick={ () => setClipboard(tx.confs) } />
+                <ContextMenuItem name='Copy date' onClick={ () => setClipboard(tx.formattedFee) } />
+                <ContextMenuItem name='Copy amount' onClick={ () => setClipboard(tx.btcAmount) } />
+                <ContextMenuItem name='Copy fee' onClick={ () => setClipboard(tx.btcFee) } />
             </>
         } effect={ menu => ref.current?.classList[menu.isShowed ? 'add' : 'remove' ]('onmenu') }>
-            <StyledTransaction $selected={inps.has(tx.id)} ref={ref} 
+            <StyledTransaction $selected={inps.has(tx.id)} ref={ref}
                                onClick={() => !inps.has(tx.id) ? inps.add(new Input(tx.id, tx.amount)) : inps.remove(tx.id)}>
                 <TransactionInfoView.left id={tx.wrappedID} confs={tx.confs} date={tx.date} gap='3px' />
                 <TransactionInfoView.right amount={tx.btcAmount} fee={tx.formattedFee} />

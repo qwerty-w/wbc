@@ -1,6 +1,6 @@
 import styled, { css } from 'styled-components'
 
-import { StyledContinueButton as GlobalContinueButton } from '../../../common/screen'
+import { StyledContinueButton as GlobalContinueButton } from '../../core/components/ContinueButton'
 import { Item } from './styled-modal'
 export { Item, Label, GeneralInput } from './styled-modal'
 
@@ -33,7 +33,7 @@ export const SwitcherOption = styled.div<{ $side: 'left' | 'right' }>`
     user-select: none;
 
     &:hover {
-        cursor: pointer;  
+        cursor: pointer;
     }
     & span {
         font-weight: 500;
@@ -67,7 +67,7 @@ export const SwitcherOption = styled.div<{ $side: 'left' | 'right' }>`
 `
 export const Top = styled.div`
     width: 100%;
-    
+
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -81,7 +81,7 @@ export const Select = styled.select`
     border-radius: 19px;
     background-color: #FFF;
     text-align: center;
-    outline: none;    
+    outline: none;
     user-select: none;
 
     color: #404040;
