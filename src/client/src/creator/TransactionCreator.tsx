@@ -1,13 +1,13 @@
 import { useContext, createContext } from 'react'
 import styled from 'styled-components'
 
-import { Container } from './common/utils'
-import { AddressContainer, AddressesView, getAddresses }  from './components/create-transaction/addresses'
-import { Transaction, TransactionsView } from './components/create-transaction/transactions'
-import { Creator, CreatorView } from './components/create-transaction/creator'
-import { NewAddressModal, NewAddressModalView } from './components/create-transaction/new-address-modal'
-import { NewOutputModal, NewOutputModalView } from './components/create-transaction/new-output-modal'
-import { Popup, PopupView } from './common/popup'
+import { Container } from '../core/utils/Container'
+import { AddressContainer, AddressesView, getAddresses }  from './components/Addresses'
+import { Transaction, TransactionsView } from './components/Transactions'
+import { Creator, CreatorView } from './components/Creator'
+import { NewAddressModal, NewAddressModalView } from './components/NewAddressModal'
+import { NewOutputModal, NewOutputModalView } from './components/NewOutputModal'
+import { Popup, PopupView } from '../core/components/Popup'
 
 
 const StyledCreate = styled.div`
@@ -42,7 +42,7 @@ export const GlobalStore = createContext<IGlobalStore>({
     popup: new Popup(10)
 })
 
-export const CreateView = () => {
+export const TransactionCreatorView = () => {
     const store = useContext(GlobalStore)
     ;(window as any).store = store
     return (

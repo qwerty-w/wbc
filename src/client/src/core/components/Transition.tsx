@@ -1,4 +1,4 @@
-import React, { useEffect, ReactElement } from 'react'
+import { useEffect, ReactElement } from 'react'
 import { observable, action, makeObservable } from 'mobx'
 import { observer } from 'mobx-react-lite'
 

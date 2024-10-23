@@ -1,7 +1,7 @@
 import { ReactElement, ReactNode } from "react"
 import styled, { WebTarget } from 'styled-components'
 
-import { setBuffer } from "./utils"
+import { setClipboard } from "../core/utils/Utils"
 
 
 const StyledDetail = styled.div`
@@ -129,7 +129,7 @@ export const QrButton = ({ data }: { data: string }) => {
 
 export const CopyButton = ({ string }: { string: string }) => {  // todo: add popup
     return (
-        <StyledOptionButton $width='46px' $height='33px' $borderRadius='9px' onClick={() => { setBuffer(string) }}>
+        <StyledOptionButton $width='46px' $height='33px' $borderRadius='9px' onClick={() => { setClipboard(string) }}>
             <img src="/icons/copy.svg" alt="copy" />
         </StyledOptionButton>
     )

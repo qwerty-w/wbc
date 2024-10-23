@@ -1,9 +1,9 @@
 import { useParams } from "react-router-dom";
 import styled from 'styled-components'
 
-import { toBitcoins } from "./common/utils";
-import * as detail from "./common/detail";
-import { Transaction } from "./components/create-transaction/transactions";
+import { toBitcoins } from "../core/utils/Utils";
+import * as detail from "./Detail";
+import { Transaction } from "../creator/components/Transactions";
 
 
 const StyledBottom = styled.div`
@@ -156,7 +156,7 @@ function getTransaction(id: string): Transaction {
     return new Transaction('96f4f76166b6f368ac6a9901446db7b27c057cb441f01589fe32b0d5d95f7cf7', 4, 1694930749, 97261894, 8721)
 }
 
-export const TransactionDetailView = () => {
+export const DetailedTransactionView = () => {
     const id = (useParams().txid as string)
     const tx = getTransaction(id)
 

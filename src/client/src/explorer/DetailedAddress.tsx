@@ -1,16 +1,16 @@
 import { useParams } from 'react-router-dom'
 import styled from 'styled-components'
 
-import { toBitcoins } from './common/utils'
-import * as detail from './common/detail'
-import * as txs from './components/create-transaction/transactions'
-import { TransactionInfoView } from './common/screen'
+import { toBitcoins } from '../core/utils/Utils'
+import * as detail from './Detail'
+import * as txs from '../creator/components/Transactions'
+import { TransactionInfoView } from '../core/components/BaseTransaction'
 
 
 const StyledType = styled(detail.StyledOption)`
     gap: 6px;
     user-select: text;
-    
+
     img {
         user-select: none;
     }
@@ -176,7 +176,7 @@ function getAddressInfo(address: string): IAddressDetailInfo {
     }
 }
 
-export const AddressDetailView = () => {
+export const DetailedAddressView = () => {
     const address = useParams().addr
 
     if (!address) {

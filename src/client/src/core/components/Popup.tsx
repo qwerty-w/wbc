@@ -3,8 +3,8 @@ import { observable, action, makeObservable, autorun } from 'mobx'
 import { observer } from 'mobx-react-lite'
 import styled from 'styled-components'
 
-import { Transition, TransitionView, TransitionState } from './transition'
-import { CircleTimer, CircleTimerView } from "./circle-timer"
+import { Transition, TransitionView, TransitionState } from './Transition'
+import { CircleTimer, CircleTimerView } from "./CircleTimer"
 
 
 const StyledPopup = styled.div.attrs<{ $top?: string, $height?: string, $transition?: number, $transitionType?: string }>(props => {
@@ -354,7 +354,7 @@ export class Popup {
     error(text: string) {
         this.add(ItemType.ERROR, text)
     }
-    removeLast() {        
+    removeLast() {
         if (!this.items.arr.length) {
             return
         }
@@ -547,7 +547,7 @@ export const PopupView = observer(({ popup }: { popup: Popup }) => {
     useLayoutEffect(() => {
         top?.updateHeight()
     }, [top])
-    
+
     if (top && top.height !== null && top.status === ItemStatus.MOUNTING && !transition.add.started) {
         transition.add.start()
     }
