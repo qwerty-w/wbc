@@ -45,7 +45,7 @@ export class CircleTimer {
     public radius: number
     public circumference: Decimal
     public offset: Decimal
-    public interval?: NodeJS.Timer
+    public interval?: NodeJS.Timeout
 
     public passed = new Decimal(0)
     public frequency = 10
