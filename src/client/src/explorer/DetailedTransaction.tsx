@@ -1,9 +1,11 @@
+import { useEffect } from "react";
 import { useParams } from "react-router-dom";
 import styled from 'styled-components'
 
 import { toBitcoins } from "../core/utils/Utils";
-import * as detail from "./Detail";
+import * as detail from "./BaseDetail";
 import { Transaction } from "../creator/components/Transactions";
+import * as api from '../core/api/explorer'
 
 
 const StyledBottom = styled.div`
@@ -152,13 +154,13 @@ const BottomView = ({ tx }: PropsWithTransaction) => {
     )
 }
 
-function getTransaction(id: string): Transaction {
-    return new Transaction('96f4f76166b6f368ac6a9901446db7b27c057cb441f01589fe32b0d5d95f7cf7', 4, 1694930749, 97261894, 8721)
-}
-
 export const DetailedTransactionView = () => {
     const id = (useParams().txid as string)
-    const tx = getTransaction(id)
+    const tx = api.getTransaction(id).then()
+
+    useEffect(() => {
+
+    }, [])
 
     return (
         <detail.DetailView string={id} stringFontSize="24px" options={{
@@ -171,6 +173,6 @@ export const DetailedTransactionView = () => {
                             <img src="/icons/raw-bin.svg" alt="raw" />
                         </detail.StyledOptionButton>
                    </>
-        }} bottom={<BottomView tx={tx}/>}/>
+        }} bottom={<BottomView tx={new Transaction(tx.id, 0, 100, tx.inamount, tx.fee)}/>}/>
     )
 }

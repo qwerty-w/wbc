@@ -3,9 +3,9 @@ import { useNavigate } from 'react-router'
 import { observer } from 'mobx-react-lite'
 import styled from 'styled-components'
 
-import { formateDate, setClipboard, toBitcoins, wrapString } from '../../core/utils/Utils'
+import { setClipboard } from '../../core/utils/Utils'
 import { ContextMenuItem, ContextMenuDivider, ContextMenuView } from '../../core/components/ContextMenu'
-import { TransactionInfoView } from '../../core/components/BaseTransaction'
+import { Transaction, TransactionInfoView } from '../../core/components/BaseTransaction'
 import { GlobalStore } from '../TransactionCreator'
 import { Input } from './Creator'
 
@@ -45,42 +45,43 @@ const StyledTransaction = styled.div<{ $selected?: boolean }>`
 `
 
 
-export class Transaction {
-    feeFormatter = Intl.NumberFormat('en', { notation: 'compact', minimumFractionDigits: 1, maximumFractionDigits: 1 });
-
-    constructor(public id: string, public confs: number, public s_timestamp: number, public amount: number, public fee: number) {}
-    get date() {
-        return formateDate(this.s_timestamp)
-    }
-    get formattedFee() {
-        return this.fee < 1000 ? String(this.fee) : this.feeFormatter.format(this.fee)
-    }
-    get wrappedID() {
-        return wrapString(this.id)
-    }
-    get btcAmount() {
-        return toBitcoins(this.amount)
-    }
-    get btcFee() {
-        return toBitcoins(this.fee)
-    }
-}
-
 export const getTransactions = (): Transaction[] => {  // TODO
     return [
         new Transaction(
             '4902f9e3fad8473d2a13c4a07efca3c01df38643e8a3d375858c34e869c7bf63',
-            0,
-            1688334358,
-            3612443,
-            4000
+            100,
+            100,
+            1,
+            1,
+            2,
+            100,
+            500,
+            300,
+            800,
+            true,
+            false,
+            10000,
+            100,
+            [],
+            []
         ),
         new Transaction(
             'fg10f9e3fad8473d2a13c4a07efca3c01df38643e8a3d375858c34e869c7lk92',
-            0,
-            1688334358,
-            3612443,
-            4000
+            100,
+            100,
+            1,
+            1,
+            2,
+            100,
+            500,
+            300,
+            800,
+            true,
+            false,
+            10000,
+            100,
+            [],
+            []
         )
     ]
 }
@@ -90,25 +91,28 @@ type PropsWithTransaction = {
 }
 
 const TransactionView = observer(({ tx }: PropsWithTransaction) => {
+    const formatted = tx.formatted
     const { inps } = useContext(GlobalStore).creator
     const ref = useRef<HTMLDivElement>(null)
     const navigate = useNavigate()
+    // todo:
     return (
         <ContextMenuView items={
             <>
                 <ContextMenuItem name='View detail' onClick={ev => { navigate(`/transaction/${tx.id}`) }} />
                 <ContextMenuDivider/>
                 <ContextMenuItem name='Copy ID' onClick={ () => setClipboard(tx.id) } />
-                <ContextMenuItem name='Copy confirmations' onClick={ () => setClipboard(tx.confs) } />
-                <ContextMenuItem name='Copy date' onClick={ () => setClipboard(tx.formattedFee) } />
-                <ContextMenuItem name='Copy amount' onClick={ () => setClipboard(tx.btcAmount) } />
-                <ContextMenuItem name='Copy fee' onClick={ () => setClipboard(tx.btcFee) } />
+                <ContextMenuItem name='Copy confirmations' onClick={ () => setClipboard(0) } />
+                <ContextMenuItem name='Copy date' onClick={ () => setClipboard(formatted.fee) } />
+                <ContextMenuItem name='Copy amount' onClick={ () => setClipboard(formatted.inamount) } />
+                <ContextMenuItem name='Copy fee' onClick={ () => setClipboard(tx.fee) } />
             </>
         } effect={ menu => ref.current?.classList[menu.isShowed ? 'add' : 'remove' ]('onmenu') }>
-            <StyledTransaction $selected={inps.has(tx.id)} ref={ref}
-                               onClick={() => !inps.has(tx.id) ? inps.add(new Input(tx.id, tx.amount)) : inps.remove(tx.id)}>
-                <TransactionInfoView.left id={tx.wrappedID} confs={tx.confs} date={tx.date} gap='3px' />
-                <TransactionInfoView.right amount={tx.btcAmount} fee={tx.formattedFee} />
+            <StyledTransaction $selected={inps.has(tx.id)} ref={ref} onClick={
+                () => !inps.has(tx.id) ? inps.add(new Input(tx.id, tx.inamount)) : inps.remove(tx.id)
+            }>
+                <TransactionInfoView.left id={formatted.id} confs={0} date={'Thu 09 2024, 10:59'} gap='3px' />
+                <TransactionInfoView.right amount={formatted.inamount} fee={formatted.fee} />
             </StyledTransaction>
         </ContextMenuView>
     )
@@ -119,7 +123,9 @@ export const TransactionsView = observer(() => {
     return (
         <ContextMenuView items={
             <>
-                <ContextMenuItem name='Select all' onClick={ev => creator.inps.extend(txs.arr.filter(tx => !creator.inps.has(tx.id)).map(tx => new Input(tx.id, tx.amount)))} />
+                <ContextMenuItem name='Select all' onClick={ev => creator.inps.extend(
+                    txs.arr.filter(tx => !creator.inps.has(tx.id)).map(tx => new Input(tx.id, tx.inamount))
+                )} />
             </>
         }>
             <StyledTransactions>
@@ -130,3 +136,5 @@ export const TransactionsView = observer(() => {
         </ContextMenuView>
     )
 })
+
+export { Transaction }
