@@ -1,5 +1,7 @@
 import { ReactNode } from 'react'
 import styled, { css } from 'styled-components'
+import * as apitypes from '../../core/api/types'
+import { formatSatoshis, toBitcoins, wrapString } from '../../core/utils/Utils'
 
 
 const StyledTransactionDetailsItem = styled.span<{ $label?: boolean }>`
@@ -41,6 +43,44 @@ const StyleTransactionRightDetails = styled(StyledTransactionSideDetails)<{ $amo
         font-size: ${props => props.$feeFontSize || '14px'};
     }
 `
+
+
+interface ITransactionFormattedValues {
+    fee: string
+    id: string
+    inamount: string
+    outamount: string
+}
+
+export class Transaction implements apitypes.Transaction {
+    public formatted: ITransactionFormattedValues
+
+    constructor(
+        public id: string,
+        public inamount: number,
+        public outamount: number,
+        public incount: number,
+        public outcount: number,
+        public version: number,
+        public locktime: number,
+        public size: number,
+        public vsize: number,
+        public weight: number,
+        public is_segwit: boolean,
+        public is_coinbase: boolean,
+        public fee: number,
+        public blockheight: number,
+        public inputs: Array<apitypes.TransactionInput>,
+        public outputs: Array<apitypes.TransactionOutput>
+    ) {
+        this.formatted = {
+            id: wrapString(this.id),
+            inamount: String(toBitcoins(this.inamount)),
+            outamount: String(toBitcoins(this.outamount)),
+            fee: formatSatoshis(this.fee)
+        }
+    }
+}
 
 
 type TransactionDetailsLeftProps = {

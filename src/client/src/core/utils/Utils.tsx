@@ -1,6 +1,13 @@
 import Decimal from "decimal.js"
 
 
+const NumberFormatter = Intl.NumberFormat('en', { notation: 'compact', minimumFractionDigits: 1, maximumFractionDigits: 1 })
+
+
+export function formatSatoshis(v: number) {
+    return v < 1000 ? String(v) : NumberFormatter.format(v)
+}
+
 export function zeroFill(val: string | number, length: number = 2): string {
     return String(val).padStart(length, '0')
 }

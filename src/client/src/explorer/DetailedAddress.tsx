@@ -2,9 +2,8 @@ import { useParams } from 'react-router-dom'
 import styled from 'styled-components'
 
 import { toBitcoins } from '../core/utils/Utils'
-import * as detail from './Detail'
-import * as txs from '../creator/components/Transactions'
-import { TransactionInfoView } from '../core/components/BaseTransaction'
+import * as detail from './BaseDetail'
+import { Transaction, TransactionInfoView } from '../core/components/BaseTransaction'
 
 
 const StyledType = styled(detail.StyledOption)`
@@ -91,16 +90,6 @@ const StyledTransactionRight = styled.div`
     }
 `
 
-
-class Transaction extends txs.Transaction {
-    type: 'in' | 'out'
-
-    constructor(id: string, confs: number, s_timestamp: number, amount: number, fee: number, type: 'in' | 'out') {
-        super(id, confs, s_timestamp, amount, fee)
-        this.type = type
-    }
-}
-
 const TopLeftOptionsView = ({ copyString }: { copyString: string }) => {
     return (
         <>
@@ -155,26 +144,26 @@ const BottomView = ({ info }: { info: IAddressDetailInfo }) => {
     )
 }
 
-interface IAddressDetailInfo {
-    balance: number,
-    txCount: number,
-    received: number,
-    sent: number,
-    txs: Transaction[]
-}
+// interface IAddressDetailInfo {
+//     balance: number,
+//     txCount: number,
+//     received: number,
+//     sent: number,
+//     txs: Transaction[]
+// }
 
-function getAddressInfo(address: string): IAddressDetailInfo {
-    return {
-        balance: 18161861,
-        txCount: 1180,
-        received: 2240745028,
-        sent: 2224103871,
-        txs: [
-            new Transaction('96f4f76166b6f368ac6a9901446db7b27c057cb441f01589fe32b0d5d95f7cf7',
-                4, 1694930749, 97261894, 8721, 'in')
-        ]
-    }
-}
+// function getAddressInfo(address: string): IAddressDetailInfo {
+//     return {
+//         balance: 18161861,
+//         txCount: 1180,
+//         received: 2240745028,
+//         sent: 2224103871,
+//         txs: [
+//             new Transaction('96f4f76166b6f368ac6a9901446db7b27c057cb441f01589fe32b0d5d95f7cf7',
+//                 4, 1694930749, 97261894, 8721, 'in')
+//         ]
+//     }
+// }
 
 export const DetailedAddressView = () => {
     const address = useParams().addr
@@ -186,6 +175,6 @@ export const DetailedAddressView = () => {
     const inf = getAddressInfo(address)
 
     return <detail.DetailView string={address}
-                       options={{ left: <TopLeftOptionsView copyString={address} />, right: <TopRightOptionsView /> }}
-                       bottom={<BottomView info={inf} />} />
+            options={{ left: <TopLeftOptionsView copyString={address} />, right: <TopRightOptionsView /> }}
+            bottom={<BottomView info={inf}/>}/>
 }
