@@ -31,9 +31,9 @@ class Input(Base):
     __tablename__ = 'blockchain_input'
 
     txid: Mapped[txidFK] = mapped_column()
-    index: Mapped[int] = mapped_column()
+    index: Mapped[bigint] = mapped_column()
     outxid: Mapped[bytes] = mapped_column(types.LargeBinary(32))
-    vout: Mapped[int] = mapped_column()
+    vout: Mapped[bigint]
     amount: Mapped[bigint]
     is_segwit: Mapped[bool]
     is_coinbase: Mapped[bool]
@@ -51,7 +51,7 @@ class Output(Base):
     __tablename__ = 'blockchain_output'
 
     txid: Mapped[txidFK] = mapped_column()
-    vout: Mapped[int] = mapped_column()
+    vout: Mapped[bigint] = mapped_column()
     pkscript: Mapped[bytes]
     amount: Mapped[bigint]
     address: Mapped[str | None]
