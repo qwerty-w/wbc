@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { useParams } from "react-router-dom";
 import styled from 'styled-components'
 
-import { toBitcoins } from "../core/utils/Utils";
+import { toBitcoins } from "../core/utils/utils";
 import * as detail from "./BaseDetail";
 import { Transaction } from "../creator/components/Transactions";
 import * as api from '../core/api/explorer'

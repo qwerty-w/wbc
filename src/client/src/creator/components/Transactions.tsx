@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router'
 import { observer } from 'mobx-react-lite'
 import styled from 'styled-components'
 
-import { setClipboard } from '../../core/utils/Utils'
+import { setClipboard } from '../../core/utils/utils'
 import { ContextMenuItem, ContextMenuDivider, ContextMenuView } from '../../core/components/ContextMenu'
 import { Transaction, TransactionInfoView } from '../../core/components/BaseTransaction'
 import { GlobalStore } from '../TransactionCreator'
