@@ -5,10 +5,10 @@ import { observer } from 'mobx-react-lite'
 import styled from 'styled-components'
 
 import { GlobalStore } from '../TransactionCreator'
-import { Container } from '../../core/utils/Container'
+import { Container } from '../../core/utils/container'
 import { ContextMenuItem, ContextMenuDivider, ContextMenuView  } from '../../core/components/ContextMenu'
 import { getTransactions } from './Transactions'
-import { setClipboard } from '../../core/utils/Utils'
+import { setClipboard } from '../../core/utils/utils'
 
 
 const StyledAddresses = styled.div`

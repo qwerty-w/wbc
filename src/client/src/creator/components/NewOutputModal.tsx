@@ -3,7 +3,7 @@ import { observable, action, makeObservable } from 'mobx'
 import { observer } from 'mobx-react-lite'
 import styled from 'styled-components'
 
-import { toSatoshis } from '../../core/utils/Utils'
+import { toSatoshis } from '../../core/utils/utils'
 import { FiltredTextInput, FiltredTextInputView, BTCamountTextInputView } from '../../core/components/TextInput'
 import { StyledContinueButton } from '../../core/components/ContinueButton'
 import { Modal, ModalView } from '../../core/components/Modal'

@@ -1,7 +1,7 @@
 import { ReactElement, ReactNode } from "react"
 import styled, { WebTarget } from 'styled-components'
 
-import { setClipboard } from "../core/utils/Utils"
+import { setClipboard } from "../core/utils/utils"
 
 
 const StyledDetail = styled.div`
