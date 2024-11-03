@@ -1,11 +1,13 @@
-import { useEffect } from "react";
+import { ReactNode, useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import styled from 'styled-components'
+import styled from "styled-components"
 
 import { toBitcoins } from "../core/utils/utils";
 import * as detail from "./BaseDetail";
 import { Transaction } from "../creator/components/Transactions";
-import * as api from '../core/api/explorer'
+import * as api from "../core/api/explorer"
+import * as apitypes from '../core/api/types'
+import { observer } from "mobx-react-lite";
 
 
 const StyledBottom = styled.div`
@@ -90,33 +92,42 @@ type PropsWithTransaction = {
     tx: Transaction
 }
 
-const InfoItemView = ({ label, value }: { label: string, value: string }) => {
-    return (
-        <detail.InfoItemView label={label} value={value} asStyledItem={StyledInfoItem} asStyledLabel={StyledInfoItemLabel} asStyledValue={StyledInfoItemValue} />
-    )
+const InfoItemView = ({ label, value }: { label: ReactNode, value: ReactNode }) => {
+    return <detail.InfoItemView label={label}
+        value={value}
+        asStyledItem={StyledInfoItem}
+        asStyledLabel={StyledInfoItemLabel}
+        asStyledValue={StyledInfoItemValue}
+    />
 }
 
 const InfoView = ({ tx }: PropsWithTransaction) => {
     return (
         <StyledInfo>
-            {
-                [[
-                    ['In', '0.18161861' ], ['Out', '0.18161861' ]
-                ], [
-                    ['Inps count', '12' ], ['Outs count', '24' ]
-                ], [
-                    ['Weight', '402' ], ['Size', '124' ]
-                ], [
-                    ['Fee', '0.74981032' ], ['Version', '2' ]
-                ], [
-                    ['Date', '09.03.2023 08:23:89']
-                ]].map(container => <StyledInfoContainer>{ container.map(([label, value]) => <InfoItemView label={label} value={value} />) }</StyledInfoContainer>)
-            }
+            <StyledInfoContainer>
+                <InfoItemView label="In" value={tx.inamount}/>
+                <InfoItemView label="Out" value={tx.outamount}/>
+            </StyledInfoContainer>
+            <StyledInfoContainer>
+                <InfoItemView label="Inputs count" value={tx.incount}/>
+                <InfoItemView label="Outputs count" value={tx.outcount}/>
+            </StyledInfoContainer>
+            <StyledInfoContainer>
+                <InfoItemView label="Weight" value={tx.weight}/>
+                <InfoItemView label="Size" value={tx.size}/>
+            </StyledInfoContainer>
+            <StyledInfoContainer>
+                <InfoItemView label="Fee" value={tx.formatted.fee}/>
+                <InfoItemView label="Version" value={String(tx.version)}/>
+            </StyledInfoContainer>
+            <StyledInfoContainer>
+                <InfoItemView label="Date" value="12 Thu 2024, 10:18.25"/>
+            </StyledInfoContainer>
         </StyledInfo>
     )
 }
 
-const IOitemView = ({ address, amount }: { address: string, amount: number }) => {
+const IoItemView = ({ address, amount }: { address: string, amount: number }) => {
     return (
         <StyledItemIO>
             <div>
@@ -128,18 +139,22 @@ const IOitemView = ({ address, amount }: { address: string, amount: number }) =>
     )
 }
 
-const InputsView = ({ tx }: PropsWithTransaction) => {
+const InputsView = ({ inputs }: { inputs: Array<apitypes.ITransactionInput> }) => {
     return (
         <StyledIO>
-            <IOitemView address="bc1f-jqnr" amount={ 56769103 } />
+            {
+                inputs.map(i => <IoItemView address={i.txid} amount={i.amount}/>)
+            }
         </StyledIO>
     )
 }
 
-const OutputsView = () => {
+const OutputsView = ({ outputs }: { outputs: Array<apitypes.ITransactionOutput> }) => {
     return (
         <StyledIO>
-            <IOitemView address="bc1f-jqnr" amount={ 56769103 } />
+        {
+            outputs.map(o => <IoItemView address={o.address ? o.address : '?'} amount={o.amount}/>)
+        }
         </StyledIO>
     )
 }
@@ -147,19 +162,41 @@ const OutputsView = () => {
 const BottomView = ({ tx }: PropsWithTransaction) => {
     return (
         <StyledBottom>
-            <InfoView tx={tx} />
-            <InputsView tx={tx} />
-            <OutputsView />
+            <InfoView tx={tx}/>
+            <InputsView inputs={tx.inputs}/>
+            <OutputsView outputs={tx.outputs}/>
         </StyledBottom>
     )
 }
 
-export const DetailedTransactionView = () => {
+export const DetailedTransactionView = observer(() => {
     const id = (useParams().txid as string)
-    const tx = api.getTransaction(id).then()
-
+    if (!id) {
+        return <>not found</>
+    }
+    const [unloadedTransaction, _] = useState<Transaction>(
+        new Transaction(
+            'loading',
+            -1,
+            -1,
+            -1,
+            -1,
+            -1,
+            -1,
+            -1,
+            -1,
+            -1,
+            false,
+            false,
+            -1,
+            -1,
+            [],
+            []
+        )
+    )
+    const [transaction, setTransaction] = useState<Transaction | null>()
     useEffect(() => {
-
+        api.getTransaction(id).then(tx => setTransaction(Transaction.fromObject(tx)))
     }, [])
 
     return (
@@ -173,6 +210,6 @@ export const DetailedTransactionView = () => {
                             <img src="/icons/raw-bin.svg" alt="raw" />
                         </detail.StyledOptionButton>
                    </>
-        }} bottom={<BottomView tx={new Transaction(tx.id, 0, 100, tx.inamount, tx.fee)}/>}/>
+        }} bottom={<BottomView tx={transaction ? transaction : unloadedTransaction}/>}/>
     )
-}
+})

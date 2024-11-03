@@ -95,7 +95,7 @@ const TransactionView = observer(({ tx }: PropsWithTransaction) => {
     const { inps } = useContext(GlobalStore).creator
     const ref = useRef<HTMLDivElement>(null)
     const navigate = useNavigate()
-    // todo:
+    // todo: replace date and other
     return (
         <ContextMenuView items={
             <>
@@ -111,7 +111,7 @@ const TransactionView = observer(({ tx }: PropsWithTransaction) => {
             <StyledTransaction $selected={inps.has(tx.id)} ref={ref} onClick={
                 () => !inps.has(tx.id) ? inps.add(new Input(tx.id, tx.inamount)) : inps.remove(tx.id)
             }>
-                <TransactionInfoView.left id={formatted.id} confs={0} date={'Thu 09 2024, 10:59'} gap='3px' />
+                <TransactionInfoView.left id={formatted.id} confirmations={0} gap='3px' />
                 <TransactionInfoView.right amount={formatted.inamount} fee={formatted.fee} />
             </StyledTransaction>
         </ContextMenuView>
