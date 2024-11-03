@@ -103,8 +103,8 @@ export const StyledInfoValue = styled.span`
 
 
 interface IInfoItemViewProps {
-    label: string,
-    value: string,
+    label: ReactNode,
+    value: ReactNode,
     asStyledItem?: WebTarget,
     asStyledLabel?: WebTarget,
     asStyledValue?: WebTarget

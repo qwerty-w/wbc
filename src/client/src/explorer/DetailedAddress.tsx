@@ -118,67 +118,61 @@ const InfoItemView = ({ label, value }: { label: string, value: any }) => {
     )
 }
 
-const TransactionView = ({ tx }: { tx: Transaction }) => {
+const TransactionView = observer(({ tx, direction }: { tx: Transaction, direction: AddressTransactionDirection }) => {
     return (
         <StyledTransaction>
             <StyledTransactionLeft>
-                <img src={tx.type === 'in' ? '/icons/tx-in.svg' : '/icons/tx-out.svg'} alt={tx.type} />
-                <TransactionInfoView.left id={tx.wrappedID} confs={tx.confs} date={tx.date} fontSize='14px' />
+                <img src={direction == 'in' ? '/icons/tx-in.svg' : '/icons/tx-out.svg'} alt={String(direction)} />
+                <TransactionInfoView.left id={tx.formatted.id} confirmations={tx.confirmations} fontSize='14px' />
             </StyledTransactionLeft>
             <StyledTransactionRight>
-                <TransactionInfoView.right amount={tx.btcAmount} fee={tx.formattedFee} amountFontSize='17px' feeFontSize='14px' />
+                <TransactionInfoView.right amount={tx.formatted.inamount} fee={tx.formatted.fee} amountFontSize='17px' feeFontSize='14px' />
             </StyledTransactionRight>
         </StyledTransaction>
     )
-}
+})
 
-const BottomView = ({ info }: { info: IAddressDetailInfo }) => {
+const BottomView = ({ info, transactions }: { info: apitypes.AddressDetail, transactions: Array<Transaction> }) => {
     return (
         <StyledBottom>
             <StyledInfo>
                 <InfoItemView label='Balance' value={toBitcoins(info.balance)} />
-                <InfoItemView label='Transactions count' value={info.txCount} />
+                <InfoItemView label='Transactions count' value={info.tx_count} />
                 <InfoItemView label='Total received' value={toBitcoins(info.received)} />
-                <InfoItemView label='Total sent' value={toBitcoins(info.sent)} />
+                <InfoItemView label='Total sent' value={toBitcoins(info.spent)} />
             </StyledInfo>
             <StyledTransactionContainer>
-                { info.txs.map(tx => <TransactionView key={tx.id} tx={tx} />) }
+                { transactions.map(tx => <TransactionView key={tx.id} tx={tx} direction={tx.getDirection(info.address)} />) }
             </StyledTransactionContainer>
         </StyledBottom>
     )
 }
 
-// interface IAddressDetailInfo {
-//     balance: number,
-//     txCount: number,
-//     received: number,
-//     sent: number,
-//     txs: Transaction[]
-// }
-
-// function getAddressInfo(address: string): IAddressDetailInfo {
-//     return {
-//         balance: 18161861,
-//         txCount: 1180,
-//         received: 2240745028,
-//         sent: 2224103871,
-//         txs: [
-//             new Transaction('96f4f76166b6f368ac6a9901446db7b27c057cb441f01589fe32b0d5d95f7cf7',
-//                 4, 1694930749, 97261894, 8721, 'in')
-//         ]
-//     }
-// }
-
 export const DetailedAddressView = () => {
     const address = useParams().addr
+    const [info, setInfo] = useState<apitypes.AddressDetail | null>(null)
+    const [transactions, setTransactions] = useState<Array<Transaction>>([])
 
-    if (!address) {
-        return <></>
-    }
+    useEffect(() => {
+        if (!address) return
+        getAddress(address).then(info => setInfo(info))
+        getAddressTransactions(address, { length: 5 }).then(
+            transactions => setTransactions(
+                transactions.map(tx => Transaction.fromObject(tx))
+            )
+        )
+    }, [])
 
-    const inf = getAddressInfo(address)
-
-    return <detail.DetailView string={address}
-            options={{ left: <TopLeftOptionsView copyString={address} />, right: <TopRightOptionsView /> }}
-            bottom={<BottomView info={inf}/>}/>
+    return address ? <detail.DetailView
+        string={info ? address : 'loading'}
+        options={{ left: <TopLeftOptionsView copyString={address} />, right: <TopRightOptionsView /> }}
+        bottom={<BottomView info={info ? info : {
+            address: 'loading',
+            received: -1,
+            spent: -1,
+            tx_count: -1,
+            network: apitypes.NetworkType.mainnet,
+            balance: -1
+        }} transactions={transactions} />}
+    /> : <>not found</>
 }
