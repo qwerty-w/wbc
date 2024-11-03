@@ -130,10 +130,21 @@ export class Transaction implements apitypes.ITransaction {
             outamount: String(toBitcoins(this.outamount)),
             fee: formatSatoshis(this.fee)
         }
+        makeObservable(this, {
+            confirmations: computed
+        })
     }
 
     static fromObject(tx: apitypes.ITransaction): Transaction {
         // @ts-ignore
         return new Transaction(...Object.values(tx))
+    }
+
+    get confirmations(): number {
+        return this.head.height == -1 || this.blockheight == -1 ? -1 : this.head.height - this.blockheight
+    }
+
+    getDirection(address: string): AddressTransactionDirection {
+        return 'in' // todo:
     }
 }
