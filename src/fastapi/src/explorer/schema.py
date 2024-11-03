@@ -124,7 +124,7 @@ class TransactionDetail(Transaction):
                 for i in instance.inputs
             ],
             outputs=[
-                Output(**o.as_dict(), address=o.address and o.address.string)
+                Output(**o.as_dict())
                 for o in instance.outputs
             ]
         )

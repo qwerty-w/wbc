@@ -60,6 +60,7 @@ async def get_address_transactions(
         )
     except schema.ValidationError as e:
         raise RequestValidationError(e.errors())
+    # todo: testnet network returns 75+- transactions, not length
     return await service.get_address_transactions(
         address,
         input.length,
