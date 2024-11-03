@@ -16,19 +16,19 @@ export const getAddress = async (address: string): Promise<types.AddressDetail> 
 export const getAddressTransactions = async (
     address: string,
     params: {
-        length?: number,
+        length: number,
         offset?: number,
         last_seen_txid?: string
-    } = {}
+    } = { length: 5 }
 
-): Promise<Array<types.Transaction>> => {
+): Promise<Array<types.ITransaction>> => {
     return (await client.get(`/address/${address}/transactions`, {
         params
     })).data
 }
 
-export const getAddressUnspent = async (address: string): Promise<Array<types.TransactionUnspent>> => {
-    return (await client.get<Array<types.TransactionUnspent>>(`/address/${address}/unspent`, {
+export const getAddressUnspent = async (address: string): Promise<Array<types.ITransactionUnspent>> => {
+    return (await client.get<Array<types.ITransactionUnspent>>(`/address/${address}/unspent`, {
         params: {
             include_transaction: true,
             // cached: ?
@@ -36,8 +36,8 @@ export const getAddressUnspent = async (address: string): Promise<Array<types.Tr
     })).data
 }
 
-export const getTransaction = async (txid: string): Promise<types.Transaction> => {
-    return (await client.get<types.Transaction>(`/transaction/${txid}`, {
+export const getTransaction = async (txid: string): Promise<types.ITransaction> => {
+    return (await client.get<types.ITransaction>(`/transaction/${txid}`, {
         params: {
             detail: true,
             cached: true
@@ -45,6 +45,6 @@ export const getTransaction = async (txid: string): Promise<types.Transaction> =
     })).data
 }
 
-export const pushTransaction = async (serialized: string): Promise<types.Transaction> => {
-    return (await client.post<types.Transaction>('/transaction', { serialized })).data
+export const pushTransaction = async (serialized: string): Promise<types.ITransaction> => {
+    return (await client.post<types.ITransaction>('/transaction', { serialized })).data
 }

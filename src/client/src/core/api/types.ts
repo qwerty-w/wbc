@@ -13,7 +13,7 @@ export interface AddressDetail {
     balance: number
 }
 
-export interface TransactionInput {
+export interface ITransactionInput {
     txid: string
     vout: number
     amount: number
@@ -23,13 +23,13 @@ export interface TransactionInput {
     witness: string
 }
 
-export interface TransactionOutput {
+export interface ITransactionOutput {
     pkscript: string,
     amount: number,
     address?: string
 }
 
-export interface Transaction {
+export interface ITransaction {
     id: string,
     inamount: number
     outamount: number
@@ -44,18 +44,18 @@ export interface Transaction {
     is_coinbase: boolean
     fee: number
     blockheight: number
-    inputs: Array<TransactionInput>
-    outputs: Array<TransactionOutput>
+    inputs: Array<ITransactionInput>
+    outputs: Array<ITransactionOutput>
 }
 
-export interface Unspent {
+export interface IUnspent {
     txid: string
     vout: number
     amount: number
     address: string
 }
 
-export interface TransactionUnspent {
-    transaction: Transaction,
-    unspent: Array<Unspent>
+export interface ITransactionUnspent {
+    transaction: ITransaction,
+    unspent: Array<IUnspent>
 }
