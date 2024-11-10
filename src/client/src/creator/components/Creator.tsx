@@ -1,10 +1,10 @@
-import { useContext, useState } from 'react'
+import { useContext } from 'react'
 import { observable, action, computed, makeObservable, makeAutoObservable } from 'mobx'
 import { observer } from 'mobx-react-lite'
 
 import { Container } from '../../core/utils/container'
 import { toBitcoins, wrapString } from '../../core/utils/utils'
-import { FiltredTextInput, BTCamountTextInputView } from '../../core/components/TextInput'
+import { BitcoinAmountTextInputView, useFiltredTextInputRef } from '../../core/components/TextInput'
 import { ContextMenuItem, ContextMenuDivider, ContextMenuView } from '../../core/components/ContextMenu'
 import { GlobalStore } from '../TransactionCreator'
 import * as styled from '../styles/styled-creator'
@@ -179,10 +179,10 @@ const CreatorTop = observer(() => {
 
 const CreatorBot = observer(() => {
     const state = useContext(GlobalStore).creator
-    const [fee] = useState(new FiltredTextInput((pos, value) => {return {pos, value}}, undefined, '0.0008'))
+    const feeRef = useFiltredTextInputRef()
 
     const create = () => {
-        fee.setInvalid(true)
+        feeRef.current?.setInvalid(true)
     }
 
     return (
@@ -198,7 +198,7 @@ const CreatorBot = observer(() => {
                         <styled.BottomLabel>Remainder</styled.BottomLabel>
                     </styled.BottomItem>
                     <styled.BottomItem>
-                        <BTCamountTextInputView inp={fee} />
+                        <BitcoinAmountTextInputView inputRef={feeRef} />
                         <styled.BottomLabel>Fee</styled.BottomLabel>
                     </styled.BottomItem>
                 </styled.BottomRow>

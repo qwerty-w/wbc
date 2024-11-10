@@ -1,10 +1,10 @@
-import { useContext, useState, useEffect } from 'react'
+import { useContext, useState, useEffect, useRef } from 'react'
 import { observable, action, makeObservable } from 'mobx'
 import { observer } from 'mobx-react-lite'
 import styled from 'styled-components'
 
-import { toSatoshis } from '../../core/utils/utils'
-import { FiltredTextInput, FiltredTextInputView, BTCamountTextInputView } from '../../core/components/TextInput'
+import { isBase58String, removeChar, toSatoshis } from '../../core/utils/utils'
+import { BitcoinAmountTextInputView, FilteredTextInputView, useFiltredTextInputRef } from '../../core/components/TextInput'
 import { StyledContinueButton } from '../../core/components/ContinueButton'
 import { Modal, ModalView } from '../../core/components/Modal'
 import { GlobalStore } from '../TransactionCreator'
@@ -78,36 +78,38 @@ export class NewOutputModal extends Modal {
 export const NewOutputModalView = observer(() => {
     const { creator, modals: { newout } } = useContext(GlobalStore)
     const [continueDisabled, setContinueDisabled] = useState(true)
+    const addressRef = useFiltredTextInputRef()
+    const amountRef = useFiltredTextInputRef()
 
-    const [address] = useState(new FiltredTextInput((pos, value) => { return { pos, value } }))
-    const [amount] = useState(new FiltredTextInput((pos, value) => { return { pos, value } }, undefined, '0'))
-
-    useEffect(() => setContinueDisabled(address.value === ''), [address.value])
-    useEffect(() => { address.setInvalid(false); amount.setInvalid(false) }, [newout.isShowed])
+    useEffect(() => {
+        var disabled = false
+        if (addressRef.current?.value == '') disabled = true
+        if (!amountRef.current || Number(amountRef.current.value) == 0) disabled = true
+        setContinueDisabled(disabled)
+    }, [addressRef.current?.value, amountRef.current?.value])
+    useEffect(() => { addressRef.current?.setInvalid(false); amountRef.current?.setInvalid(false) }, [newout.isShowed])
 
     const onContinue = () => {
-        const [addr, am] = [address.value, toSatoshis(Number(amount.value))]
-        address.setInvalid(addr === '' || !addr.split('').every(char => '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz'.includes(char)) || creator.outs.has(addr))
-        amount.setInvalid(am <= 0 || Number.isNaN(am) || am > creator.remainder)
+        const [address, amount] = [addressRef.current?.value, toSatoshis(Number(amountRef.current?.value))]
+        if (!address || !amount) return
+        addressRef.current?.setInvalid(!isBase58String(address))
+        amountRef.current?.setInvalid(amount <= 0 || Number.isNaN(amount) || amount > creator.remainder)
 
-        if (address.isInvalid || amount.isInvalid) {
-            return
-        }
-
-        creator.outs.add(new Output(addr, am))
+        if (addressRef.current?.invalid || amountRef.current?.invalid) return
+        creator.outs.add(new Output(address, amount))
         newout.hide()
     }
 
     return (
-        <ModalView modal={newout} onEnter={onContinue} >
+        <ModalView modal={newout} onEnter={onContinue}>
             <StyledNewOutput>
                 <StyledAddress>
-                    <FiltredTextInputView inp={address} />
+                    <FilteredTextInputView inputRef={addressRef}/>
                     <styledModal.Label>Address</styledModal.Label>
                 </StyledAddress>
                 <StyledBottom>
                     <StyledAmount>
-                        <BTCamountTextInputView inp={amount} />
+                        <BitcoinAmountTextInputView inputRef={amountRef}/>
                         <styledModal.Label>Amount</styledModal.Label>
                     </StyledAmount>
                     <StyledContinueButton $width='107px' $height='40px' disabled={continueDisabled} onClick={onContinue} />
