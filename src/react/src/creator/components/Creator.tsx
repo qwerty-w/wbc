@@ -198,7 +198,8 @@ const CreatorBot = observer(() => {
                         <styled.BottomLabel>Remainder</styled.BottomLabel>
                     </styled.BottomItem>
                     <styled.BottomItem>
-                        <BitcoinAmountTextInputView inputRef={feeRef} />
+                        <input type="number" defaultValue="0" placeholder='0' min="0" />
+                        { /* todo: replace to <BitcoinAmountTextInputView inputRef={feeRef} />  */ }
                         <styled.BottomLabel>Fee</styled.BottomLabel>
                     </styled.BottomItem>
                 </styled.BottomRow>

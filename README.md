@@ -41,6 +41,7 @@ python -m venv .venv
 pip install -r requirements.txt
 # Запуск PostgreSQL (port 5432), pgAdmin4 (port 8080)
 docker compose up -d
+alembic upgrade head
 mv example.env .env
 fastapi dev src/main.py
 ```
