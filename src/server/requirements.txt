@@ -1,4 +1,0 @@
-btc-lib~=0.0.2
-django>=4.1.2
-djangorestframework~=3.14.0
-base58check~=1.0.2
