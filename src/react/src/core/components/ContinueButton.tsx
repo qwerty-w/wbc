@@ -1,5 +1,6 @@
 import styled, { css } from 'styled-components'
 
+
 export const StyledContinueButton = styled.button.attrs<{
     $width: string,
     $height: string,
