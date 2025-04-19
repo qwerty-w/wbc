@@ -1,6 +1,6 @@
 fastapi~=0.111.1
 btc-lib~=1.1.0
-SQLAlchemy~=2.0.31
+SQLAlchemy==2.0.31
 pydantic_settings~=2.3.4
 psycopg2~=2.9.9
 asyncpg~=0.29.0
