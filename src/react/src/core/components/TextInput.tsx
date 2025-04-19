@@ -5,8 +5,18 @@ import styled from 'styled-components'
 import { isDigitChar, isSingleChar, removeChar } from "../utils/utils"
 
 
-export const StyledTextInput = styled.input<{ $invalid?: boolean }>`
-    color: ${ props => props.$invalid ? '#E73838' : 'unset' };
+export const BaseTextInput = styled.input<{ $invalid?: boolean }>`
+    width: 100%;
+    height: 40px;
+    padding: 0px 6px;
+    background-color: #FFF;
+    text-align: center;
+    font-size: 20px;
+    font-weight: 600;
+    outline: none;
+    border: none;
+    border-radius: 20px;
+    color: ${props => props.$invalid ? '#E73838' : 'unset'};
 `
 
 interface IFilteredTextInputParams {
@@ -73,6 +83,7 @@ type FilteredTextInputRef = React.MutableRefObject<FilteredTextInput | null | un
 
 interface IFilteredTextInputViewProps extends IFilteredTextInputParams {
     inputRef?: FilteredTextInputRef
+    children?: React.ComponentType<React.InputHTMLAttributes<HTMLInputElement>>
 }
 
 export const FilteredTextInputView = observer((props: IFilteredTextInputViewProps) => {
@@ -84,8 +95,9 @@ export const FilteredTextInputView = observer((props: IFilteredTextInputViewProp
         elementRef.current?.setSelectionRange(input.cursorPos, input.cursorPos)
     }, [input.changed])
 
+    const InputElement = props.children || BaseTextInput
     return (
-        <StyledTextInput
+        <InputElement
             ref={elementRef}
             $invalid={input.invalid}
             type="text"

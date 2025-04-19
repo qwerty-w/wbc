@@ -110,7 +110,7 @@ const CreateAddress = ({ newaddr }: INewAddressModalWindowProps) => {
 
 const ImportAddress = ({ newaddr }: INewAddressModalWindowProps) => {
     const onContinue = () => {
-
+        // todo:
     }
 
     return (
