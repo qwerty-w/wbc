@@ -1,4 +1,4 @@
-> ⚠️ В разработке.
+> ⚠️ In development
 
 # Web Bitcoin Client (WBC)
 
